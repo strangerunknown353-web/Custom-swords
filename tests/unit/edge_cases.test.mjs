@@ -285,9 +285,11 @@ describe('multiplayer isolation', () => {
         const playerB = wielder(dimension, 'player-b', EARTH);
         playerB.location = { x: 40, y: 64, z: 0 };
 
-        // Thunder's bolt lands where the player looks; in open air that is its
-        // full 16-block reach, so A's target stands there.
-        const zombieA = zombie(dimension, 'zombie-a', 16);
+        // Thunder Strike raycasts from the wielder's head to the entity they
+        // are looking at, within 16 blocks. 15 keeps the target comfortably
+        // inside that reach — measured from head height, exactly 16 along the
+        // ground is marginally beyond it.
+        const zombieA = zombie(dimension, 'zombie-a', 15);
         const zombieB = new MockEntity({ id: 'zombie-b', location: { x: 40, y: 64, z: 2 }, dimension });
         dimension.entities.push(zombieB);
 

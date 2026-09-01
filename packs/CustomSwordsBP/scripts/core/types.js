@@ -137,6 +137,10 @@
  * @property {number} [cooldownTicks] Defaults to 0 (no cooldown).
  * @property {string} [cooldownKey] Share a cooldown across several bindings. Defaults to `<swordId>#<activation>`.
  * @property {string} [hudCategory] Vanilla item-cooldown category to mirror onto the HUD.
+ * @property {string} [label] Player-facing name for this binding, overriding the ability's own.
+ *   Lets a sword present "Frost Nova" while binding the generic, reusable `nova` ability — the
+ *   ability id stays a behaviour name so other swords can bind it, and the flavour lives with
+ *   the sword that owns it.
  * @property {TargetingSpec} [targeting] Defaults to `{ type: 'self' }`.
  * @property {EffectSpec[]} [effects] Applied to each affected target.
  * @property {ParticleSpec[]} [particles]

@@ -5,7 +5,7 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.6.0 — eight swords, and the first green client test.**
+> **Status: v0.7.0 — eight swords, four of them finalized.**
 > Ember Blade 🔥 joins the seven Elemental Collection blades: Inferno 🔥,
 > Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿. See
 > `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
@@ -15,7 +15,8 @@ sounds and cooldowns.
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Ember Blade itself has **not** been client-tested yet.
+> Ember Blade, Frost and Thunder have **not** been client-tested since their
+> reworks.
 
 ---
 
@@ -34,11 +35,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.6.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.6.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.6.0.mcpack` | resource pack alone |
+| `CustomSwords-v0.7.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.7.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.7.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.6.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.7.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -47,8 +48,8 @@ both packs enabled, then give yourself a sword and right-click:
 ```
 /give @s custom_swords:ember_blade       fast ember burst; build heat by hitting things
 /give @s custom_swords:inferno_sword     a burning arc
-/give @s custom_swords:thunder_sword     a bolt where you are looking
-/give @s custom_swords:frost_sword       slowness and mining fatigue
+/give @s custom_swords:thunder_sword     a bolt that arcs between enemies
+/give @s custom_swords:frost_sword       chill them, then shatter the chilled
 /give @s custom_swords:wind_sword        scatters everything outward
 /give @s custom_swords:earth_sword       a ground shock, heaviest melee
 /give @s custom_swords:tidal_sword       a wave pushed forward
@@ -119,7 +120,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 359 unit and integration tests against a mocked engine |
+| `npm test` | 377 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |

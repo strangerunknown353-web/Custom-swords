@@ -152,8 +152,9 @@ describe('framework bootstrap', () => {
             edge.map((u) => [u.swordId, u.activation]),
             [[TEST_SWORD_ID, 'attack']],
         );
-        // `burst` proper is Earth's; the elemental collection binds the rest,
-        // so nothing should be orphaned.
+        // Frost owns the nova/afflict pair and Thunder the chain/discharge
+        // pair, the same way Ember Blade owns its two. `burst` proper is
+        // Earth's; the collection binds the rest, so nothing is orphaned.
         assert.ok(framework.abilities.swordsUsing('custom_swords:burst').length > 0);
         assert.deepEqual(framework.abilities.unused(), []);
     });

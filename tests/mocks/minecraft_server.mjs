@@ -250,6 +250,26 @@ export class MockEntity {
         return { typeId: effect };
     }
 
+    /**
+     * Mirrors the real `getEffect`: returns the most recently applied matching
+     * effect, or `undefined`. Effects here never expire — nothing in the
+     * framework advances a mock effect clock — so a test that needs an effect
+     * to lapse must remove it explicitly.
+     *
+     * @param {string} effectId
+     */
+    getEffect(effectId) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        const match = [...this.effects].reverse().find((e) => e.effect === effectId);
+        if (match === undefined) return undefined;
+        return { typeId: match.effect, duration: match.duration, amplifier: match.options?.amplifier ?? 0 };
+    }
+
+    getEffects() {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        return this.effects.map((e) => ({ typeId: e.effect, duration: e.duration, amplifier: e.options?.amplifier ?? 0 }));
+    }
+
     getHeadLocation() {
         return { x: this.location.x, y: this.location.y + 1.62, z: this.location.z };
     }

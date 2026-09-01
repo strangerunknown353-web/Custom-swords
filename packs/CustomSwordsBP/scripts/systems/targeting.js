@@ -197,6 +197,32 @@ export class TargetingService {
      * Entities in a sphere around a point.
      *
      * @param {import('../core/types.js').AbilityContext} ctx
+     * Targetable entities within `range` of an arbitrary point.
+     *
+     * A thin, explicit front door onto {@link sphere} for abilities that need
+     * candidates around somewhere other than the caster — a chain's next link,
+     * a projectile's impact, a summoned effect. It keeps the binding's target
+     * filters and the caster exclusion, so an ability cannot widen its own
+     * permissions by choosing a different origin.
+     *
+     * One engine query, bounded by `range` and by `config.targeting` ceilings.
+     *
+     * @param {AbilityContext} ctx
+     * @param {Vec3Like} origin
+     * @param {number} range
+     * @param {number} [maxTargets]
+     * @returns {Entity[]}
+     */
+    around(ctx, origin, range, maxTargets) {
+        return this.sphere(ctx, {
+            origin,
+            range,
+            maxTargets,
+            allowedCategories: ctx.allowedTargets,
+        });
+    }
+
+    /**
      * @param {TargetQuery} query
      * @returns {Entity[]}
      */

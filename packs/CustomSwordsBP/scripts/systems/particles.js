@@ -113,6 +113,51 @@ export class ParticleService {
     }
 
     /**
+     * Draws a straight run of particles between two points.
+     *
+     * The visual primitive for anything that travels: a lightning arc between
+     * chained targets, a projectile trail, a tether. Like {@link ring} it is
+     * capped by `config.particles.maxPerEmit`, so a caller asking for a
+     * thousand points gets the cap rather than a stalled device.
+     *
+     * @param {Dimension} dimension
+     * @param {ParticleSpec} spec
+     * @param {Vec3Like} from
+     * @param {Vec3Like} to
+     * @param {number} points
+     * @returns {number} How many particles were spawned.
+     */
+    line(dimension, spec, from, to, points) {
+        const total = clamp(Math.floor(points), 0, this.config.particles.maxPerEmit);
+        if (total === 0) return 0;
+        if (!isFinitePoint(from) || !isFinitePoint(to)) {
+            this.log.debug('particles.line refused a non-finite endpoint.');
+            return 0;
+        }
+
+        const molang = this.buildMolang(spec);
+        let spawned = 0;
+        for (let i = 0; i < total; i++) {
+            // Inclusive of both ends when there is more than one point, so an
+            // arc visibly touches the entities it connects.
+            const t = total === 1 ? 0.5 : i / (total - 1);
+            const point = {
+                x: from.x + (to.x - from.x) * t,
+                y: from.y + (to.y - from.y) * t,
+                z: from.z + (to.z - from.z) * t,
+            };
+            try {
+                dimension.spawnParticle(spec.id, point, molang);
+                spawned++;
+            } catch (error) {
+                this.log.warn(`particles.line failed for '${spec.id}':`, error);
+                break;
+            }
+        }
+        return spawned;
+    }
+
+    /**
      * @private
      * @param {ParticleSpec} spec
      * @returns {MolangVariableMap | undefined}
@@ -133,4 +178,18 @@ export class ParticleService {
             return undefined;
         }
     }
+}
+
+/**
+ * @param {any} point
+ * @returns {boolean}
+ */
+function isFinitePoint(point) {
+    return (
+        point !== null &&
+        typeof point === 'object' &&
+        Number.isFinite(point.x) &&
+        Number.isFinite(point.y) &&
+        Number.isFinite(point.z)
+    );
 }

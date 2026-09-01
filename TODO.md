@@ -30,7 +30,21 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
-## Completed in Ember Blade finalization (v0.6.0)
+## Completed in Frost & Thunder finalization (v0.7.0)
+
+- [x] Frost Nova and Frostbite — a chill-then-shatter sequence, replacing two
+      bindings that both used the generic `brand`.
+- [x] Thunder Strike (chain lightning, `ray` targeting) and Static Charge
+      (every third hit), replacing `surge` and `brand`.
+- [x] `EffectService.has()` / `.remaining()` — target-state reads.
+- [x] `ParticleService.line()` and `TargetingService.around()`.
+- [x] Binding `label`, so reusable ability ids can carry per-sword names.
+- [x] Frost Sword's texture regenerated — it read as a blue diamond sword.
+- [x] `surge` removed; it had no binder and the project forbids orphans.
+- [x] Lightning implemented without `spawnEntity('minecraft:lightning_bolt')`,
+      avoiding fires, mob conversions and out-of-framework damage.
+
+
 
 - [x] Test Blade renamed to Ember Blade and promoted to a shipped sword; the
       project no longer ships a diagnostic item.

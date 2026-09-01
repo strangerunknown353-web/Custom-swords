@@ -74,6 +74,54 @@ export class EffectService {
     }
 
     /**
+     * Whether a target currently carries an effect.
+     *
+     * The read half of the effect system, and the primitive behind every
+     * "conditional on what the target is already suffering" mechanic: Frost's
+     * shatter bonus, its escalating frostbite, and anything later that wants to
+     * reward setting a target up before hitting it.
+     *
+     * Never throws. `getEffect` raises on an unknown effect id and on an
+     * invalidated entity handle, and this runs inside combat resolution where a
+     * throw would abandon the remaining targets. An unreadable target is
+     * reported as "not affected", which fails towards *not* granting a bonus.
+     *
+     * @param {Entity} target
+     * @param {string} effectId Vanilla effect identifier, e.g. `slowness`.
+     * @returns {boolean}
+     */
+    has(target, effectId) {
+        if (target === undefined || target === null) return false;
+        try {
+            if (!target.isValid) return false;
+            return target.getEffect(effectId) !== undefined;
+        } catch (error) {
+            this.log.debug('effects.has failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * The remaining duration of an effect in ticks, or 0 when absent.
+     *
+     * @param {Entity} target
+     * @param {string} effectId
+     * @returns {number}
+     */
+    remaining(target, effectId) {
+        if (target === undefined || target === null) return 0;
+        try {
+            if (!target.isValid) return 0;
+            const effect = target.getEffect(effectId);
+            const duration = effect?.duration;
+            return typeof duration === 'number' && Number.isFinite(duration) && duration > 0 ? duration : 0;
+        } catch (error) {
+            this.log.debug('effects.remaining failed:', error);
+            return 0;
+        }
+    }
+
+    /**
      * Restores health, clamped to the entity's maximum.
      *
      * Uses the health attribute component directly rather than an instant-health

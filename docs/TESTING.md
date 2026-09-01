@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 359 unit + integration tests against a mocked @minecraft/server
+npm test            # 377 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -177,8 +177,8 @@ The other columns record what is verified *statically*.
 | Sword | Item id | Attack | Active (cooldown) | Passive | Texture | Sound | FX | Tested in-game |
 |---|---|---:|---|---|:---:|:---:|:---:|:---:|
 | Inferno 🔥 | `custom_swords:inferno_sword` | 9 | Cleave — burning arc, angular falloff (7 s) | Brand — ignite 3 s | ✅ | ✅ | ✅ | ☐ |
-| Thunder ⚡ | `custom_swords:thunder_sword` | 9 | Surge — bolt at the looked-at block, ≤16 m (10 s) | Brand — weakness 2 s | ✅ | ✅ | ✅ | ☐ |
-| Frost ❄️ | `custom_swords:frost_sword` | 7 | Brand — slowness 7 s + mining fatigue 6 s (6 s) | Brand — slowness 2 s | ✅ | ✅ | ✅ | ☐ |
+| Thunder ⚡ | `custom_swords:thunder_sword` | 9 | Thunder Strike — aimed target + 3 arcs at 60% falloff, ≤16 m (10 s) | Static Charge — discharges every 3rd hit | ✅ | ✅ | ✅ | ☐ |
+| Frost ❄️ | `custom_swords:frost_sword` | 7 | Frost Nova — duration scales with nearness, +5 vs already-slowed (6 s) | Frostbite — slowness, escalates on a chilled target | ✅ | ✅ | ✅ | ☐ |
 | Wind 🌪️ | `custom_swords:wind_sword` | 6 | Repulse — scatter outward, kb 2.2 (5 s) | Bolster — speed 4 s | ✅ | ✅ | ✅ | ☐ |
 | Earth 🪨 | `custom_swords:earth_sword` | 10 | Burst — ground shock, distance falloff (9 s) | Bolster — resistance 5 s | ✅ | ✅ | ✅ | ☐ |
 | Tidal 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
@@ -332,21 +332,32 @@ appear.
 - [ ] A mob at the centre of the arc takes clearly more than one at the edge
 - [ ] Melee hits alone set mobs on fire briefly (the `brand` passive)
 
-**Thunder ⚡ (`use` → surge, 10 s):**
+**Thunder ⚡ (`use` → Thunder Strike, 10 s):**
 
-- [ ] Right-click while looking at a block up to 16 blocks away: the blast lands
-      **there**, not at the player
-- [ ] Right-click while looking at open sky: the blast lands at maximum reach
-      along the view line and does not error
-- [ ] Electric spark particles appear at the caster and a ring at the impact
-- [ ] Melee hits apply brief Weakness
+- [ ] Right-click while looking at a mob up to 16 blocks away: **that** mob is
+      struck — not a random one, not the whole area
+- [ ] The strike arcs onward to up to three more mobs standing near it, with a
+      visible line of particles between each pair
+- [ ] Each link takes **less** damage than the one before
+- [ ] Line up six mobs: exactly four are hit, not all six
+- [ ] Right-click at open sky: nothing happens, no cooldown starts, no error
+- [ ] **No fires start.** No creeper becomes charged, no pig becomes a
+      zombified piglin, no villager becomes a witch — the bolt is scripted, not
+      a vanilla lightning entity
+- [ ] The wielder takes no damage from their own strike
+- [ ] **Static Charge:** every third melee hit visibly crackles and hits harder;
+      the two hits between it are ordinary
 
-**Frost ❄️ (`use` → brand, 6 s):**
+**Frost ❄️ (`use` → Frost Nova, 6 s):**
 
-- [ ] Right-click applies Slowness **and** Mining Fatigue for several seconds
-      with only light damage — this sword controls, it does not burst
-- [ ] Snowflake particles at the caster, ice evaporation on each target
-- [ ] Melee hits apply brief Slowness
+- [ ] Right-click applies Slowness **and** Mining Fatigue with only light damage
+- [ ] A ring of snowflakes marks the 6-block reach
+- [ ] A mob at your feet stays slowed **noticeably longer** than one at the rim
+- [ ] **The combo:** hit a mob in melee first (it gains Slowness), then nova it —
+      it should take clearly more damage than an unchilled mob beside it
+- [ ] The action bar reads `Frost Nova   n frozen · n shattered`
+- [ ] Melee hits apply brief Slowness; a **second** hit on the same mob also
+      applies Mining Fatigue and hits harder
 
 **Wind 🌪️ (`use` → repulse, 5 s):**
 
@@ -462,6 +473,29 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.7.0 — Frost and Thunder finalized, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **377 passed**, 0 failed |
+| Uniqueness | 8 swords: ids, names, texture shortnames, lang keys all unique |
+| Abilities | 12 registered, **none orphaned** (`surge` removed rather than left unbound) |
+| Sound presets | 21 verified against 1824 vanilla events |
+| Textures | 8 sources, 0 warnings; Frost rebuilt, spread 226 |
+
+**Not tested in a client — I have no Minecraft environment.** What to watch for
+when it is, beyond the usual regression pass:
+
+- **Does the Frost combo read?** A player should notice that hitting things
+  first makes the nova hurt more. The action bar says `4 frozen · 2 shattered`,
+  but whether that lands is a design question no test answers.
+- **Does the chain look like lightning?** It is particles along a line, not a
+  vanilla bolt — deliberately, see `docs/API_NOTES.md` §3c. If it reads as a
+  dotted trail rather than an arc, the fix is particle choice and density.
+- **Is `random.fizz`/`item.trident.thunder` the right audio** for these swords.
+- Whether Static Charge's every-third-hit rhythm is noticeable in real combat.
 
 ### v0.6.0 — Ember Blade, not yet tested in Minecraft
 

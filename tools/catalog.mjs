@@ -33,6 +33,8 @@ function profilesOf(sword) {
 
 /** @param {string} id */
 const abilityName = (id) => ABILITIES.find((a) => a.id === id)?.name ?? id;
+/** The name a player sees: the binding's own label, else the ability's. */
+const bindingName = (binding) => binding.label ?? abilityName(binding.abilityId);
 
 /**
  * @param {any} sword
@@ -47,7 +49,7 @@ function describeBinding(binding) {
     const range = targeting.range === undefined ? '' : ` r${targeting.range}`;
     const effects = (binding.effects ?? []).map((e) => e.effect).join(', ');
     return (
-        `**${abilityName(binding.abilityId)}** · ${targeting.type}${range}` +
+        `**${bindingName(binding)}** · ${targeting.type}${range}` +
         `${effects ? ` · ${effects}` : ''}`
     );
 }
@@ -77,9 +79,9 @@ for (const sword of shipped) {
     const passive = bindingFor(sword, 'attack');
     lines.push(
         `| ${sword.name} | ${d.rarityLabel} | ${d.stats.meleeDamage} | ${d.stats.durability} ` +
-            `| ${active === undefined ? '—' : abilityName(active.abilityId)} ` +
+            `| ${active === undefined ? '—' : bindingName(active)} ` +
             `| ${active === undefined ? '—' : `${(active.cooldownTicks ?? 0) / 20}s`} ` +
-            `| ${passive === undefined ? '—' : abilityName(passive.abilityId)} |`,
+            `| ${passive === undefined ? '—' : bindingName(passive)} |`,
     );
 }
 
@@ -125,7 +127,7 @@ for (const sword of shipped) {
             .map(([slot, value]) => `${slot}: ${typeof value === 'string' ? value : value?.id}`)
             .join(', ') || '—';
         lines.push(
-            `| ${ACTIVATION_LABELS[binding.activation]} | ${abilityName(binding.abilityId)} ` +
+            `| ${ACTIVATION_LABELS[binding.activation]} | ${bindingName(binding)} ` +
                 `| ${(binding.cooldownTicks ?? 0) / 20}s ` +
                 `| ${(binding.allowedTargets ?? ['any']).join(', ')} ` +
                 `| ${details.join(' · ') || '—'} ` +

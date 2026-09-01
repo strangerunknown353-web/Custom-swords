@@ -12,8 +12,8 @@ are not part of the collection.
 |---|---|---:|---:|---|---:|---|
 | Ember Blade | Uncommon | 6 | 500 | Ember Burst | 3.5s | Ember Edge |
 | Inferno Sword | Epic | 9 | 1100 | Cleave | 7s | Brand |
-| Thunder Sword | Legendary | 9 | 1400 | Surge | 10s | Brand |
-| Frost Sword | Rare | 7 | 900 | Brand | 6s | Brand |
+| Thunder Sword | Legendary | 9 | 1400 | Thunder Strike | 10s | Static Charge |
+| Frost Sword | Rare | 7 | 900 | Frost Nova | 6s | Frostbite |
 | Wind Sword | Rare | 6 | 800 | Repulse | 5s | Bolster |
 | Earth Sword | Epic | 10 | 1500 | Burst | 9s | Bolster |
 | Tidal Sword | Epic | 8 | 1200 | Repulse | 7.5s | Bolster |
@@ -81,8 +81,8 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Surge | 10s | mob, player | 12 ability damage · knockback 0.9 · weakness 5.0s | endrod | cast: thunder_cast, impact: thunder_impact |
-| Melee hit | Brand | 4s | mob, player | weakness 2.0s | endrod | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Thunder Strike | 10s | mob, player | 12 ability damage · knockback 0.9 · weakness 5.0s | endrod | cast: thunder_cast, impact: thunder_impact |
+| Melee hit | Static Charge | 0.5s | mob, player | 1 ability damage · weakness 3.0s | endrod | cast: thunder_cast, impact: thunder_impact |
 
 ### Frost Sword
 
@@ -102,8 +102,8 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Brand | 6s | mob, player | 3 ability damage · slowness 7.0s · mining_fatigue 6.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
-| Melee hit | Brand | 2.5s | mob, player | slowness 2.0s | snowflake_particle | cast: frost_cast, impact: frost_impact |
+| Use (right-click / long-press) | Frost Nova | 6s | mob, player | 4 ability damage · knockback 0.3 · slowness 7.0s · mining_fatigue 6.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
+| Melee hit | Frostbite | 2.5s | mob, player | 1 ability damage · slowness 3.0s | snowflake_particle | cast: frost_cast, impact: frost_impact |
 
 ### Wind Sword
 
@@ -196,9 +196,12 @@ are not part of the collection.
 | **Strike** | Nature Sword | A committed single-target blow that bites deeper into a wounded foe. |
 | **Burst** | Earth Sword | Detonates around the caster, hitting hardest at the centre. |
 | **Repulse** | Wind Sword, Tidal Sword | Throws everything nearby away from the caster. |
-| **Brand** | Inferno Sword, Thunder Sword, Frost Sword | Marks its targets with lingering afflictions. |
+| **Brand** | Inferno Sword | Marks its targets with lingering afflictions. |
 | **Cleave** | Inferno Sword | Sweeps everything in a wide arc ahead of the caster. |
-| **Surge** | Thunder Sword | Detonates at the spot the caster is looking at. |
 | **Bolster** | Wind Sword, Earth Sword, Tidal Sword, Nature Sword | Steeps the wielder in the blade’s own energy. |
 | **Ember Burst** | Ember Blade | Releases stored heat in a tight burst around the wielder. |
 | **Ember Edge** | Ember Blade | Banks a little heat with every blow that lands. |
+| **Nova** | Frost Sword | Bursts outward, gripping hardest at its centre. |
+| **Afflict** | Frost Sword | Bites deeper into a foe already suffering. |
+| **Chain** | Thunder Sword | Strikes one foe, then arcs to those beside it. |
+| **Discharge** | Thunder Sword | Builds with every blow and lets go on the beat. |

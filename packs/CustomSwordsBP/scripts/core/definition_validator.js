@@ -374,6 +374,10 @@ export function validateBinding(binding, label, abilityExists) {
     problems.push(...validateParticles(binding.particles, label));
     problems.push(...validateSounds(binding.sounds, label));
 
+    if (binding.label !== undefined && (typeof binding.label !== 'string' || binding.label.trim().length === 0)) {
+        problems.push(`${label}.label: must be a non-empty string when present.`);
+    }
+
     if (binding.visual !== undefined && !isVisualProfile(binding.visual)) {
         problems.push(
             `${label}.visual: '${binding.visual}' is not a visual profile. ` +

@@ -99,6 +99,14 @@ reusable stacking-charge primitive on `PlayerStateStore` rather than bespoke
 logic. That is the shape every content milestone below should take — a sword
 that needs something new leaves a reusable capability behind.
 
+### Interlude — Frost and Thunder finalized (v0.7.0) — **done**
+Both shipped in step 5 but leaned on the generic `brand` ability. They now carry
+mechanics of their own: Frost a chill-then-shatter sequence that reads the
+*target's* state, Thunder a chain that arcs between entities. Each left a
+reusable primitive behind — `effects.has`, `particles.line`,
+`targeting.around`, and binding `label` — which is the pattern every content
+step below should follow.
+
 ### 6. Ability library — spatial (planned)
 Teleportation, gravity manipulation, earthquakes and area denial. Introduces
 block-aware targeting beyond the `point` mode already shipped, and the safety

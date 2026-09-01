@@ -324,6 +324,49 @@ sound id is wrong.
 
 ---
 
+## 3c. Vanilla lightning, and why this project does not use it
+
+`Dimension.spawnEntity('minecraft:lightning_bolt', location)` works and is the
+obvious way to build a thunder weapon. It is not used here, deliberately.
+
+A real bolt is a world event, not a damage call. It:
+
+- **starts fires** at and around the strike point;
+- **converts mobs** — creeper → charged creeper, pig → zombified piglin,
+  villager → witch, mooshroom colour swap;
+- **damages everything nearby**, including the wielder, with no way to exclude
+  them;
+- does all of that **outside the combat layer** — no damage validation, no hit
+  protection, no `allowedTargets` filter, and no `allowPlayerVersusPlayer`
+  toggle.
+
+The last point is the disqualifying one. Every safety property the framework
+guarantees would have a hole in it shaped exactly like Thunder Sword.
+
+`abilities/builtin/chain.js` therefore draws the bolt with
+`particles.line()` plus a thunder sound, and routes every point of damage
+through `combat.strikeOne`. The sword looks like lightning and behaves like the
+rest of the framework — a deliberate trade of visual fidelity for
+predictability.
+
+Reference: `EntityDamageCause.lightning` is a real damage cause and *is* used,
+so the damage still reads as lightning to the game's own systems.
+
+### `Entity.getEffect`
+
+| API | Signature |
+|---|---|
+| `Entity.getEffect` | `(effectType: EffectType \| string) => Effect \| undefined` |
+| `Entity.getEffects` | `() => Effect[]` |
+| `Effect` | `typeId`, `duration` (ticks remaining), `amplifier` |
+
+`getEffect` **throws** on an unknown effect identifier and on an invalidated
+entity handle — not returns undefined. `EffectService.has()` wraps both cases,
+because this is called inside combat resolution where a throw would abandon
+every remaining target.
+
+---
+
 ## 4. Experiment requirements
 
 **None.** Custom Components V2 requires no experimental toggle when the

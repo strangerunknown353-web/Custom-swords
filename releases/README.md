@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.6.0.mcaddon` | Eight swords: Ember Blade plus the seven Elemental Collection blades. Includes both rounds of client bug fixes (item registration in v0.5.1, ability presentation in v0.5.2), which the project owner confirmed working in Minecraft Bedrock. |
+| `CustomSwords-v0.7.0.mcaddon` | Eight swords. Ember Blade, Frost and Thunder each carry mechanics of their own; the remaining five bind shared abilities. Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever

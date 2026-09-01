@@ -646,6 +646,12 @@ stronger and never went back" bugs happen.
 | `feedback` | action bar text, deny cues | always single-player scoped — cannot broadcast |
 | `combat` | the whole "do this to these targets" pipeline | fixed ordering, per-execution and per-player hit protection, category re-check |
 
+`targeting.around(ctx, origin, range)` resolves candidates near an arbitrary
+point while keeping the binding's filters and the caster exclusion, so an
+ability cannot widen its own permissions by choosing a different origin.
+`particles.line(dimension, spec, from, to, points)` draws the visual for
+anything that travels, capped by the same per-emit budget as `ring`.
+
 Targeting always delegates culling to the engine's own spatial query
 (`getEntities` with `location` + `maxDistance`). The framework never iterates
 every entity in a dimension.
@@ -722,11 +728,44 @@ The combat layer stores nothing of its own: hit protection lives in
 `CooldownManager` under `hit:<entityId>` keys owned by the striking player, and
 the per-execution duplicate set is a local variable that dies with the call.
 
+### Reading the target, not just the caster
+
+`EffectService.has(entity, effectId)` and `.remaining(entity, effectId)` are the
+read half of the effect system, and they open an axis the framework did not
+have: an ability can branch on **what the target is already suffering**.
+
+That is what makes Frost Sword a sequence rather than a button. Its passive
+leaves slowness; its active deals bonus damage to anything already slowed. The
+three burst abilities now each ask a different question:
+
+| Ability | Scales with | Sword |
+|---|---|---|
+| `burst` | how far the target is from the centre | Earth |
+| `ember_burst` | how much heat the **caster** has banked | Ember Blade |
+| `nova` | what the **target** is already suffering | Frost |
+
+Neither read ever throws — `getEffect` raises on an unknown effect id and on a
+dead handle, and this runs inside combat resolution where a throw would abandon
+the remaining targets. An unreadable target reports as *unaffected*, so the
+failure mode is "no bonus", never "free bonus".
+
+The ordering rule that goes with it: **read the target's state before striking**,
+so the effects an activation applies cannot trigger its own bonus. Both `nova`
+and `afflict` do this, and a test asserts it.
+
 ### Stacking charges
 
 `PlayerStateStore` exposes the one primitive for "this sword builds something up
-as you fight": `addCharge` / `charges` / `spendCharges`. Ember Blade's heat is
-the first user; combo counters and momentum meters are the intended next ones.
+as you fight": `addCharge` / `charges` / `spendCharges`. Two swords use it now, in
+opposite ways, which is the argument for it existing:
+
+| | Ember Blade — heat | Thunder Sword — static charge |
+|---|---|---|
+| Fills on | a landed melee hit | a landed melee hit |
+| Spent by | the **player**, with the active | **itself**, on the third hit |
+| Feels like | a resource | a metronome |
+
+Same primitive, opposite rhythm.
 
 Three properties are enforced centrally rather than per ability, because each is
 a way the multiplayer rule could quietly break:
@@ -951,6 +990,14 @@ Resolution happens **once per activation**, not per target, in
 only fills gaps. Abilities read `ctx.visual?.trail` for decorative geometry, so
 `cleave` draws its arc in flame on Inferno and in storm-sparks on Thunder
 without knowing either theme exists.
+
+A binding may also carry a **`label`**, the player-facing name for that
+activation. Ability ids stay behaviour names — `nova`, `chain`, `discharge` —
+so any sword can bind them; the flavour lives with the sword that owns it. Frost
+presents `nova` as "Frost Nova", Thunder presents `chain` as "Thunder Strike",
+and the action bar and catalogue both show the label. Without this the choice
+was between reusable abilities and evocative names; there is no reason to lose
+either.
 
 Nine profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`, `grove`,
 `ember`, and `arcane` as the framework's neutral default. A test asserts no two

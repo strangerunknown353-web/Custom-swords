@@ -17,10 +17,13 @@ import { burst } from './builtin/burst.js';
 import { repulse } from './builtin/repulse.js';
 import { brand } from './builtin/brand.js';
 import { cleave } from './builtin/cleave.js';
-import { surge } from './builtin/surge.js';
 import { bolster } from './builtin/bolster.js';
 import { emberBurst } from './builtin/ember_burst.js';
 import { emberEdge } from './builtin/ember_edge.js';
+import { nova } from './builtin/nova.js';
+import { afflict } from './builtin/afflict.js';
+import { chain } from './builtin/chain.js';
+import { discharge } from './builtin/discharge.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -29,8 +32,11 @@ export const ABILITIES = Object.freeze([
     repulse,
     brand,
     cleave,
-    surge,
     bolster,
     emberBurst,
     emberEdge,
+    nova,
+    afflict,
+    chain,
+    discharge,
 ]);

@@ -13,6 +13,86 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.7.0] — 2026-09-01
+
+**Frost Sword and Thunder Sword finalized.** Both shipped in v0.5.0 as part of
+the Elemental Collection, but both leaned on the generic `brand` ability —
+Frost for its active *and* its passive. They now have mechanics of their own,
+built to the benchmark Ember Blade set.
+
+### Added
+
+- **Frost Nova** (`custom_swords:nova`) — a radial burst that inverts the usual
+  falloff: **proximity scales the effect duration, not the damage**. A target at
+  the caster's feet is locked down for the full slowness III and mining fatigue;
+  one at the rim gets 40% of it. It is a control ability, so its falloff is
+  control.
+- **The shatter bonus.** Frost Nova deals +5 damage to a target that is
+  *already* slowed. Combined with the passive, the sword plays as a sequence:
+  chill the group in melee, then shatter them.
+- **Frostbite** (`custom_swords:afflict`) — the passive that sets that up.
+  Applies slowness, and against a target already slowed adds mining fatigue and
+  +3 damage. Staying on one enemy is worth more than spreading hits.
+- **Thunder Strike** (`custom_swords:chain`) — picks the entity the wielder is
+  looking at within 16 blocks, then arcs to the nearest unstruck target, three
+  further links at 60% damage each. Rewards finding a *line* of enemies, where
+  every other reaching ability rewards a cluster's centre.
+- **Static Charge** (`custom_swords:discharge`) — builds one charge per landed
+  hit and releases on the third: +6 damage, weakness, and a spark burst. A fixed
+  interval rather than a random chance, because a percentage roll cannot be
+  learned by the player, cannot be tested deterministically, and feels broken on
+  a bad streak.
+- **`EffectService.has()` / `.remaining()`** — the read half of the effect
+  system, and the primitive behind every "conditional on what the target is
+  already suffering" mechanic. Never throws: an unreadable target reports as
+  unaffected, which fails towards *not* granting a bonus.
+- **`ParticleService.line()`** — particles between two points, capped like
+  `ring()`. The visual primitive for anything that travels; Thunder's arc is the
+  first user.
+- **`TargetingService.around()`** — targetable entities near an arbitrary point,
+  keeping the binding's filters and caster exclusion so an ability cannot widen
+  its own permissions by choosing a different origin.
+- **Binding `label`** — a sword can present "Frost Nova" while binding the
+  generic, reusable `nova`. Ability ids stay behaviour names so other swords can
+  bind them; the flavour lives with the sword that owns it. Surfaced on the
+  action bar and in the catalogue.
+- **`tests/unit/frost_thunder.test.mjs`** — the shatter combo, proximity-scaled
+  duration, chain falloff, the jump limit, the discharge rhythm, and per-player
+  isolation for both.
+
+### Changed
+
+- **Frost Sword's texture regenerated.** It read as a blue diamond sword with a
+  stub for a hilt — the one thing the theme brief rules out. Now a deep glacier
+  blade with alternating crystal facets, a bright silver rimed guard that
+  separates blade from grip, a near-black wrapped grip and a crystal pommel.
+  Luminance spread 226. Three iterations; the first two were worse than what
+  they replaced and were discarded.
+- **Thunder Sword's active moved from `point` to `ray` targeting.** The player
+  now names a victim and the chain decides the rest, instead of the bolt landing
+  wherever the crosshair met a block.
+- Thunder's Static Charge deals 1 chip damage per swing. Not cosmetic: the
+  ability learns whether its blow landed from the strike report, and the damage
+  layer refuses a zero-damage strike — so a 0-damage build-up could never
+  advance its own counter. `discharge` validates `damage >= 1` to stop the next
+  sword falling into it.
+
+### Removed
+
+- **`custom_swords:surge`.** Thunder was its only binder, and the project
+  enforces "no orphaned abilities" — shipping unbound ability code in a mobile
+  add-on is the wrong default. The `point` targeting mode it used remains in the
+  framework and tested, so a future meteor sword can restore it from history.
+
+### Notes
+
+- Inferno Sword and Ember Blade are untouched.
+- **No vanilla lightning.** `spawnEntity('minecraft:lightning_bolt')` would look
+  right and behave badly: fires, charged creepers, zombified piglins, witches,
+  damage to the wielder, and all of it outside the combat layer's validation and
+  PvP rules. Thunder's bolt is particles and sound; every point of damage goes
+  through `combat.strikeOne`.
+
 ## [0.6.0] — 2026-09-01
 
 **Ember Blade.** The framework's diagnostic Test Blade becomes a finished

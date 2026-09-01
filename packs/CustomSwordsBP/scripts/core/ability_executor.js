@@ -129,7 +129,7 @@ export class AbilityExecutor {
         if (result.ok) {
             this.startCooldown(player, player.id, cooldownKey, binding);
             if (FEEDBACK_ACTIVATIONS.has(activation)) {
-                services.feedback.abilityUsed(player, ability.name, result.message);
+                services.feedback.abilityUsed(player, binding.label ?? ability.name, result.message);
             }
         } else if (FEEDBACK_ACTIVATIONS.has(activation)) {
             services.feedback.denied(player, result.message ?? 'Nothing happened.');

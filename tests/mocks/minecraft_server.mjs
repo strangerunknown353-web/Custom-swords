@@ -84,6 +84,10 @@ export class MockDimension {
         this.particles = [];
         /** @type {{ id: string, location: any, options: any }[]} */
         this.sounds = [];
+        /** @type {Map<string, string>} Block overrides, keyed "x,y,z". */
+        this.blocks = new Map();
+        /** @type {Set<string>} Coordinates that throw, as an unloaded chunk does. */
+        this.unreadable = new Set();
     }
 
     /** @param {any} options */
@@ -98,6 +102,41 @@ export class MockDimension {
             }
             return true;
         });
+    }
+
+    /**
+     * Block lookup for the movement system.
+     *
+     * The default world is open air above y=64 and solid stone below it, which
+     * gives dashes somewhere to land. Tests override individual blocks with
+     * `setBlock(x, y, z, kind)` where kind is 'air' | 'stone' | 'water' |
+     * 'lava', or set `unloadedBelowY` to model a chunk edge.
+     *
+     * @param {any} location
+     */
+    getBlock(location) {
+        const key = `${Math.floor(location.x)},${Math.floor(location.y)},${Math.floor(location.z)}`;
+        if (this.unreadable.has(key)) {
+            throw new Error('LocationInUnloadedChunkError');
+        }
+        const kind = this.blocks.get(key) ?? (Math.floor(location.y) < 64 ? 'stone' : 'air');
+        return {
+            typeId: kind === 'air' ? 'minecraft:air' : `minecraft:${kind}`,
+            isAir: kind === 'air',
+            isLiquid: kind === 'water' || kind === 'lava',
+        };
+    }
+
+    /** @param {number} x @param {number} y @param {number} z @param {string} kind */
+    setBlock(x, y, z, kind) {
+        this.blocks.set(`${x},${y},${z}`, kind);
+        return this;
+    }
+
+    /** Marks a block coordinate as raising, the way an unloaded chunk does. */
+    setUnreadable(x, y, z) {
+        this.unreadable.add(`${x},${y},${z}`);
+        return this;
     }
 
     /** @param {any} location @param {any} direction @param {any} options */
@@ -268,6 +307,30 @@ export class MockEntity {
     getEffects() {
         if (!this.isValid) throw new Error('Entity is not valid.');
         return this.effects.map((e) => ({ typeId: e.effect, duration: e.duration, amplifier: e.options?.amplifier ?? 0 }));
+    }
+
+    /**
+     * Mirrors `Entity.tryTeleport`: returns false rather than throwing when the
+     * destination is occupied. The mock treats a non-air feet or head block as
+     * an intersection, which is the case the real collision test catches.
+     *
+     * @param {any} location @param {any} options
+     */
+    tryTeleport(location, options = {}) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        if (options.checkForBlocks !== false && this.dimension?.getBlock !== undefined) {
+            try {
+                const feet = this.dimension.getBlock(location);
+                const head = this.dimension.getBlock({ ...location, y: location.y + 1 });
+                if (!feet?.isAir && !feet?.isLiquid) return false;
+                if (!head?.isAir && !head?.isLiquid) return false;
+            } catch {
+                return false;
+            }
+        }
+        this.teleports.push({ location, options });
+        this.location = { ...location };
+        return true;
     }
 
     getHeadLocation() {

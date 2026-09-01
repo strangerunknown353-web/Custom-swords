@@ -15,7 +15,7 @@ export const CONFIG = Object.freeze({
     namespace: 'custom_swords',
 
     /** Semantic version of the framework. Kept in sync by `tools/set-version.mjs`. */
-    version: '0.7.0',
+    version: '0.8.0',
 
     debug: Object.freeze({
         /** Emit lifecycle + dispatch logs to the content log. */
@@ -99,6 +99,21 @@ export const CONFIG = Object.freeze({
     particles: Object.freeze({
         /** Safety ceiling on particles emitted by a single `particles.emit` call. */
         maxPerEmit: 64,
+    }),
+
+    movement: Object.freeze({
+        /**
+         * Hard ceiling on how far any dash or blink may move a player, whatever
+         * a sword definition asks for.
+         *
+         * Deliberately short. A long teleport is not a stronger version of a
+         * short one — it is a different and much more dangerous thing: it
+         * crosses chunk boundaries, outruns the server's view of where the
+         * player is, and turns a mobility tool into terrain traversal. Ten
+         * blocks is roughly a bow shot, and far enough to reposition in a
+         * fight without leaving it.
+         */
+        maxDashDistance: 10,
     }),
 
     feedback: Object.freeze({

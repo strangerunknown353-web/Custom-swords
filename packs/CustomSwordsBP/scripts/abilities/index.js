@@ -24,6 +24,8 @@ import { nova } from './builtin/nova.js';
 import { afflict } from './builtin/afflict.js';
 import { chain } from './builtin/chain.js';
 import { discharge } from './builtin/discharge.js';
+import { blink } from './builtin/blink.js';
+import { opportunist } from './builtin/opportunist.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -39,4 +41,6 @@ export const ABILITIES = Object.freeze([
     afflict,
     chain,
     discharge,
+    blink,
+    opportunist,
 ]);

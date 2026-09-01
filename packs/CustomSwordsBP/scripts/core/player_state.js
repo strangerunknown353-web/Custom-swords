@@ -143,6 +143,46 @@ export class PlayerStateStore {
     }
 
     /**
+     * Records that something happened, at a tick.
+     *
+     * The third shape of per-player state the framework needs, after resources
+     * (`addCharge`) and counters: a **combo window**. One ability marks, another
+     * asks how long ago — which is how Shadow Sword's passive knows the wielder
+     * has just blinked without the two abilities referring to each other.
+     *
+     * Life-scoped, so a window cannot survive the death that ended the combo.
+     *
+     * @param {string} playerId
+     * @param {string} name
+     * @param {number} tick
+     */
+    mark(playerId, name, tick) {
+        if (!Number.isFinite(tick)) return;
+        this.set(playerId, lifeKey(name), tick);
+    }
+
+    /**
+     * Ticks elapsed since a mark, or `Infinity` when it was never set.
+     *
+     * `Infinity` rather than `-1` or `undefined` so the natural comparison —
+     * `sinceMark(...) <= windowTicks` — is false for an absent mark without the
+     * caller having to special-case it.
+     *
+     * @param {string} playerId
+     * @param {string} name
+     * @param {number} tick
+     * @returns {number}
+     */
+    sinceMark(playerId, name, tick) {
+        const at = this.get(playerId, lifeKey(name), undefined);
+        if (!Number.isFinite(at) || !Number.isFinite(tick)) return Number.POSITIVE_INFINITY;
+        const elapsed = tick - /** @type {number} */ (at);
+        // A clock that appears to run backwards means the world reloaded under
+        // us; treat the mark as gone rather than as infinitely fresh.
+        return elapsed < 0 ? Number.POSITIVE_INFINITY : elapsed;
+    }
+
+    /**
      * @param {string} playerId
      * @param {string} key
      */

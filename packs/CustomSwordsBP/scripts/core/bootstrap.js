@@ -38,6 +38,7 @@ import { TargetingService } from '../systems/targeting.js';
 import { DamageService } from '../systems/damage.js';
 import { EffectService } from '../systems/effects.js';
 import { ParticleService } from '../systems/particles.js';
+import { MovementService } from '../systems/movement.js';
 import { SoundService } from '../systems/sounds.js';
 import { FeedbackService } from '../systems/feedback.js';
 import { CombatSystem } from '../systems/combat.js';
@@ -126,6 +127,7 @@ export function createFramework(options = {}) {
     const damage = new DamageService(CONFIG, targeting, log);
     const effects = new EffectService(log);
     const particles = new ParticleService(CONFIG, log);
+    const movement = new MovementService(CONFIG, log);
     const feedback = new FeedbackService(CONFIG, sounds, log);
     const combat = new CombatSystem({ config: CONFIG, damage, effects, particles, sounds, cooldowns });
 
@@ -137,6 +139,7 @@ export function createFramework(options = {}) {
         particles,
         sounds,
         feedback,
+        movement,
         combat,
         cooldowns,
         state,

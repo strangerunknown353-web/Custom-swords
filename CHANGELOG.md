@@ -13,6 +13,60 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.8.0] — 2026-09-01
+
+**Shadow Sword** — the ninth sword, and the first whose active does no
+meaningful damage on its own.
+
+### Added
+
+- **Shadow Sword** (`custom_swords:shadow_sword`) — Epic, 8 melee, 1000
+  durability, 0.28s swing, repaired with echo shards. Its Epic rating is bought
+  with utility rather than numbers: it is the only sword in the set that can
+  leave a fight it is losing.
+- **Shadow Step** (`custom_swords:blink`) — a validated 6-block dash along the
+  wielder's view, on a 7-second cooldown. Lands a light 4-damage strike on
+  whatever is standing at the arrival point, and opens a combo window.
+- **Shadow Edge** (`custom_swords:opportunist`) — 1 damage on an ordinary
+  swing; **+6 and 2 health drained** on a swing within 4 seconds of a step.
+  Positioning is the cost of the damage rather than a bonus on top of it.
+- **`systems/movement.js`** — the reusable destination validator every future
+  mobility ability inherits. Candidates are tried furthest-first; each is
+  screened for finite coordinates, passable feet and head blocks, lava, and
+  ground within `maxDrop` — and then `Entity.tryTeleport` runs the engine's own
+  collision test as the authority. A refusal moves nothing and names its reason.
+- **`config.movement.maxDashDistance`** (10) — a hard ceiling on any dash,
+  whatever a definition asks for. Deliberately short: a long teleport is not a
+  stronger short one, it is terrain traversal.
+- **`PlayerStateStore.mark()` / `.sinceMark()`** — the third shape of per-player
+  state, after resources and counters: a **combo window**. One ability marks,
+  another asks how long ago. `sinceMark` returns `Infinity` for an absent mark
+  so `<= windowTicks` is naturally false, and treats a backwards clock (a world
+  reload) as no mark rather than an infinitely fresh one.
+- **`shadow` visual profile** and `shadow_cast` / `shadow_impact` presets —
+  portal motes where the wielder was, void-dark spatter where they arrive. The
+  only profile whose caster particle marks a place the player has *left*.
+- **`tests/unit/shadow_step.test.mjs`** — eighteen assertions, most of them
+  refusals: facing a wall, head-height obstruction only, lava, a drop, an
+  unreadable chunk, and the distance ceiling. Plus the combo window, its
+  expiry, the lifesteal, and per-player isolation.
+
+### Changed
+
+- The readiness-banner test matched a hardcoded sword count and broke on every
+  new sword. It now matches the banner's *shape* and checks the counts against
+  each other, so it asserts something real without needing an edit per sword.
+
+### Notes
+
+- **Not a stealth sword.** Bedrock has no reliable invisibility-with-held-item
+  behaviour worth building an identity on, and the `invisibility` effect leaves
+  armour and the held sword rendered — a promise the game does not keep.
+  Mobility is the honest version of that fantasy.
+- **`Block.isSolid` is not used.** It is still marked pre-release; `isAir ||
+  isLiquid` is the stable equivalent and is what the validator uses.
+- The other eight swords are untouched.
+
 ## [0.7.0] — 2026-09-01
 
 **Frost Sword and Thunder Sword finalized.** Both shipped in v0.5.0 as part of

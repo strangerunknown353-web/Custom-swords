@@ -112,6 +112,19 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'ember_impact',
     }),
 
+    /**
+     * Shadow: displacement rather than an element. Portal motes where the
+     * wielder was, void-dark spatter where they arrive. The only profile whose
+     * caster particle marks a place the player has *left*.
+     */
+    shadow: Object.freeze({
+        caster: 'minecraft:mob_portal',
+        target: 'minecraft:obsidian_glow_dust_particle',
+        trail: 'minecraft:basic_portal_particle',
+        castSound: 'shadow_cast',
+        impactSound: 'shadow_impact',
+    }),
+
     /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',

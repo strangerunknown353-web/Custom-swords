@@ -5,9 +5,10 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.7.0 — eight swords, four of them finalized.**
-> Ember Blade 🔥 joins the seven Elemental Collection blades: Inferno 🔥,
-> Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿. See
+> **Status: v0.8.0 — nine swords.**
+> Shadow Sword 🌑 and Ember Blade 🔥 join the seven Elemental Collection
+> blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and
+> Nature 🌿. See
 > `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
@@ -15,8 +16,7 @@ sounds and cooldowns.
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Ember Blade, Frost and Thunder have **not** been client-tested since their
-> reworks.
+> Ember Blade, Frost, Thunder and Shadow have **not** been client-tested.
 
 ---
 
@@ -35,11 +35,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.7.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.7.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.7.0.mcpack` | resource pack alone |
+| `CustomSwords-v0.8.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.8.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.8.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.7.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.8.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -54,6 +54,7 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:earth_sword       a ground shock, heaviest melee
 /give @s custom_swords:tidal_sword       a wave pushed forward
 /give @s custom_swords:nature_sword      an execute, and it heals you
+/give @s custom_swords:shadow_sword      dash through the dark, then hit hard
 ```
 
 To confirm the framework recognises it, run in game:
@@ -120,7 +121,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 377 unit and integration tests against a mocked engine |
+| `npm test` | 396 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |
@@ -149,7 +150,7 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **8 of 20–25 swords.** The remaining 12–17 arrive in milestones 7, 9 and 10.
+- **9 of 20–25 swords.** The remaining 11–16 arrive in milestones 7, 9 and 10.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No crafting, loot or trades.** The swords are creative/`/give` only so far.

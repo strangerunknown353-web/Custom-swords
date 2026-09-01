@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 377 unit + integration tests against a mocked @minecraft/server
+npm test            # 396 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -183,6 +183,7 @@ The other columns record what is verified *statically*.
 | Earth 🪨 | `custom_swords:earth_sword` | 10 | Burst — ground shock, distance falloff (9 s) | Bolster — resistance 5 s | ✅ | ✅ | ✅ | ☐ |
 | Tidal 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
 | Nature 🌿 | `custom_swords:nature_sword` | 7 | Strike — execute below 40 % health (5.5 s) | Bolster — regeneration 4 s | ✅ | ✅ | ✅ | ☐ |
+| Shadow 🌑 | `custom_swords:shadow_sword` | 8 | Shadow Step — 6-block validated dash, light strike on arrival (7 s) | Shadow Edge — +6 and 2 lifesteal within 4 s of a step | ✅ | ✅ | ✅ | ☐ |
 | Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
@@ -319,7 +320,55 @@ makes the burst stronger.
 - [ ] The 0.22 s swing is noticeably faster than Inferno's — quick, not twitchy
 - [ ] Ember Blade and Inferno are distinguishable in the hotbar **at a glance**
 
-### F. The seven elemental swords
+### F. Shadow Sword — the step, and what it must never do
+
+Shadow Step is the only ability in the project that moves **you**. Its refusals
+matter more than its successes: a bad teleport suffocates, drops or burns you,
+and none of that is recoverable. Run the unsafe cases first.
+
+**It must refuse, harmlessly, when:**
+
+- [ ] You face a wall from point-blank — nothing happens, the action bar says
+      the shadows are blocked, **and the cooldown does not start**
+- [ ] You stand in a 1-block-wide corridor facing its end
+- [ ] Everything ahead is a 2-block-high tunnel with a solid ceiling — the feet
+      fit, the head does not, and it must still refuse
+- [ ] A lava pool lies ahead at every distance from 2 to 6
+- [ ] You face a sheer drop with no floor within 4 blocks
+
+**It must work, and land you somewhere sane, when:**
+
+- [ ] Open flat ground — you move the full 6 blocks forward
+- [ ] A wall 4 blocks ahead — you land at 3, not against the wall or inside it
+- [ ] A 2-block step down ahead — you take it
+- [ ] You look straight up or straight down — you move **level**, never launched
+- [ ] Water ahead — refused by default (`allowLiquid: false`)
+
+**Terrain the mock could not model — the cases most likely to find a bug:**
+
+- [ ] Half-slabs and stairs at the destination
+- [ ] A doorway, fence or gate exactly at the far end of the step
+- [ ] Standing in a boat or minecart
+- [ ] The edge of a loaded chunk in a freshly generated world
+- [ ] The Nether roof, and standing on bedrock at y=-64
+
+**Arrival and combo:**
+
+- [ ] Portal motes appear where you left **and** where you arrive, with a trail
+      between
+- [ ] A mob standing where you land takes light damage; a mob 10 blocks away
+      does not
+- [ ] Hitting a mob **within 4 seconds** of stepping deals clearly more damage
+      than an ordinary swing, and heals you a little
+- [ ] Waiting more than 4 seconds and hitting deals ordinary damage, no heal
+- [ ] Dying and respawning closes the window — the next hit is ordinary
+
+**Multiplayer:**
+
+- [ ] Player A steps; player B does not move, and B's cooldown is untouched
+- [ ] B hitting a mob right after A's step gets **no** empowered bonus
+
+### F2. The seven elemental swords
 
 One block per sword. The point of each is that it should feel like a *different
 weapon*, not a recoloured one — judge that, not just whether damage numbers
@@ -473,6 +522,33 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.8.0 — Shadow Sword, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **396 passed**, 0 failed |
+| Registry | 9 swords, 14 abilities, none orphaned |
+| Uniqueness | ids, names, texture shortnames, lang keys all unique |
+| Sound presets | 23 verified against 1824 vanilla events |
+| Performance | 6 subscriptions, 1 interval, 0 gameplay tick loops |
+
+Shadow Step's refusals are covered by eighteen assertions against a mock world
+with walls, drops, lava and unloaded chunks carved into it. **That is not the
+same as a real world**, and this is the ability where the gap matters most —
+a mock cannot reproduce slabs, stairs, fences, boats, scaffolding, or a chunk
+boundary under load.
+
+**Test Shadow Step against real terrain before trusting it.** The in-game
+checklist has a dedicated block; the cases most likely to find something are
+the ones the mock cannot model:
+
+- half-slabs and stairs at the destination (passable feet, solid-ish footing);
+- a doorway or fence line exactly at 6 blocks;
+- standing in a boat or minecart;
+- the edge of a loaded chunk in a fresh world;
+- the Nether roof and bedrock floor, where world bounds are in play.
 
 ### v0.7.0 — Frost and Thunder finalized, not yet tested in Minecraft
 

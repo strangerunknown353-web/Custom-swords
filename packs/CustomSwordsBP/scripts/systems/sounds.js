@@ -75,6 +75,11 @@ export const SOUND_LIBRARY = Object.freeze({
     nature_cast: { id: 'block.cave_vines.place', volume: 0.9, pitch: 0.9 },
     nature_impact: { id: 'break.amethyst_cluster', volume: 0.6, pitch: 1.3 },
 
+    // Shadow: the enderman's displacement note, pitched down so it reads as
+    // something older and heavier than a mob teleport.
+    shadow_cast: { id: 'mob.endermen.portal', volume: 0.8, pitch: 0.7 },
+    shadow_impact: { id: 'mob.shulker.teleport', volume: 0.6, pitch: 0.8 },
+
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },

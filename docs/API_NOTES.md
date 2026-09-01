@@ -367,6 +367,27 @@ every remaining target.
 
 ---
 
+## 3d. Moving a player safely
+
+| API | Signature | Note |
+|---|---|---|
+| `Entity.tryTeleport` | `(location, options?) => boolean` | **Returns false** rather than throwing when the destination intersects blocks or sits in an unloaded chunk. This is the safe primitive; `teleport` forces the move. |
+| `Dimension.getBlock` | `(location) => Block \| undefined` | `undefined` when the chunk is not loaded |
+| `Block.isAir` / `.isLiquid` / `.typeId` | properties | **All throw** `LocationInUnloadedChunkError` and `LocationOutOfWorldBoundariesError` |
+| `Block.isSolid` | property | **Pre-release — not used.** `isAir \|\| isLiquid` is the stable equivalent |
+
+Two things follow, and `systems/movement.js` is built around both:
+
+- **`tryTeleport` is the authority, not the whole answer.** It tests geometry,
+  so it will happily place a player in mid-air over a ravine or on top of lava.
+  The survivability screen — passable feet and head, no lava, ground within a
+  fall tolerance — has to come from block reads first.
+- **Every block read needs a try/catch.** A player standing at a chunk edge, at
+  world height, or at bedrock is ordinary, not exceptional. An unreadable block
+  is treated as *not passable*, so the failure mode is a refused dash.
+
+---
+
 ## 4. Experiment requirements
 
 **None.** Custom Components V2 requires no experimental toggle when the

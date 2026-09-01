@@ -1,0 +1,34 @@
+{
+  "name": "Shadow Sword",
+  "description": "A narrow blade of near-black enchanted steel with a seam of violet void-light running the cutting edge, set in a wide crescent guard that sweeps back like a wing. Dark corded grip and a single amethyst-dark pommel stone.",
+  "palette": {
+    "o": "#05040a",
+    "X": "#cbb8ff",
+    "V": "#7d5fd0",
+    "H": "#6b6480",
+    "S": "#2f2a3d",
+    "D": "#17141f",
+    "G": "#57506b",
+    "g": "#3b3450",
+    "W": "#211c2b",
+    "P": "#9d8fd4"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oXo",
+    "............oXVo",
+    "...........oHVSo",
+    "..........oHVSo.",
+    ".........oHVSDo.",
+    "........oHVSDo..",
+    ".......oHVSDo...",
+    "..o...oHVSDo....",
+    ".oGo.oHVSDo.....",
+    ".oGgoGVSDo......",
+    "..oGgGgGo.......",
+    "...oWWWo........",
+    "...oWXWo........",
+    "...oPPPo........",
+    "....ooo........."
+  ]
+}

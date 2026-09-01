@@ -42,3 +42,8 @@ item.custom_swords:tidal_sword.description=Drawn from a trench that has never se
 item.custom_swords:nature_sword=§9Nature Sword§r
 item.custom_swords:nature_sword.name=§9Nature Sword§r
 item.custom_swords:nature_sword.description=Still growing. New shoots close over every notch the blade takes.
+
+## custom_swords:shadow_sword - Epic
+item.custom_swords:shadow_sword=§dShadow Sword§r
+item.custom_swords:shadow_sword.name=§dShadow Sword§r
+item.custom_swords:shadow_sword.description=Its edge is only ever where you last looked away from.

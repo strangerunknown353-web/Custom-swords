@@ -30,7 +30,19 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
-## Completed in Frost & Thunder finalization (v0.7.0)
+## Completed in Shadow Sword (v0.8.0)
+
+- [x] Shadow Sword: Epic, mobility-first, ninth in the collection.
+- [x] Shadow Step (`blink`) with full destination validation, and Shadow Edge
+      (`opportunist`) with a 4-second combo window and lifesteal.
+- [x] `systems/movement.js` — reusable safe repositioning for any future
+      mobility ability.
+- [x] `config.movement.maxDashDistance` ceiling.
+- [x] `PlayerStateStore.mark()` / `.sinceMark()` — combo windows.
+- [x] `shadow` visual profile and its two sound presets.
+- [x] Readiness-banner test no longer hardcodes the sword count.
+
+
 
 - [x] Frost Nova and Frostbite — a chill-then-shatter sequence, replacing two
       bindings that both used the generic `brand`.

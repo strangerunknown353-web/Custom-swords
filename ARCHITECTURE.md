@@ -27,7 +27,7 @@ code path.**
 │               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
 │ SYSTEMS       targeting  damage  combat  effects  particles          │
-│               sounds     feedback                                    │
+│               sounds     feedback  movement                          │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -645,6 +645,7 @@ stronger and never went back" bugs happen.
 | `sounds` | play sounds | named preset library, world-vs-player scoping |
 | `feedback` | action bar text, deny cues | always single-player scoped — cannot broadcast |
 | `combat` | the whole "do this to these targets" pipeline | fixed ordering, per-execution and per-player hit protection, category re-check |
+| `movement` | reposition the caster safely | destination screening, lava and drop refusal, distance ceiling, engine collision test as the authority |
 
 `targeting.around(ctx, origin, range)` resolves candidates near an arbitrary
 point while keeping the binding's filters and the caster exclusion, so an
@@ -753,6 +754,47 @@ The ordering rule that goes with it: **read the target's state before striking**
 so the effects an activation applies cannot trigger its own bonus. Both `nova`
 and `afflict` do this, and a test asserts it.
 
+### Moving the caster
+
+`systems/movement.js` is the framework's only code that repositions a player,
+and it is written under the opposite rule to the rest of the combat layer:
+**when in doubt, do nothing.** A refused strike costs a player a click; a bad
+teleport suffocates them in stone, drops them down a ravine, or puts them in
+lava.
+
+```
+caster position + view direction (flattened)
+        │
+        ▼  candidates at maxDistance, maxDistance-1, … minDistance
+        │  furthest first — the player asked to go as far as possible
+        ▼  per candidate:
+        │    1. finite coordinates
+        │    2. feet and head blocks passable
+        │    3. not lava, not fire
+        │    4. ground within maxDrop below
+        │    5. Entity.tryTeleport with checkForBlocks  ← the authority
+        ▼
+   first candidate that passes, or a refusal with a named reason
+```
+
+Steps 1–4 are a survivability screen; step 5 is the engine's own collision
+test, and the only check that cannot disagree with the game. Both halves are
+needed: `tryTeleport` alone would happily drop a player off a cliff, because it
+tests geometry rather than whether they live.
+
+Three details worth stating:
+
+- **Every block read is wrapped.** `Block.isAir`, `.isLiquid` and `.typeId` all
+  throw on an unloaded chunk or outside world bounds — ordinary situations at a
+  chunk edge or at world height. An unreadable block counts as *not passable*.
+- **`Block.isSolid` is not used.** It is still pre-release; `isAir || isLiquid`
+  is the stable way to ask whether something can stand somewhere.
+- **The view is flattened by default.** A dash that follows pitch is how a
+  mobility ability launches someone into a ceiling.
+
+`config.movement.maxDashDistance` caps every dash at 10 blocks regardless of
+what a definition asks for.
+
 ### Stacking charges
 
 `PlayerStateStore` exposes the one primitive for "this sword builds something up
@@ -766,6 +808,27 @@ opposite ways, which is the argument for it existing:
 | Feels like | a resource | a metronome |
 
 Same primitive, opposite rhythm.
+
+### Combo windows
+
+`mark(playerId, name, tick)` and `sinceMark(playerId, name, tick)` are the third
+shape of per-player state, and the only one read by a *different* ability than
+the one that wrote it:
+
+| Shape | Written by | Read by | Example |
+|---|---|---|---|
+| Resource | a passive | the player, deliberately | Ember Blade's heat |
+| Counter | itself | itself, on a rhythm | Thunder's static charge |
+| **Window** | one ability | **another**, for a time | Shadow Step → Shadow Edge |
+
+The two Shadow abilities never reference each other; they share a key. A future
+sword could open the same window with a leap, a feint or a kill and reuse
+`opportunist` unchanged.
+
+`sinceMark` returns `Infinity` when no mark exists, so the natural comparison
+`sinceMark(...) <= windowTicks` is false without the caller special-casing it,
+and treats an apparently backwards clock — a world reload — as no mark rather
+than an infinitely fresh one.
 
 Three properties are enforced centrally rather than per ability, because each is
 a way the multiplayer rule could quietly break:

@@ -107,10 +107,18 @@ reusable primitive behind — `effects.has`, `particles.line`,
 `targeting.around`, and binding `label` — which is the pattern every content
 step below should follow.
 
+### Interlude — Shadow Sword (v0.8.0) — **done**
+The ninth sword, and the first whose active does no meaningful damage. It
+brought the framework its movement layer — destination validation, a distance
+ceiling, and combo windows — which is most of what step 6 below was for. That
+step is correspondingly smaller now: gravity and area denial rather than
+teleportation from scratch.
+
 ### 6. Ability library — spatial (planned)
-Teleportation, gravity manipulation, earthquakes and area denial. Introduces
-block-aware targeting beyond the `point` mode already shipped, and the safety
-rules that go with moving players and entities around.
+Gravity manipulation, earthquakes and area denial. Teleportation and its safety
+rules arrived early with Shadow Sword (`systems/movement.js`), so what is left
+is block-aware targeting beyond the `point` mode and abilities that move
+*entities* rather than the caster.
 
 ### 7. Swords 8–13 (planned)
 The forged and mystic tiers, leaning on the spatial library. First swords

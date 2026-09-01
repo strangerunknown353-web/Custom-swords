@@ -25,6 +25,9 @@
     },
     "nature_sword": {
       "textures": "textures/items/custom_swords/swords/nature_sword"
+    },
+    "shadow_sword": {
+      "textures": "textures/items/custom_swords/swords/shadow_sword"
     }
   }
 }

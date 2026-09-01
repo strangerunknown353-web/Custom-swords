@@ -111,7 +111,7 @@ const twoActivationSword = {
         },
         {
             activation: 'sneak_use',
-            abilityId: 'custom_swords:strike',
+            abilityId: 'custom_swords:burst',
             cooldownTicks: 100,
             targeting: { type: 'single', range: 7 },
             params: { damage: 4 },
@@ -261,7 +261,7 @@ describe('input router and activation', () => {
                 },
                 {
                     activation: 'sneak_use',
-                    abilityId: 'custom_swords:strike',
+                    abilityId: 'custom_swords:burst',
                     targeting: { type: 'single', range: 7 },
                     effects: [{ effect: 'weakness', durationTicks: 60 }],
                     params: { damage: 6 },

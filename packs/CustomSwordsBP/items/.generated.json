@@ -10,5 +10,16 @@
     "thunder_sword.item.json",
     "tidal_sword.item.json",
     "wind_sword.item.json"
+  ],
+  "recipes": [
+    "earth_sword.recipe.json",
+    "ember_blade.recipe.json",
+    "frost_sword.recipe.json",
+    "inferno_sword.recipe.json",
+    "nature_sword.recipe.json",
+    "shadow_sword.recipe.json",
+    "thunder_sword.recipe.json",
+    "tidal_sword.recipe.json",
+    "wind_sword.recipe.json"
   ]
 }

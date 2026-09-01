@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:earth_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " D ",
+      "DED",
+      " I "
+    ],
+    "key": {
+      "D": {
+        "item": "minecraft:deepslate"
+      },
+      "E": {
+        "item": "minecraft:emerald"
+      },
+      "I": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:deepslate"
+      }
+    ],
+    "result": "custom_swords:earth_sword"
+  }
+}

@@ -14,10 +14,10 @@ are not part of the collection.
 | Inferno Sword | Epic | 9 | 1100 | Cleave | 7s | Brand |
 | Thunder Sword | Legendary | 9 | 1400 | Thunder Strike | 10s | Static Charge |
 | Frost Sword | Rare | 7 | 900 | Frost Nova | 6s | Frostbite |
-| Wind Sword | Rare | 6 | 800 | Repulse | 5s | Bolster |
-| Earth Sword | Epic | 10 | 1500 | Burst | 9s | Bolster |
-| Tidal Sword | Epic | 8 | 1200 | Repulse | 7.5s | Bolster |
-| Nature Sword | Rare | 7 | 1000 | Strike | 5.5s | Bolster |
+| Wind Sword | Rare | 6 | 800 | Wind Burst | 5s | Wind Momentum |
+| Earth Sword | Epic | 10 | 1500 | Earth Shock | 9s | Stone Guard |
+| Tidal Sword | Epic | 8 | 1200 | Tidal Wave | 7.5s | Aqua Affinity |
+| Nature Sword | Rare | 7 | 1000 | Nature's Grasp | 5.5s | Nature's Vitality |
 | Shadow Sword | Epic | 8 | 1000 | Shadow Step | 7s | Shadow Edge |
 
 ## Swords
@@ -37,6 +37,17 @@ are not part of the collection.
 | **Swing** | 0.22s |
 | **Visual profile** | ember |
 | **Texture** | `art/swords/ember_blade.json` — authored, passes the texture standard |
+
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    X  
+    X  
+    I  
+
+  X = copper_ingot
+  I = blaze_rod
+```
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
@@ -59,6 +70,18 @@ are not part of the collection.
 | **Visual profile** | fire |
 | **Texture** | `art/swords/inferno_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    M  
+    D  
+    I  
+
+  M = magma_cream
+  D = diamond
+  I = blaze_rod
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Cleave | 7s | mob, player | 7 ability damage · knockback 0.6 · ignite 6s · weakness 4.0s | basic_flame_particle, campfire_smoke_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
@@ -79,6 +102,19 @@ are not part of the collection.
 | **Swing** | 0.38s |
 | **Visual profile** | storm |
 | **Texture** | `art/swords/thunder_sword.json` — authored, passes the texture standard |
+
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    L  
+  C D C
+    I  
+
+  L = lightning_rod
+  C = copper_ingot
+  D = diamond
+  I = blaze_rod
+```
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
@@ -101,6 +137,18 @@ are not part of the collection.
 | **Visual profile** | frost |
 | **Texture** | `art/swords/frost_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    X  
+    D  
+    I  
+
+  X = packed_ice
+  D = diamond
+  I = stick
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Frost Nova | 6s | mob, player | 4 ability damage · knockback 0.3 · slowness 7.0s · mining_fatigue 6.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
@@ -122,10 +170,21 @@ are not part of the collection.
 | **Visual profile** | gale |
 | **Texture** | `art/swords/wind_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    P  
+    P  
+    B  
+
+  P = phantom_membrane
+  B = breeze_rod
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Repulse | 5s | mob, player | 2 ability damage · knockback 2.2 | knockback_roar_particle | cast: wind_cast, impact: wind_impact |
-| Melee hit | Bolster | 6s | any | speed 4.0s | spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
+| Use (right-click / long-press) | Wind Burst | 5s | mob, player | 2 ability damage · knockback 2.2 | knockback_roar_particle | cast: wind_cast, impact: wind_impact |
+| Melee hit | Wind Momentum | 6s | any | speed 4.0s | spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
 
 ### Earth Sword
 
@@ -143,10 +202,22 @@ are not part of the collection.
 | **Visual profile** | stone |
 | **Texture** | `art/swords/earth_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    D  
+  D E D
+    I  
+
+  D = deepslate
+  E = emerald
+  I = stick
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Burst | 9s | mob, player | 11 ability damage · knockback 1 · slowness 3.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
-| Melee hit | Bolster | 8s | any | resistance 5.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
+| Use (right-click / long-press) | Earth Shock | 9s | mob, player | 11 ability damage · knockback 1 · slowness 3.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
+| Melee hit | Stone Guard | 8s | any | resistance 5.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
 
 ### Tidal Sword
 
@@ -164,10 +235,22 @@ are not part of the collection.
 | **Visual profile** | tide |
 | **Texture** | `art/swords/tidal_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    P  
+    H  
+    C  
+
+  P = prismarine_shard
+  H = heart_of_the_sea
+  C = prismarine_crystals
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Repulse | 7.5s | mob, player | 6 ability damage · knockback 2.6 (wave) · slowness 3.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
-| Melee hit | Bolster | 10s | any | water_breathing 15.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
+| Use (right-click / long-press) | Tidal Wave | 7.5s | mob, player | 6 ability damage · knockback 2.6 (wave) · slowness 3.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
+| Melee hit | Aqua Affinity | 10s | any | water_breathing 15.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
 
 ### Nature Sword
 
@@ -185,10 +268,22 @@ are not part of the collection.
 | **Visual profile** | grove |
 | **Texture** | `art/swords/nature_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    M  
+    E  
+    L  
+
+  M = moss_block
+  E = emerald
+  L = oak_log
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Strike | 5.5s | mob, player | 8 ability damage · knockback 0.5 · poison 7.0s · slowness 4.0s | villager_happy, villager_happy | cast: nature_cast, impact: nature_impact |
-| Melee hit | Bolster | 7s | any | regeneration 4.0s | villager_happy | cast: nature_cast, impact: nature_impact |
+| Use (right-click / long-press) | Nature's Grasp | 5.5s | mob, player | 3 ability damage · slowness 5.0s · weakness 5.0s | villager_happy, spore_blossom_shower_particle | cast: nature_cast, impact: nature_impact |
+| Melee hit | Nature's Vitality | 7s | any | regeneration 4.0s | villager_happy | cast: nature_cast, impact: nature_impact |
 
 ### Shadow Sword
 
@@ -206,6 +301,18 @@ are not part of the collection.
 | **Visual profile** | shadow |
 | **Texture** | `art/swords/shadow_sword.json` — authored, passes the texture standard |
 
+**Crafting** — shaped, crafting table, yields 1:
+
+```
+    E  
+    O  
+    A  
+
+  E = echo_shard
+  O = obsidian
+  A = amethyst_shard
+```
+
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Shadow Step | 7s | mob, player | knockback 0.4 | mob_portal | cast: shadow_cast, impact: shadow_impact |
@@ -215,7 +322,6 @@ are not part of the collection.
 
 | Ability | Used by | Behaviour |
 |---|---|---|
-| **Strike** | Nature Sword | A committed single-target blow that bites deeper into a wounded foe. |
 | **Burst** | Earth Sword | Detonates around the caster, hitting hardest at the centre. |
 | **Repulse** | Wind Sword, Tidal Sword | Throws everything nearby away from the caster. |
 | **Brand** | Inferno Sword | Marks its targets with lingering afflictions. |
@@ -229,3 +335,4 @@ are not part of the collection.
 | **Discharge** | Thunder Sword | Builds with every blow and lets go on the beat. |
 | **Blink** | Shadow Sword | Steps through the dark to a place close by. |
 | **Opportunist** | Shadow Sword | Strikes hardest in the moment after a reposition. |
+| **Entangle** | Nature Sword | Roots everything nearby, and feeds on what it holds. |

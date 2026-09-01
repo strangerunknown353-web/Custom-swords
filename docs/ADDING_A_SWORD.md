@@ -74,6 +74,32 @@ checks it at build time — a targeting block missing its `range` fails the buil
 whereas the same mistake hidden in `params` would ship as an ability that
 silently does nothing.
 
+### Every sword needs a recipe
+
+This is a permanent project rule, enforced by `npm run validate`: a sword with
+no `recipe` fails the build.
+
+```js
+recipe: {
+    pattern: [' X ', ' X ', ' I '],       // 1-3 rows, 1-3 wide, space = empty
+    key: { X: 'minecraft:copper_ingot', I: 'minecraft:blaze_rod' },
+    unlockedBy: 'minecraft:blaze_rod',    // optional; reveals it in the recipe book
+},
+```
+
+`tools/generate.mjs` compiles that into `recipes/<name>.recipe.json`. Never
+hand-write the JSON — it is build output.
+
+Two rules that are not stylistic:
+
+- **Every ingredient must be a real vanilla item**, checked against
+  `tools/data/vanilla_items.json`. A recipe naming an item that does not exist
+  does **not** error; it silently never registers, and the only symptom is a
+  player who cannot craft the sword.
+- **Build the recipe around the sword's own `repairItems[0]`** where it makes
+  sense, so the material that mends a blade is the material it is made from.
+  Scale the rest of the cost with rarity.
+
 ### Presentation: pick a visual profile
 
 Do not write particle ids and sound names into a binding by hand. Name a

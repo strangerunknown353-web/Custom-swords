@@ -51,6 +51,13 @@ export const shadowSword = {
         repairItems: ['minecraft:echo_shard'],
     },
 
+    // Epic: an echo shard set in obsidian, on an amethyst hilt.
+    recipe: {
+        pattern: [' E ', ' O ', ' A '],
+        key: { E: 'minecraft:echo_shard', O: 'minecraft:obsidian', A: 'minecraft:amethyst_shard' },
+        unlockedBy: 'minecraft:echo_shard',
+    },
+
     abilities: [
         {
             // SHADOW STEP — the sword. Everything else supports it.

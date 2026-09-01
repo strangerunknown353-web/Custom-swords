@@ -87,14 +87,16 @@ describe('binding labels', () => {
     });
 
     it('falls back to the ability name when a binding sets no label', () => {
+        // Inferno labels neither binding, so it still shows the ability's own
+        // name — which is what keeps `label` optional rather than required.
         const dimension = new MockDimension();
         const { component } = install();
-        const player = wielder(dimension, 'p', 'custom_swords:earth_sword');
+        const player = wielder(dimension, 'p', 'custom_swords:inferno_sword');
         mob(dimension, 'm', 2);
 
-        use(component, player, 'custom_swords:earth_sword');
+        use(component, player, 'custom_swords:inferno_sword');
 
-        assert.match(player.actionBarMessages.at(-1), /Burst/);
+        assert.match(player.actionBarMessages.at(-1), /Cleave/);
     });
 });
 

@@ -13,6 +13,70 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.9.0] — 2026-09-01
+
+**Every sword is craftable.** The collection had nine swords and zero recipes;
+it now has nine of each, generated from the sword definitions and checked
+against a transcribed vanilla item list.
+
+### Added
+
+- **Crafting recipes for all nine swords** — shaped, crafting-table, one sword
+  each. Each is built around the material that *repairs* that sword, so the
+  thing that mends a blade is the thing it was made from, and cost scales with
+  rarity: Ember Blade is two copper on a blaze rod; Thunder is a lightning rod
+  quenched between copper over a diamond core.
+- **`recipe` on the sword data model**, compiled to `minecraft:recipe_shaped`
+  by `tools/generate.mjs` into `packs/CustomSwordsBP/recipes/`. Recipes are
+  sword data for the same reason item JSON is: a recipe file maintained apart
+  from its sword drifts from it, and the drift is invisible until somebody
+  tries to craft one.
+- **`tools/data/vanilla_items.json`** — 1607 item identifiers from Mojang's own
+  `bedrock-samples` metadata. Build-time only, not shipped. The validator proves
+  every crafting ingredient **and every repair item** is a real item, because a
+  recipe naming a nonexistent item does not error, it simply never registers.
+- **Validator gates**: every sword has a recipe; patterns fit a 3×3 grid and are
+  not ragged; every pattern character has a key and every key is used; every
+  ingredient is a real item; recipe identifiers are unique; generated JSON
+  carries the `crafting_table` tag and resolves to one of our swords. Each
+  negative-tested by seeding the defect.
+- **`tests/unit/recipes.test.mjs`** — nine assertions against the real generated
+  files, including that the emitted JSON has not drifted from the definitions.
+- **Nature's Grasp** (`custom_swords:entangle`) — an area root that pays the
+  caster back **per target held**, capped. The first area ability whose effect
+  scales with *how many* it caught rather than distance, target state, or
+  nothing. No knockback: roots hold things where they are. The roots are
+  effects, not blocks, so nothing is placed in the world and there is nothing
+  to clean up.
+
+### Changed
+
+- **Named the abilities on Wind, Earth, Tidal and Nature** using the binding
+  `label` added in v0.7.0: Wind Burst / Wind Momentum, Earth Shock / Stone
+  Guard, Tidal Wave / Aqua Affinity, Nature's Grasp / Nature's Vitality. The
+  ability ids stay generic behaviour names so other swords can bind them.
+- **Nature's active moved from `strike` to `entangle`.** Its old identity was a
+  single-target execute; an area root that holds a group is a different and more
+  distinctive thing, and it no longer duplicates a behaviour three other swords
+  could bind.
+
+### Removed
+
+- **`custom_swords:strike`.** Nature was its last binder, and the project
+  forbids orphaned abilities — the same call made for `surge` in v0.7.0. Git
+  history keeps it if a future sword wants an execute.
+
+### Notes
+
+- **No new swords were created.** Wind, Earth, Tidal and Nature have shipped
+  since v0.5.0; the collection has stood at nine since v0.8.0. What was actually
+  missing was recipes, which no sword had, and distinct identities for the four
+  that still bound shared abilities.
+- **"Ocean Sword" is Tidal Sword.** The collection's water sword already exists
+  as `custom_swords:tidal_sword`, and its active was already a forward-cone
+  wave — now labelled **Tidal Wave**. Renaming a shipped identifier would break
+  every world that already contains one, so the id is unchanged.
+
 ## [0.8.0] — 2026-09-01
 
 **Shadow Sword** — the ninth sword, and the first whose active does no

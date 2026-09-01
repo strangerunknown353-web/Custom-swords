@@ -12,7 +12,6 @@
  * a remote impact point.
  */
 
-import { strike } from './builtin/strike.js';
 import { burst } from './builtin/burst.js';
 import { repulse } from './builtin/repulse.js';
 import { brand } from './builtin/brand.js';
@@ -26,10 +25,10 @@ import { chain } from './builtin/chain.js';
 import { discharge } from './builtin/discharge.js';
 import { blink } from './builtin/blink.js';
 import { opportunist } from './builtin/opportunist.js';
+import { entangle } from './builtin/entangle.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
-    strike,
     burst,
     repulse,
     brand,
@@ -43,4 +42,5 @@ export const ABILITIES = Object.freeze([
     discharge,
     blink,
     opportunist,
+    entangle,
 ]);

@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:inferno_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " M ",
+      " D ",
+      " I "
+    ],
+    "key": {
+      "M": {
+        "item": "minecraft:magma_cream"
+      },
+      "D": {
+        "item": "minecraft:diamond"
+      },
+      "I": {
+        "item": "minecraft:blaze_rod"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:magma_cream"
+      }
+    ],
+    "result": "custom_swords:inferno_sword"
+  }
+}

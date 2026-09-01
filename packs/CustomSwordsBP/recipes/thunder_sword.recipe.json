@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:thunder_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " L ",
+      "CDC",
+      " I "
+    ],
+    "key": {
+      "L": {
+        "item": "minecraft:lightning_rod"
+      },
+      "C": {
+        "item": "minecraft:copper_ingot"
+      },
+      "D": {
+        "item": "minecraft:diamond"
+      },
+      "I": {
+        "item": "minecraft:blaze_rod"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:lightning_rod"
+      }
+    ],
+    "result": "custom_swords:thunder_sword"
+  }
+}

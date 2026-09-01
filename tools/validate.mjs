@@ -694,6 +694,129 @@ function validateUniqueness(swords) {
 }
 
 // ---------------------------------------------------------------------------
+// 4c. Crafting recipes
+// ---------------------------------------------------------------------------
+
+/**
+ * Every sword must be craftable, and every ingredient must be a real item.
+ *
+ * A recipe naming an item that does not exist does not error — it simply never
+ * registers, and the player finds out by not being able to craft the sword.
+ * That is the same silent-failure shape as the particle and sound bugs, so it
+ * gets the same treatment: a transcribed vanilla list, checked at build time.
+ *
+ * @param {readonly any[]} swords
+ */
+function validateRecipes(swords) {
+    const snapshotPath = path.join(PATHS.root, 'tools', 'data', 'vanilla_items.json');
+    if (!fs.existsSync(snapshotPath)) {
+        error('tools/data/vanilla_items.json is missing — recipe ingredients cannot be verified.');
+        return;
+    }
+    const snapshot = readJson(snapshotPath);
+    if (snapshot === undefined) return;
+    const vanillaItems = new Set(snapshot.items ?? []);
+
+    /** @type {Map<string, string>} recipe identifier -> owning sword */
+    const identifiers = new Map();
+    let ingredientsChecked = 0;
+
+    for (const sword of swords) {
+        const recipe = sword.recipe;
+        if (recipe === undefined) {
+            error(`${sword.id}: no crafting recipe. Every sword must be craftable — see docs/ADDING_A_SWORD.md.`);
+            continue;
+        }
+
+        // --- shape ---
+        if (!Array.isArray(recipe.pattern) || recipe.pattern.length === 0 || recipe.pattern.length > 3) {
+            error(`${sword.id}: recipe.pattern must be 1 to 3 rows.`);
+            continue;
+        }
+        const width = recipe.pattern[0].length;
+        if (width === 0 || width > 3) {
+            error(`${sword.id}: recipe rows must be 1 to 3 characters wide.`);
+            continue;
+        }
+        for (const row of recipe.pattern) {
+            if (typeof row !== 'string' || row.length !== width) {
+                error(`${sword.id}: every recipe row must be a string of the same width.`);
+            }
+        }
+
+        // --- keys cover the pattern, and nothing more ---
+        const used = new Set([...recipe.pattern.join('')].filter((ch) => ch !== ' '));
+        if (used.size === 0) {
+            error(`${sword.id}: recipe pattern is entirely empty.`);
+        }
+        for (const ch of used) {
+            if (recipe.key?.[ch] === undefined) {
+                error(`${sword.id}: recipe pattern uses '${ch}' but recipe.key does not define it.`);
+            }
+        }
+        for (const ch of Object.keys(recipe.key ?? {})) {
+            if (!used.has(ch)) {
+                warn(`${sword.id}: recipe.key defines '${ch}', which the pattern never uses.`);
+            }
+        }
+
+        // --- every ingredient is a real vanilla item ---
+        for (const [ch, item] of Object.entries(recipe.key ?? {})) {
+            ingredientsChecked += 1;
+            if (typeof item !== 'string' || !vanillaItems.has(item)) {
+                error(`${sword.id}: recipe key '${ch}' is '${item}', which is not a vanilla item identifier.`);
+            }
+        }
+        if (recipe.unlockedBy !== undefined && !vanillaItems.has(recipe.unlockedBy)) {
+            error(`${sword.id}: recipe.unlockedBy '${recipe.unlockedBy}' is not a vanilla item identifier.`);
+        }
+
+        // --- one recipe identifier per sword ---
+        const identifier = `${sword.id}_recipe`;
+        const owner = identifiers.get(identifier);
+        if (owner !== undefined) error(`recipe identifier '${identifier}' is claimed by both '${owner}' and '${sword.id}'.`);
+        else identifiers.set(identifier, sword.id);
+    }
+
+    // --- repair items are real too ---
+    for (const sword of swords) {
+        for (const item of sword.item?.repairItems ?? []) {
+            ingredientsChecked += 1;
+            if (!vanillaItems.has(item)) {
+                error(`${sword.id}: repair item '${item}' is not a vanilla item identifier.`);
+            }
+        }
+    }
+
+    // --- the generated JSON matches the definitions ---
+    if (fs.existsSync(PATHS.bpRecipes)) {
+        const files = fs.readdirSync(PATHS.bpRecipes).filter((f) => f.endsWith('.recipe.json'));
+        if (files.length !== swords.length) {
+            error(`${files.length} recipe file(s) for ${swords.length} sword(s). Run 'npm run generate'.`);
+        }
+        for (const file of files) {
+            const json = readJson(path.join(PATHS.bpRecipes, file));
+            if (json === undefined) continue;
+            const shaped = json['minecraft:recipe_shaped'];
+            if (shaped === undefined) {
+                error(`recipes/${file}: not a minecraft:recipe_shaped recipe.`);
+                continue;
+            }
+            if (!(shaped.tags ?? []).includes('crafting_table')) {
+                error(`recipes/${file}: must carry the 'crafting_table' tag or it cannot be crafted anywhere.`);
+            }
+            if (!swords.some((s) => s.id === shaped.result)) {
+                error(`recipes/${file}: result '${shaped.result}' is not one of this add-on's swords.`);
+            }
+        }
+    } else {
+        error("packs/CustomSwordsBP/recipes/ does not exist. Run 'npm run generate'.");
+    }
+
+    note(`${swords.length} recipe(s), ${ingredientsChecked} ingredient/repair item(s) verified against ${vanillaItems.size} vanilla items.`);
+}
+
+// ---------------------------------------------------------------------------
 // 5b. Audio catalogue
 // ---------------------------------------------------------------------------
 
@@ -743,6 +866,7 @@ async function main() {
     validateAllJson();
     const swords = await validateDefinitions();
     validateUniqueness(swords);
+    validateRecipes(swords);
     validateItemsAndResources(swords);
     validateTextures(swords);
     await validateSoundLibrary();

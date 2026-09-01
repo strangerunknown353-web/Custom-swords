@@ -23,6 +23,7 @@ export const PATHS = Object.freeze({
     bpManifest: path.join(BP, 'manifest.json'),
     rpManifest: path.join(RP, 'manifest.json'),
     bpItems: path.join(BP, 'items'),
+    bpRecipes: path.join(BP, 'recipes'),
     bpScripts: path.join(BP, 'scripts'),
     bpTexts: path.join(BP, 'texts'),
     rpTexts: path.join(RP, 'texts'),

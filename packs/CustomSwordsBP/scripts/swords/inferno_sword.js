@@ -22,6 +22,13 @@ export const infernoSword = {
         glint: true,
     },
 
+    // Epic: magma-forged blade over a blaze-rod core, bound with a diamond.
+    recipe: {
+        pattern: [' M ', ' D ', ' I '],
+        key: { M: 'minecraft:magma_cream', D: 'minecraft:diamond', I: 'minecraft:blaze_rod' },
+        unlockedBy: 'minecraft:magma_cream',
+    },
+
     abilities: [
         {
             // INFERNO SLASH — a sweeping arc of fire in front of the wielder.

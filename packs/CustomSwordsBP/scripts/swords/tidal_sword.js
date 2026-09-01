@@ -24,12 +24,25 @@ export const tidalSword = {
         repairItems: ['minecraft:prismarine_shard'],
     },
 
+    // Epic: prismarine around a heart of the sea — the one recipe requiring a
+    // genuine ocean-exploration item.
+    recipe: {
+        pattern: [' P ', ' H ', ' C '],
+        key: {
+            P: 'minecraft:prismarine_shard',
+            H: 'minecraft:heart_of_the_sea',
+            C: 'minecraft:prismarine_crystals',
+        },
+        unlockedBy: 'minecraft:heart_of_the_sea',
+    },
+
     abilities: [
         {
             // TIDAL WAVE — a directional surge. Everything caught is driven the
             // same way rather than scattered.
             activation: 'use',
             visual: 'tide',
+            label: 'Tidal Wave',
             abilityId: 'custom_swords:repulse',
             cooldownTicks: 150,
             hudCategory: 'custom_swords_tidal',
@@ -45,6 +58,7 @@ export const tidalSword = {
             // Passive: the sea keeps its own.
             activation: 'attack',
             visual: 'tide',
+            label: 'Aqua Affinity',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 200,
             targeting: { type: 'self' },

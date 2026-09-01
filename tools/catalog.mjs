@@ -107,6 +107,15 @@ for (const sword of shipped) {
     lines.push(`| **Texture** | \`art/swords/${sword.texture ?? localNameOf(sword.id)}.json\` — authored, passes the texture standard |`);
     lines.push('');
 
+    lines.push('**Crafting** — shaped, crafting table, yields 1:', '');
+    lines.push('```');
+    for (const row of sword.recipe.pattern) lines.push(`  ${[...row].join(' ')}`);
+    lines.push('');
+    for (const [ch, item] of Object.entries(sword.recipe.key)) {
+        lines.push(`  ${ch} = ${item.replace('minecraft:', '')}`);
+    }
+    lines.push('```', '');
+
     lines.push('| Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |');
     lines.push('|---|---|---:|---|---|---|---|');
     for (const binding of sword.abilities) {

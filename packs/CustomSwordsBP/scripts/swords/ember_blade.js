@@ -48,6 +48,14 @@ export const emberBlade = {
         swingDuration: 0.22,
     },
 
+    // Uncommon: two copper on a blaze-rod hilt. The cheapest sword in the
+    // collection to make, matching its place at the base of the curve.
+    recipe: {
+        pattern: [' X ', ' X ', ' I '],
+        key: { X: 'minecraft:copper_ingot', I: 'minecraft:blaze_rod' },
+        unlockedBy: 'minecraft:blaze_rod',
+    },
+
     abilities: [
         {
             // EMBER BURST — spend banked heat in a tight ring around the

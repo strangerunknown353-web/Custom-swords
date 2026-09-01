@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 396 unit + integration tests against a mocked @minecraft/server
+npm test            # 405 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -70,6 +70,10 @@ npm run all         # check + build
   `SOUND_LIBRARY` is a real vanilla sound event**, checked against the 1824
   events in `tools/data/vanilla_sound_events.json`;
 - **every binding names a known visual profile**;
+- **every sword declares a crafting recipe**, its pattern fits a 3×3 grid, every
+  pattern character has a key and every key is used, every ingredient and repair
+  item is a real vanilla item (checked against 1607 identifiers from Mojang's
+  own metadata), and recipe identifiers are unique;
 - **no two swords share an identifier, display name, texture shortname or
   localisation key** — the registry already rejected duplicate ids, but the
   other three collide silently;
@@ -522,6 +526,28 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.9.0 — crafting, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **405 passed**, 0 failed |
+| Recipes | 9 recipes, 35 ingredient/repair items verified against 1607 vanilla items |
+| Registry | 9 swords, 14 abilities, none orphaned |
+| Package | 9 `.recipe.json` files present in the `.mcaddon` |
+
+**Crafting is the thing to test first, and the automated checks cannot reach
+it.** They prove the JSON is well-formed and the ingredient ids are real; they
+cannot prove Minecraft accepts the recipe, that the pattern is what the player
+must lay out, or that nothing conflicts with a vanilla recipe.
+
+For each of the nine swords, in survival at a crafting table:
+
+- [ ] The recipe produces **exactly one** sword
+- [ ] The pattern shown in `SWORD_CATALOG.md` is the one that works
+- [ ] It appears in the recipe book once you hold the unlocking item
+- [ ] No vanilla recipe stopped working (check a vanilla sword and a pickaxe)
 
 ### v0.8.0 — Shadow Sword, not yet tested in Minecraft
 

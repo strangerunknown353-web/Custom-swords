@@ -1096,6 +1096,7 @@ world:
 | `core/effect_catalogue.js` | 37 status effects | `@minecraft/vanilla-data` 1.26.44 |
 | `core/particle_catalogue.js` | usable particles, plus Molang-dependent ones mapped to their usable sibling | Bedrock Wiki vanilla particle list |
 | `tools/data/vanilla_sound_events.json` | 1824 sound events | the vanilla resource pack's `sound_definitions.json` |
+| `tools/data/vanilla_items.json` | 1607 item identifiers | Mojang's `bedrock-samples` metadata |
 
 The particle catalogue encodes the distinction that caused the bug. An
 identifier fails for one of two reasons, and the error says which:
@@ -1119,6 +1120,7 @@ scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
         │                                              │
         ▼  tools/generate.mjs  ◄────────────────────────┘
         ├── packs/CustomSwordsBP/items/*.item.json
+        ├── packs/CustomSwordsBP/recipes/*.recipe.json
         ├── packs/CustomSwordsRP/textures/item_texture.json
         ├── packs/CustomSwordsRP/textures/items/custom_swords/swords/*.png
         ├── packs/CustomSwordsRP/texts/en_US.lang
@@ -1139,6 +1141,35 @@ The tools import the framework's own `identifiers.js`, `rarity.js` and
 `sword_stats.js` rather than keeping their own copies of the rules. A build tool
 with a private copy of the conventions is a build tool that will one day
 disagree with the game.
+
+### Crafting recipes
+
+A sword's recipe is **sword data**, not a hand-written JSON file:
+
+```js
+recipe: {
+    pattern: [' X ', ' X ', ' I '],
+    key: { X: 'minecraft:copper_ingot', I: 'minecraft:blaze_rod' },
+    unlockedBy: 'minecraft:blaze_rod',
+}
+```
+
+`tools/generate.mjs` compiles that into `minecraft:recipe_shaped` JSON under
+`packs/CustomSwordsBP/recipes/`. The reason is the same one that made item JSON
+generated: at 25 swords, a recipe file maintained separately from its sword
+drifts from it, and the drift is invisible until somebody tries to craft one.
+
+Every sword **must** declare a recipe — `tools/validate.mjs` fails the build
+otherwise. That is a permanent project rule, alongside the texture standard.
+
+The failure mode this guards against is specific: **a recipe naming an item
+that does not exist does not error.** It simply never registers, and the only
+symptom is a player who cannot craft the sword. So every ingredient, and every
+`repairItems` entry, is checked against `tools/data/vanilla_items.json` — 1607
+identifiers from Mojang's own metadata — at build time.
+
+Each recipe is built around the material that repairs its sword, so the thing
+that mends a blade is the thing it was made from.
 
 ### Textures
 

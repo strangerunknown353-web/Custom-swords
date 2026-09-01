@@ -45,6 +45,13 @@ export const frostSword = {
         repairItems: ['minecraft:packed_ice'],
     },
 
+    // Rare: packed ice grown around a diamond core.
+    recipe: {
+        pattern: [' X ', ' D ', ' I '],
+        key: { X: 'minecraft:packed_ice', D: 'minecraft:diamond', I: 'minecraft:stick' },
+        unlockedBy: 'minecraft:packed_ice',
+    },
+
     abilities: [
         {
             // FROST NOVA — a ring of cold. Effects are the payload; the shatter

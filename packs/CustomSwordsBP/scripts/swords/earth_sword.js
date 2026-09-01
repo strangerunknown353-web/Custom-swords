@@ -24,11 +24,20 @@ export const earthSword = {
         repairItems: ['minecraft:deepslate'],
     },
 
+    // Epic: a slab of deepslate over an emerald core. Heavy, and it costs the
+    // most raw blocks of any recipe — which suits the heaviest blade.
+    recipe: {
+        pattern: [' D ', 'DED', ' I '],
+        key: { D: 'minecraft:deepslate', E: 'minecraft:emerald', I: 'minecraft:stick' },
+        unlockedBy: 'minecraft:deepslate',
+    },
+
     abilities: [
         {
             // EARTHQUAKE — heavy area damage, upward force, no block damage.
             activation: 'use',
             visual: 'stone',
+            label: 'Earth Shock',
             abilityId: 'custom_swords:burst',
             cooldownTicks: 180,
             hudCategory: 'custom_swords_earth',
@@ -44,6 +53,7 @@ export const earthSword = {
             // Passive: the stone steadies its wielder.
             activation: 'attack',
             visual: 'stone',
+            label: 'Stone Guard',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 160,
             targeting: { type: 'self' },

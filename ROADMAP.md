@@ -114,6 +114,19 @@ ceiling, and combo windows — which is most of what step 6 below was for. That
 step is correspondingly smaller now: gravity and area denial rather than
 teleportation from scratch.
 
+### Interlude — crafting, and four swords finalized (v0.9.0) — **done**
+The collection had nine swords and no way to obtain any of them outside
+creative. Every sword is now craftable, with recipes generated from the sword
+definitions and ingredients checked against Mojang's own item list.
+
+Wind, Earth, Tidal and Nature also stopped sharing generic abilities: they carry
+named identities now, and Nature gained a real one in `entangle`. That closes
+the gap between the four swords built in step 5 and the benchmark set since.
+
+**Milestone 12 shrinks accordingly** — crafting and survival acquisition were
+most of its scope, so what remains there is the codex UI, loot tables and
+trades.
+
 ### 6. Ability library — spatial (planned)
 Gravity manipulation, earthquakes and area denial. Teleportation and its safety
 rules arrived early with Shadow Sword (`systems/movement.js`), so what is left

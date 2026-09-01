@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.8.0.mcaddon` | Nine swords. Ember Blade, Frost, Thunder and Shadow each carry mechanics of their own; the remaining five bind shared abilities. Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
+| `CustomSwords-v0.9.0.mcaddon` | Nine swords, **all craftable at a crafting table** — see `SWORD_CATALOG.md` for each recipe grid. Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever

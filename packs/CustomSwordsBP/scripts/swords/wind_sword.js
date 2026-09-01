@@ -21,12 +21,21 @@ export const windSword = {
         repairItems: ['minecraft:phantom_membrane'],
     },
 
+    // Rare: phantom membrane stretched over a breeze rod. The lightest
+    // materials in the game, for the lightest sword in the collection.
+    recipe: {
+        pattern: [' P ', ' P ', ' B '],
+        key: { P: 'minecraft:phantom_membrane', B: 'minecraft:breeze_rod' },
+        unlockedBy: 'minecraft:breeze_rod',
+    },
+
     abilities: [
         {
             // WIND BURST — a radial shove. Force is clamped by the combat
             // system, so nobody leaves the map.
             activation: 'use',
             visual: 'gale',
+            label: 'Wind Burst',
             abilityId: 'custom_swords:repulse',
             cooldownTicks: 100,
             hudCategory: 'custom_swords_wind',
@@ -41,6 +50,7 @@ export const windSword = {
             // Passive: momentum after a connecting blow.
             activation: 'attack',
             visual: 'gale',
+            label: 'Wind Momentum',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 120,
             targeting: { type: 'self' },

@@ -22,33 +22,42 @@ export const natureSword = {
         repairItems: ['minecraft:moss_block'],
     },
 
+    // Rare: living moss grown over an emerald, on an oak haft.
+    recipe: {
+        pattern: [' M ', ' E ', ' L '],
+        key: { M: 'minecraft:moss_block', E: 'minecraft:emerald', L: 'minecraft:oak_log' },
+        unlockedBy: 'minecraft:moss_block',
+    },
+
     abilities: [
         {
             // NATURE'S WRATH — a committed strike that finishes wounded prey,
             // and leaves poison in anything that survives.
             activation: 'use',
             visual: 'grove',
-            abilityId: 'custom_swords:strike',
+            label: "Nature's Grasp",
+            abilityId: 'custom_swords:entangle',
             cooldownTicks: 110,
             hudCategory: 'custom_swords_nature',
-            targeting: { type: 'single', range: 6 },
+            targeting: { type: 'area', range: 5, maxTargets: 8 },
             allowedTargets: ['mob', 'player'],
-            knockback: { horizontal: 0.5, vertical: 0.1 },
+            // Deliberately no knockback: roots hold, they do not shove.
             effects: [
-                { effect: 'poison', durationTicks: 140, amplifier: 1 },
-                { effect: 'slowness', durationTicks: 80 },
+                { effect: 'slowness', durationTicks: 100, amplifier: 2 },
+                { effect: 'weakness', durationTicks: 100 },
             ],
             particles: [
-                { id: 'minecraft:villager_happy', count: 12, spread: 1, at: 'caster' },
-                { id: 'minecraft:villager_happy', count: 6, spread: 0.4, at: 'target' },
+                { id: 'minecraft:villager_happy', count: 14, spread: 1.4, at: 'caster' },
+                { id: 'minecraft:spore_blossom_shower_particle', count: 5, spread: 0.4, at: 'target' },
             ],
             sounds: { cast: 'nature_cast', impact: 'nature_impact' },
-            params: { damage: 8, executeMultiplier: 1.6, executeThreshold: 0.4, cause: 'magic' },
+            params: { damage: 3, cause: 'magic', healPerTarget: 1, maxHeal: 6, ringPoints: 18 },
         },
         {
             // Passive: the blade feeds its wielder a little of what it takes.
             activation: 'attack',
             visual: 'grove',
+            label: "Nature's Vitality",
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 140,
             targeting: { type: 'self' },

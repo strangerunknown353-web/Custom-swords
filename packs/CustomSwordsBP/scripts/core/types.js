@@ -28,6 +28,28 @@
  * @property {number} [swingDuration] Seconds for the swing animation, via `minecraft:swing_duration`
  *   (requires item format_version 1.21.120). Visual only — it does not change attack speed or damage.
  *   Vanilla's default swing is about 0.3s; a heavier sword reads better nearer 0.4-0.5.
+ * @property {RecipeSpec} recipe How the sword is crafted. Required — see `tools/validate.mjs`.
+ */
+
+/**
+ * A shaped crafting-table recipe, in the project's own shorthand.
+ *
+ * Compiled to `minecraft:recipe_shaped` JSON by `tools/generate.mjs`. Kept as
+ * sword data rather than hand-written JSON for the same reason the item
+ * definitions are: with 25 swords, a recipe file maintained separately from the
+ * sword drifts from it, and the drift is invisible until someone tries to craft
+ * one.
+ *
+ * `pattern` is 1–3 rows of at most 3 characters; a space means an empty slot.
+ * Every non-space character must appear in `key`, and every `key` value must be
+ * a real vanilla item identifier — checked at build time against
+ * `tools/data/vanilla_items.json`, because a recipe naming an item that does
+ * not exist simply never registers, with no error anywhere.
+ *
+ * @typedef {Object} RecipeSpec
+ * @property {readonly string[]} pattern Rows of the crafting grid, e.g. `['X', 'X', 'I']`.
+ * @property {Readonly<Record<string, string>>} key Pattern character → vanilla item identifier.
+ * @property {string} [unlockedBy] Item that reveals the recipe in the recipe book. Defaults to the rarest key item.
  */
 
 /**

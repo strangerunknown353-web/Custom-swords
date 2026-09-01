@@ -5,7 +5,7 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.8.0 — nine swords.**
+> **Status: v0.9.0 — nine swords, all craftable.**
 > Shadow Sword 🌑 and Ember Blade 🔥 join the seven Elemental Collection
 > blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and
 > Nature 🌿. See
@@ -35,11 +35,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.8.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.8.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.8.0.mcpack` | resource pack alone |
+| `CustomSwords-v0.9.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.9.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.9.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.8.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.9.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -57,7 +57,8 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:shadow_sword      dash through the dark, then hit hard
 ```
 
-To confirm the framework recognises it, run in game:
+Every sword is craftable at a crafting table — `SWORD_CATALOG.md` shows each
+recipe grid. To confirm the framework recognises a sword, run in game:
 
 ```
 /scriptevent custom_swords:list        every registered sword and its stats
@@ -121,7 +122,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 396 unit and integration tests against a mocked engine |
+| `npm test` | 405 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |
@@ -153,7 +154,8 @@ Stated plainly:
 - **9 of 20–25 swords.** The remaining 11–16 arrive in milestones 7, 9 and 10.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
-- **No crafting, loot or trades.** The swords are creative/`/give` only so far.
+- **No loot tables or trades.** Every sword is craftable at a table, but none
+  appear in chests or villager trades yet — milestone 12.
 - **`en_US` only.** The localisation plumbing exists; other languages do not.
 - **In-memory state only.** Cooldowns and player state reset on world reload, by
   design; persistence is tracked in `TODO.md`.

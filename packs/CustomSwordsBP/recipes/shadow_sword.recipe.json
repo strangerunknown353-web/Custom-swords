@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:shadow_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " E ",
+      " O ",
+      " A "
+    ],
+    "key": {
+      "E": {
+        "item": "minecraft:echo_shard"
+      },
+      "O": {
+        "item": "minecraft:obsidian"
+      },
+      "A": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:echo_shard"
+      }
+    ],
+    "result": "custom_swords:shadow_sword"
+  }
+}

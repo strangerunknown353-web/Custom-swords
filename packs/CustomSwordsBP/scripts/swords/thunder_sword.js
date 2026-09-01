@@ -44,6 +44,19 @@ export const thunderSword = {
         glint: true,
     },
 
+    // Legendary: the most expensive recipe in the collection — a lightning rod
+    // quenched between copper, on a diamond core.
+    recipe: {
+        pattern: [' L ', 'CDC', ' I '],
+        key: {
+            L: 'minecraft:lightning_rod',
+            C: 'minecraft:copper_ingot',
+            D: 'minecraft:diamond',
+            I: 'minecraft:blaze_rod',
+        },
+        unlockedBy: 'minecraft:lightning_rod',
+    },
+
     abilities: [
         {
             // THUNDER STRIKE — one chosen target, then the arc.

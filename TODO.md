@@ -30,7 +30,19 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
-## Completed in Shadow Sword (v0.8.0)
+## Completed in crafting + finalization (v0.9.0)
+
+- [x] Crafting recipes for all nine swords, generated from the definitions.
+- [x] `recipe` on the sword data model; `recipes/` emitted by the generator.
+- [x] `tools/data/vanilla_items.json` and validator gates proving every
+      ingredient and repair item is a real vanilla item.
+- [x] Wind Burst / Wind Momentum, Earth Shock / Stone Guard, Tidal Wave /
+      Aqua Affinity, Nature's Grasp / Nature's Vitality named via binding
+      labels.
+- [x] `entangle` — Nature's area root, replacing the shared `strike`.
+- [x] `strike` removed; it had no binder left.
+
+
 
 - [x] Shadow Sword: Epic, mobility-first, ninth in the collection.
 - [x] Shadow Step (`blink`) with full destination validation, and Shadow Edge

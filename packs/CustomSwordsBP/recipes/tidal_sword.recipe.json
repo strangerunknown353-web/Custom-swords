@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:tidal_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " P ",
+      " H ",
+      " C "
+    ],
+    "key": {
+      "P": {
+        "item": "minecraft:prismarine_shard"
+      },
+      "H": {
+        "item": "minecraft:heart_of_the_sea"
+      },
+      "C": {
+        "item": "minecraft:prismarine_crystals"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:heart_of_the_sea"
+      }
+    ],
+    "result": "custom_swords:tidal_sword"
+  }
+}

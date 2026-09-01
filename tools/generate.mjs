@@ -152,6 +152,36 @@ function buildItemJson(sword) {
 }
 
 /**
+ * Compiles a sword's `recipe` shorthand into `minecraft:recipe_shaped` JSON.
+ *
+ * `result` is emitted as a bare identifier string rather than `{ item, count }`
+ * because that is the form the reference documents for a shaped recipe, and a
+ * shaped recipe yields exactly one item by default. Using only syntax that is
+ * documented is the same rule that governs the item JSON.
+ *
+ * @param {any} sword
+ * @returns {object}
+ */
+function buildRecipeJson(sword) {
+    const recipe = sword.recipe;
+    const unlock = recipe.unlockedBy ?? Object.values(recipe.key)[0];
+
+    return {
+        format_version: ITEM_FORMAT_VERSION,
+        'minecraft:recipe_shaped': {
+            description: { identifier: `${sword.id}_recipe` },
+            // Crafting table only: these are not campfire or furnace recipes,
+            // and an empty tag list would make the recipe unusable anywhere.
+            tags: ['crafting_table'],
+            pattern: [...recipe.pattern],
+            key: Object.fromEntries(Object.entries(recipe.key).map(([ch, item]) => [ch, { item }])),
+            unlock: [{ item: unlock }],
+            result: sword.id,
+        },
+    };
+}
+
+/**
  * @param {readonly any[]} swords
  * @returns {object}
  */
@@ -223,20 +253,32 @@ async function main() {
         writeIfChanged(path.join(PATHS.bpItems, fileName), toJson(buildItemJson(sword)));
     }
 
-    // Prune item JSON left behind by swords that were renamed or removed.
-    const previous = fs.existsSync(PATHS.generatedManifest)
-        ? (JSON.parse(fs.readFileSync(PATHS.generatedManifest, 'utf8')).items ?? [])
-        : [];
-    for (const stale of previous) {
-        if (!generatedItemFiles.includes(stale)) {
-            removeIfPresent(path.join(PATHS.bpItems, stale));
-        }
+    // --- Crafting recipes -----------------------------------------------------
+    /** @type {string[]} */
+    const generatedRecipeFiles = [];
+    fs.mkdirSync(PATHS.bpRecipes, { recursive: true });
+    for (const sword of SWORDS) {
+        const fileName = `${localNameOf(sword.id)}.recipe.json`;
+        generatedRecipeFiles.push(fileName);
+        writeIfChanged(path.join(PATHS.bpRecipes, fileName), toJson(buildRecipeJson(sword)));
+    }
+
+    // Prune generated files left behind by swords that were renamed or removed.
+    const manifest = fs.existsSync(PATHS.generatedManifest)
+        ? JSON.parse(fs.readFileSync(PATHS.generatedManifest, 'utf8'))
+        : {};
+    for (const stale of manifest.items ?? []) {
+        if (!generatedItemFiles.includes(stale)) removeIfPresent(path.join(PATHS.bpItems, stale));
+    }
+    for (const stale of manifest.recipes ?? []) {
+        if (!generatedRecipeFiles.includes(stale)) removeIfPresent(path.join(PATHS.bpRecipes, stale));
     }
     writeIfChanged(
         PATHS.generatedManifest,
         toJson({
             note: 'Written by tools/generate.mjs so stale generated files can be pruned. Not read by Minecraft.',
             items: generatedItemFiles.sort(),
+            recipes: generatedRecipeFiles.sort(),
         }),
     );
 

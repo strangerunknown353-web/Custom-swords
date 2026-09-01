@@ -29,8 +29,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PATHS, MODULES, ITEM_FORMAT_VERSION, resourceFile, toJson } from './lib/project.mjs';
+import { PATHS, MODULES, ITEM_FORMAT_VERSION, artFile, resourceFile, toJson } from './lib/project.mjs';
 import { placeholderSwordIcon, placeholderPackIcon } from './lib/png.mjs';
+import { compile as compileTexture, validateSource } from './lib/texture.mjs';
 
 const CHECK_ONLY = process.argv.includes('--check');
 
@@ -224,13 +225,32 @@ async function main() {
     writeIfChanged(path.join(PATHS.bpTexts, 'en_US.lang'), buildBehaviourLang());
     writeIfChanged(path.join(PATHS.bpTexts, 'languages.json'), toJson(['en_US']));
 
-    // --- Placeholder art ------------------------------------------------------
-    // Only created when absent: real artwork committed later is never clobbered.
+    // --- Sword icons ----------------------------------------------------------
+    // Compiled from the hand-authored sources in `art/swords/`. A sword with no
+    // source still gets a placeholder so the pack loads and iteration is not
+    // blocked, but `tools/validate.mjs` fails the build until real art exists —
+    // see the texture standard in docs/TEXTURE_STANDARD.md.
     for (const sword of SWORDS) {
-        const target = resourceFile(swordTexturePath(textureNameOf(sword)));
-        if (!fs.existsSync(target)) {
-            writeIfChanged(target, placeholderSwordIcon({ seed: sword.id }));
+        const shortname = textureNameOf(sword);
+        const target = resourceFile(swordTexturePath(shortname));
+        const source = artFile(shortname);
+
+        if (!fs.existsSync(source)) {
+            if (!fs.existsSync(target)) {
+                writeIfChanged(target, placeholderSwordIcon({ seed: sword.id }));
+            }
+            continue;
         }
+
+        const spec = JSON.parse(fs.readFileSync(source, 'utf8'));
+        const problems = validateSource(spec);
+        if (problems.length > 0) {
+            console.error(`generate: ${path.relative(PATHS.root, source)} is malformed:`);
+            for (const problem of problems) console.error(`  - ${problem}`);
+            process.exitCode = 1;
+            continue;
+        }
+        writeIfChanged(target, compileTexture(spec));
     }
     for (const [dir, seed] of [
         [PATHS.bp, 'custom_swords_behaviour'],

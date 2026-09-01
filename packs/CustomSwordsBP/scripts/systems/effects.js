@@ -7,6 +7,7 @@
  */
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
+/** @typedef {import('../util/vec3.js').Vec3} Vec3 */
 
 /**
  * @typedef {Object} EffectSpec
@@ -61,7 +62,7 @@ export class EffectService {
 
     /**
      * @param {Entity} target
-     * @param {EffectSpec[]} specs
+     * @param {readonly EffectSpec[]} specs
      * @returns {number}
      */
     applyMany(target, specs) {
@@ -70,5 +71,124 @@ export class EffectService {
             if (this.apply(target, spec)) applied++;
         }
         return applied;
+    }
+
+    /**
+     * Restores health, clamped to the entity's maximum.
+     *
+     * Uses the health attribute component directly rather than an instant-health
+     * effect, so the amount healed is exact and undead targets are not harmed by
+     * accident.
+     *
+     * @param {Entity} target
+     * @param {number} amount Hit points.
+     * @returns {number} Health actually restored.
+     */
+    heal(target, amount) {
+        if (target === undefined || !target.isValid) return 0;
+        if (!Number.isFinite(amount) || amount <= 0) return 0;
+        try {
+            const health = target.getComponent('minecraft:health');
+            if (health === undefined) return 0;
+            const component = /** @type {import('@minecraft/server').EntityHealthComponent} */ (health);
+            const before = component.currentValue;
+            const capped = Math.min(before + amount, component.effectiveMax);
+            if (capped <= before) return 0;
+            component.setCurrentValue(capped);
+            return capped - before;
+        } catch (error) {
+            this.log.debug('effects.heal skipped:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Sets a target alight.
+     *
+     * @param {Entity} target
+     * @param {number} seconds
+     * @param {boolean} [useEffects] Play the vanilla ignition effects. Defaults to true.
+     * @returns {boolean}
+     */
+    ignite(target, seconds, useEffects = true) {
+        if (target === undefined || !target.isValid) return false;
+        if (!Number.isFinite(seconds) || seconds <= 0) return false;
+        try {
+            return target.setOnFire(Math.ceil(seconds), useEffects);
+        } catch (error) {
+            this.log.debug('effects.ignite skipped:', error);
+            return false;
+        }
+    }
+
+    /**
+     * @param {Entity} target
+     * @returns {boolean}
+     */
+    extinguish(target) {
+        if (target === undefined || !target.isValid) return false;
+        try {
+            return target.extinguishFire(true);
+        } catch (error) {
+            this.log.debug('effects.extinguish skipped:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Moves an entity. `checkForBlocks` defaults to true so an ability can never
+     * teleport a target inside terrain.
+     *
+     * @param {Entity} target
+     * @param {Vec3} location
+     * @param {{ checkForBlocks?: boolean, keepVelocity?: boolean, facingLocation?: Vec3 }} [options]
+     * @returns {boolean}
+     */
+    teleport(target, location, options = {}) {
+        if (target === undefined || !target.isValid) return false;
+        if (!Number.isFinite(location?.x) || !Number.isFinite(location?.y) || !Number.isFinite(location?.z)) {
+            this.log.warn('effects.teleport refused a non-finite destination.');
+            return false;
+        }
+        try {
+            target.teleport(location, {
+                checkForBlocks: options.checkForBlocks ?? true,
+                keepVelocity: options.keepVelocity ?? false,
+                ...(options.facingLocation === undefined ? {} : { facingLocation: options.facingLocation }),
+            });
+            return true;
+        } catch (error) {
+            this.log.debug('effects.teleport skipped:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Pushes an entity along a vector.
+     *
+     * `Entity.applyImpulse` throws when called on a Player — that is documented
+     * engine behaviour, not a bug we can work around — so players are routed to
+     * `applyKnockback` instead, which is the supported equivalent. Callers get
+     * one method that works on anything.
+     *
+     * @param {Entity} target
+     * @param {Vec3} vector
+     * @returns {boolean}
+     */
+    impulse(target, vector) {
+        if (target === undefined || !target.isValid) return false;
+        if (!Number.isFinite(vector?.x) || !Number.isFinite(vector?.y) || !Number.isFinite(vector?.z)) return false;
+        try {
+            if (target.typeId === 'minecraft:player') {
+                const horizontal = Math.hypot(vector.x, vector.z);
+                /** @type {any} */ (target).applyKnockback({ x: vector.x, z: vector.z }, vector.y);
+                return horizontal > 0 || vector.y !== 0;
+            }
+            target.applyImpulse(vector);
+            return true;
+        } catch (error) {
+            this.log.debug('effects.impulse skipped:', error);
+            return false;
+        }
     }
 }

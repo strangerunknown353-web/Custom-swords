@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.2.0.mcaddon` | Roadmap step 2 — core sword framework. Registry, identification, rarity, stats, declarative ability envelope and in-game diagnostics, plus one diagnostic sword. **No shipped swords yet.** |
+| `CustomSwords-v0.3.0.mcaddon` | Roadmap step 3 — Ability Engine and texture standard. Activation system, ability registry, validation gate, cooldowns, targeting, effects and outcome composition, plus one diagnostic sword with a finished texture and two abilities. **No collection swords yet.** |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -24,11 +24,14 @@ toggles are needed.
 3. Create a **new** world, enable both packs, and turn on Creative plus cheats.
 4. `/give @s custom_swords:test_blade`, then right-click (or long-press) with
    mobs nearby.
-5. Confirm the framework recognises it:
+5. Right-click for a wide burst; **sneak + right-click** for an aimed strike.
+   Both run the same ability with different data.
+6. Confirm the framework recognises it:
 
    ```
    /scriptevent custom_swords:list
    /scriptevent custom_swords:held
+   /scriptevent custom_swords:abilities
    ```
 
 Then work through the checklist in `../docs/TESTING.md`.

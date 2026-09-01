@@ -17,7 +17,7 @@ function sword(overrides = {}) {
         rarity: 'rare',
         description: 'An example sword.',
         item: { attackDamage: 7, durability: 500, enchantValue: 12 },
-        active: { abilityId: 'custom_swords:diagnostic_pulse', cooldownTicks: 40 },
+        abilities: [{ activation: 'use', abilityId: 'custom_swords:shockwave', cooldownTicks: 40 }],
         ...overrides,
     };
 }
@@ -63,7 +63,7 @@ describe('SwordRegistry', () => {
             stored.item.attackDamage = 999;
         }, TypeError);
         assert.throws(() => {
-            stored.active.cooldownTicks = 0;
+            stored.abilities[0].cooldownTicks = 0;
         }, TypeError);
     });
 
@@ -101,18 +101,32 @@ describe('SwordRegistry', () => {
         assert.equal(registry.getStats('custom_swords:missing'), undefined);
 
         const abilities = registry.getAbilities('custom_swords:plain');
-        assert.equal(abilities.active?.abilityId, 'custom_swords:diagnostic_pulse');
-        assert.equal(abilities.passive, undefined);
+        assert.equal(abilities.length, 1);
+        assert.equal(abilities[0].abilityId, 'custom_swords:shockwave');
 
-        // Always an object, so callers can destructure without a null check.
-        assert.deepEqual(registry.getAbilities('custom_swords:missing'), { active: undefined, passive: undefined });
+        // Always an array, so callers can iterate without a null check.
+        assert.deepEqual(registry.getAbilities('custom_swords:missing'), []);
     });
 
-    it('returns the binding for one trigger', () => {
+    it('returns the binding for one activation method', () => {
         const registry = populated();
         assert.equal(registry.getBinding('custom_swords:plain', 'use')?.cooldownTicks, 40);
-        assert.equal(registry.getBinding('custom_swords:plain', 'hit'), undefined);
+        assert.equal(registry.getBinding('custom_swords:plain', 'sneak_use'), undefined);
         assert.equal(registry.getBinding('custom_swords:missing', 'use'), undefined);
+    });
+
+    it('lists the activation methods a sword responds to', () => {
+        const registry = new SwordRegistry();
+        registry.register(
+            sword({
+                abilities: [
+                    { activation: 'use', abilityId: 'custom_swords:shockwave' },
+                    { activation: 'sneak_use', abilityId: 'custom_swords:shockwave' },
+                ],
+            }),
+        );
+        assert.deepEqual(registry.getActivations('custom_swords:example'), ['use', 'sneak_use']);
+        assert.deepEqual(registry.getActivations('custom_swords:missing'), []);
     });
 
     it('assembles a consistent display record', () => {

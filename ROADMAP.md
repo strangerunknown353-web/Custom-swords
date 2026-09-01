@@ -2,10 +2,13 @@
 
 Fifteen milestones from an empty repository to a finished 20–25 sword add-on.
 
-Milestone 2 was originally scoped as "sword framework hardening"; delivering it
-made clear that the ability work it assumed deserved a milestone of its own, so
-the Ability Engine is now step 3 and the two asset milestones (art, then
-particles and sound) were merged into step 11, keeping the total at fifteen.
+The plan is re-balanced as milestones land, but the total stays at fifteen.
+Milestone 2 was originally "sword framework hardening"; delivering it showed the
+ability work deserved its own step, so the Ability Engine became step 3 and the
+two asset milestones were merged into step 11. Milestone 3 then absorbed the
+texture standard, and the combat/safety layer was promoted to step 4 — it is the
+foundation the whole collection leans on, and it is cheaper to build before
+twenty-five swords depend on it than after.
 Every milestone ends with a `.mcaddon` that can be imported and played; nothing
 is "done" until it has been tested in a real game.
 
@@ -29,41 +32,48 @@ ability envelope (targeting, effects, particles, sounds) that turns one ability
 into many distinct swords. Plus in-game diagnostics so the registry's view is
 observable in a real world. Still one diagnostic sword and one ability.
 
-### 3. Ability Engine (planned)
-The reusable engine the envelope was designed for: an ability composition
-helper, multi-stage abilities (wind-up → impact) with cancellation, a second
-trigger (sneak-use) and dual active slots, and ability-level cost and condition
-checks. Two or three real abilities as vertical slices — no sword collection
-yet.
+### 3. Ability Engine and texture standard — **done**
+The reusable engine: an activation system covering four player inputs, a
+dedicated Ability Registry with a sword reverse-index, an ordered validation
+gate with declarative restrictions, life-scoped player state cleared on death,
+extended effect helpers, and an outcome composer so abilities stop retyping the
+same block. One real ability, bound twice on one sword to prove the envelope
+drives behaviour. Also establishes the project's permanent premium texture
+standard, its authored-as-text pipeline and its automated quality gate.
 
-### 4. Ability library, part one — elemental (planned)
-Fire, ice, lightning and wind as reusable, parameterised abilities. Establishes
-the composition patterns (damage-over-time, status application, area shapes,
-projectile-like ranged hits) that the rest of the library builds on.
+### 4. Combat, damage and safety layer (planned)
+Harden the layer everything else will lean on before the collection arrives:
+crit windows and combo tracking on melee activations, damage attribution and
+resistance handling, friendly-fire and team rules, projectile-like ranged hits,
+and multi-stage abilities (wind-up → impact) with cancellation on death,
+disconnect or dimension change. Plus the safety work that only matters at scale:
+target-count budgets under load, and per-player rate limiting.
 
 ---
 
 ## Phase 2 — Content
 
-### 5. Swords 1–5 (planned)
-The first shipped tier. Common through rare. Focus on making them feel distinct
-using only the Phase 1 primitives, which stress-tests whether the abstraction is
-actually general.
+### 5. Ability library — elemental (planned)
+Fire, ice, lightning and wind as reusable, parameterised abilities, each with
+its own authored texture theme. Establishes the composition patterns
+(damage-over-time, status application, area shapes, ranged hits) that the rest
+of the library builds on.
 
-### 6. Ability library, part two — spatial (planned)
-Teleportation, gravity manipulation, earthquake / shockwave, area denial.
-Introduces block-aware targeting and the safety rules that go with it.
+### 6. Swords 1–5 (planned)
+The first shipped tier, common through rare. Focus on making them feel distinct
+using only existing primitives, which stress-tests whether the abstraction is
+actually general. Every sword ships a finished texture.
 
-### 7. Swords 6–12 (planned)
-Mid tier. First swords with both an active and a passive ability.
+### 7. Ability library — spatial (planned)
+Teleportation, gravity manipulation, earthquake, area denial. Introduces
+block-aware targeting and the safety rules that go with it.
 
-### 8. Ability library, part three — exotic (planned)
-Life steal, shadow effects, time-based effects, meteors, ultimates. Introduces
-multi-stage abilities (wind-up → impact) built on `system.runTimeout` rather
-than intervals.
+### 8. Swords 6–12 (planned)
+Mid tier. First swords carrying three or four activation methods at once.
 
-### 9. Swords 13–20 (planned)
-Epic and legendary tiers.
+### 9. Ability library — exotic, and swords 13–20 (planned)
+Life steal, shadow effects, time-based effects, meteors and ultimates, plus the
+epic and legendary tiers that use them.
 
 ### 10. Swords 21–25 and the ultimate tier (planned)
 Mythic swords with genuinely climactic abilities. Completes the collection.

@@ -29,6 +29,7 @@ export const PATHS = Object.freeze({
     rpTextures: path.join(RP, 'textures'),
     itemTextureJson: path.join(RP, 'textures', 'item_texture.json'),
     dist: path.join(ROOT, 'dist'),
+    art: path.join(ROOT, 'art', 'swords'),
     swordsIndex: path.join(BP, 'scripts', 'swords', 'index.js'),
     abilitiesIndex: path.join(BP, 'scripts', 'abilities', 'index.js'),
     coreDir: path.join(BP, 'scripts', 'core'),
@@ -56,6 +57,16 @@ export const MODULES = Object.freeze({
  * docs/API_NOTES.md.
  */
 export const ITEM_FORMAT_VERSION = '1.21.90';
+
+/**
+ * Absolute path of a sword's texture source.
+ *
+ * @param {string} shortname
+ * @returns {string}
+ */
+export function artFile(shortname) {
+    return path.join(PATHS.art, `${shortname}.json`);
+}
 
 /**
  * Absolute path of a sword icon on disk, from the resource-pack-relative path

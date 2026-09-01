@@ -15,13 +15,14 @@
 
 import { IDENTIFIER_PATTERN, isValidIdentifier, isValidLocalName } from './identifiers.js';
 import { RARITIES, isRarity } from './rarity.js';
+import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
 
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 /** @typedef {import('./types.js').AbilityDefinition} AbilityDefinition */
 /** @typedef {import('./types.js').AbilityBinding} AbilityBinding */
 
-/** Re-exported so callers that only need the tier list have one import. */
-export { RARITIES };
+/** Re-exported so callers that only need these lists have one import. */
+export { RARITIES, ACTIVATION_METHODS };
 
 /** Targeting shapes the framework knows how to resolve. */
 export const TARGETING_TYPES = Object.freeze(['self', 'single', 'area', 'cone', 'ray']);
@@ -209,8 +210,44 @@ export function validateSounds(sounds, label) {
 }
 
 /**
+ * @param {unknown} restrictions
+ * @param {string} label
+ * @returns {string[]}
+ */
+export function validateRestrictions(restrictions, label) {
+    if (restrictions === undefined) return [];
+    if (!isPlainObject(restrictions)) return [`${label}.restrictions: must be an object.`];
+
+    /** @type {string[]} */
+    const problems = [];
+    const known = ['minHealth', 'requireGrounded', 'forbidInWater', 'dimensions'];
+
+    if (restrictions.minHealth !== undefined && !isPositiveNumber(restrictions.minHealth)) {
+        problems.push(`${label}.restrictions: 'minHealth' must be a positive number.`);
+    }
+    for (const flag of ['requireGrounded', 'forbidInWater']) {
+        if (restrictions[flag] !== undefined && typeof restrictions[flag] !== 'boolean') {
+            problems.push(`${label}.restrictions: '${flag}' must be a boolean when present.`);
+        }
+    }
+    if (restrictions.dimensions !== undefined) {
+        if (!Array.isArray(restrictions.dimensions) || restrictions.dimensions.length === 0) {
+            problems.push(`${label}.restrictions: 'dimensions' must be a non-empty array when present.`);
+        } else if (!restrictions.dimensions.every((d) => typeof d === 'string' && IDENTIFIER_PATTERN.test(d))) {
+            problems.push(`${label}.restrictions: every dimension must be a namespaced id, e.g. 'minecraft:nether'.`);
+        }
+    }
+    for (const key of Object.keys(restrictions)) {
+        if (!known.includes(key)) {
+            problems.push(`${label}.restrictions: unknown restriction '${key}'. Valid: ${known.join(', ')}.`);
+        }
+    }
+    return problems;
+}
+
+/**
  * @param {AbilityBinding | undefined} binding
- * @param {string} label Where the binding lives, e.g. `custom_swords:x.active`.
+ * @param {string} label Where the binding lives, e.g. `custom_swords:x[use]`.
  * @param {(id: string) => boolean} abilityExists
  * @returns {string[]}
  */
@@ -221,6 +258,9 @@ export function validateBinding(binding, label, abilityExists) {
     /** @type {string[]} */
     const problems = [];
 
+    if (!isActivationMethod(binding.activation)) {
+        problems.push(`${label}: 'activation' must be one of ${ACTIVATION_METHODS.join(', ')}.`);
+    }
     if (!isValidIdentifier(binding.abilityId)) {
         problems.push(`${label}: 'abilityId' must match namespace:local_name.`);
     } else if (!abilityExists(/** @type {string} */ (binding.abilityId))) {
@@ -245,6 +285,7 @@ export function validateBinding(binding, label, abilityExists) {
     problems.push(...validateEffects(binding.effects, label));
     problems.push(...validateParticles(binding.particles, label));
     problems.push(...validateSounds(binding.sounds, label));
+    problems.push(...validateRestrictions(binding.restrictions, label));
 
     return problems;
 }
@@ -312,11 +353,25 @@ export function validateSwordDefinition(sword, abilityExists) {
 
     problems.push(...validateItemStats(sword.item, label));
 
-    if (sword.active === undefined && sword.passive === undefined) {
-        problems.push(`${label}: needs at least one of 'active' or 'passive'.`);
+    if (!Array.isArray(sword.abilities)) {
+        problems.push(`${label}: 'abilities' must be an array of bindings.`);
+    } else if (sword.abilities.length === 0) {
+        problems.push(`${label}: needs at least one ability binding.`);
+    } else {
+        /** @type {Set<string>} */
+        const seenActivations = new Set();
+        sword.abilities.forEach((binding, index) => {
+            const activation = isPlainObject(binding) ? String(binding.activation) : `#${index}`;
+            problems.push(...validateBinding(binding, `${label}[${activation}]`, abilityExists));
+            // Two bindings on one activation would make dispatch ambiguous.
+            if (isPlainObject(binding) && isActivationMethod(binding.activation)) {
+                if (seenActivations.has(binding.activation)) {
+                    problems.push(`${label}: binds '${binding.activation}' more than once.`);
+                }
+                seenActivations.add(binding.activation);
+            }
+        });
     }
-    problems.push(...validateBinding(sword.active, `${label}.active`, abilityExists));
-    problems.push(...validateBinding(sword.passive, `${label}.passive`, abilityExists));
 
     if (sword.tags !== undefined && !Array.isArray(sword.tags)) {
         problems.push(`${label}: 'tags' must be an array when present.`);

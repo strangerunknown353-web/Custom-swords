@@ -21,7 +21,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PATHS, MODULES, resourceFile } from './lib/project.mjs';
+import { PATHS, MODULES, artFile, resourceFile } from './lib/project.mjs';
+import { inspectQuality, validateSource } from './lib/texture.mjs';
 
 const { NAMESPACE, SWORD_COMPONENT_ID, SWORD_ITEM_TAG, localNameOf, namespaceOf, nameKey, swordTexturePath } =
     await import(MODULES.identifiers);
@@ -367,6 +368,66 @@ function validateItemsAndResources(swords) {
 }
 
 // ---------------------------------------------------------------------------
+// 3b. Texture standard
+// ---------------------------------------------------------------------------
+
+/**
+ * Enforces the project's permanent texture rule: every sword ships a unique,
+ * hand-authored, polished icon. A missing or sub-standard source is a build
+ * failure, not a warning — see docs/TEXTURE_STANDARD.md.
+ *
+ * @param {readonly any[]} swords
+ */
+function validateTextures(swords) {
+    /** @type {Map<string, string>} Signature -> the sword that used it first. */
+    const signatures = new Map();
+
+    for (const sword of swords) {
+        const shortname = sword.texture ?? localNameOf(sword.id);
+        const source = artFile(shortname);
+        const relative = path.relative(PATHS.root, source);
+
+        if (!fs.existsSync(source)) {
+            error(
+                `${sword.id}: no texture source at ${relative}. Every sword needs a hand-authored ` +
+                    'icon before it is complete — a generated placeholder does not satisfy the texture standard.',
+            );
+            continue;
+        }
+
+        const spec = readJson(source);
+        if (spec === undefined) continue;
+
+        const structural = validateSource(spec);
+        for (const problem of structural) error(`${relative}: ${problem}`);
+        if (structural.length > 0) continue;
+
+        const quality = inspectQuality(spec);
+        for (const problem of quality.errors) error(`${relative}: ${problem}`);
+        for (const problem of quality.warnings) warn(`${relative}: ${problem}`);
+
+        // Two swords sharing a pixel grid means a recolour, which the standard
+        // forbids: each sword needs its own silhouette and identity.
+        const signature = spec.pixels.join('|');
+        const previous = signatures.get(signature);
+        if (previous !== undefined) {
+            error(
+                `${sword.id}: its texture is pixel-identical in shape to ${previous}. ` +
+                    'Swords must not be recolours of one another.',
+            );
+        } else {
+            signatures.set(signature, sword.id);
+        }
+
+        note(
+            `  texture ${shortname.padEnd(20)} ${quality.stats.colours} colours · ` +
+                `${(quality.stats.coverage * 100).toFixed(0)}% coverage · ` +
+                `luminance spread ${quality.stats.luminanceSpread}`,
+        );
+    }
+}
+
+// ---------------------------------------------------------------------------
 // 4. Sword and ability definitions
 // ---------------------------------------------------------------------------
 
@@ -424,7 +485,11 @@ async function validateDefinitions() {
     for (const description of describeAll(SWORDS)) {
         const abilities =
             description.abilities
-                .map((a) => `${a.trigger}:${a.targetingType}${a.range === undefined ? '' : `/${a.range}`}@${a.cooldownSeconds}s`)
+                .map(
+                    (a) =>
+                        `${a.activation}:${a.targetingType}${a.range === undefined ? '' : `/${a.range}`}` +
+                        `@${a.cooldownSeconds}s`,
+                )
                 .join(' ') || 'none';
         note(
             `  ${description.rarityLabel.padEnd(9)} ${description.id.padEnd(32)} ` +
@@ -488,7 +553,32 @@ function validateArchitecture() {
         error(`system.runInterval must live in core/bootstrap.js, found it in ${intervalSites[0]}.`);
     }
 
-    // 5d. No orphaned script modules — everything must be reachable from the
+    // 5d. Performance rule: every engine event is subscribed exactly once, and
+    //     only from the bootstrap. A second subscription to the same signal
+    //     means an ability firing twice per input.
+    /** @type {Map<string, string[]>} signal -> files subscribing to it */
+    const subscriptions = new Map();
+    for (const file of scriptFiles) {
+        const relative = path.relative(PATHS.bpScripts, file);
+        const source = fs.readFileSync(file, 'utf8');
+        for (const match of source.matchAll(/\b(?:world|system)\.(?:before|after)Events\.([a-zA-Z]+)\.subscribe\b/g)) {
+            const signal = match[1];
+            const seen = subscriptions.get(signal) ?? [];
+            seen.push(relative);
+            subscriptions.set(signal, seen);
+        }
+    }
+    for (const [signal, files] of subscriptions) {
+        if (files.length > 1) {
+            error(`Engine event '${signal}' is subscribed ${files.length} times (${files.join(', ')}). Subscribe once.`);
+        }
+        if (files[0] !== 'core/bootstrap.js') {
+            error(`Engine event '${signal}' is subscribed from ${files[0]}; all subscriptions belong in core/bootstrap.js.`);
+        }
+    }
+    note(`  ${subscriptions.size} engine event subscription(s), 1 recurring interval, 0 gameplay tick loops.`);
+
+    // 5e. No orphaned script modules — everything must be reachable from the
     //     manifest entry point, or it is dead weight inside the .mcaddon.
     const entry = path.join(PATHS.bpScripts, 'main.js');
     /** @type {Set<string>} */
@@ -521,6 +611,7 @@ async function main() {
     validateAllJson();
     const swords = await validateDefinitions();
     validateItemsAndResources(swords);
+    validateTextures(swords);
     validateArchitecture();
 
     for (const message of notes) console.log(`validate: note    ${message}`);

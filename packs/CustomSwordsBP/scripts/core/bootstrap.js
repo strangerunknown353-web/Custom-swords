@@ -22,16 +22,17 @@ import { system, world } from '@minecraft/server';
 
 import { CONFIG } from '../config.js';
 import { log } from './log.js';
-import { Registry } from './registry.js';
+import { NAMESPACE } from './identifiers.js';
 import { SwordRegistry } from './sword_registry.js';
+import { AbilityRegistry } from './ability_registry.js';
 import { ItemIdentifier } from './item_identifier.js';
 import { Diagnostics } from './diagnostics.js';
 import { CooldownManager } from './cooldown_manager.js';
 import { PlayerStateStore } from './player_state.js';
+import { AbilityGate } from './ability_gate.js';
 import { AbilityExecutor } from './ability_executor.js';
 import { InputRouter } from './input_router.js';
 import { validateAbilityDefinition, validateSwordDefinition } from './definition_validator.js';
-import { NAMESPACE } from './identifiers.js';
 
 import { TargetingService } from '../systems/targeting.js';
 import { DamageService } from '../systems/damage.js';
@@ -39,7 +40,7 @@ import { EffectService } from '../systems/effects.js';
 import { ParticleService } from '../systems/particles.js';
 import { SoundService } from '../systems/sounds.js';
 import { FeedbackService } from '../systems/feedback.js';
-import { CombatSystem } from '../systems/combat.js';
+import { OutcomeService } from '../systems/outcome.js';
 
 import { ABILITIES } from '../abilities/index.js';
 import { SWORDS } from '../swords/index.js';
@@ -56,13 +57,13 @@ import { SWORDS } from '../swords/index.js';
  * @param {readonly SwordDefinition[]} [options.swords]
  * @param {() => number} [options.clock]
  * @returns {{
- *   abilities: Registry<AbilityDefinition>,
+ *   abilities: AbilityRegistry,
  *   swords: SwordRegistry,
  *   identifier: ItemIdentifier,
  *   diagnostics: Diagnostics,
  *   services: import('./types.js').ServiceContainer,
+ *   gate: AbilityGate,
  *   executor: AbilityExecutor,
- *   combat: CombatSystem,
  *   router: InputRouter,
  *   problems: string[]
  * }}
@@ -75,8 +76,8 @@ export function createFramework(options = {}) {
     /** @type {string[]} */
     const problems = [];
 
-    /** @type {Registry<AbilityDefinition>} */
-    const abilities = new Registry('ability');
+    // --- Abilities ---------------------------------------------------------
+    const abilities = new AbilityRegistry();
     for (const ability of abilityDefinitions) {
         const issues = validateAbilityDefinition(ability);
         if (issues.length > 0) {
@@ -84,13 +85,14 @@ export function createFramework(options = {}) {
             continue; // Never register a malformed ability.
         }
         try {
-            abilities.register(ability.id, ability);
+            abilities.register(ability);
         } catch (error) {
             problems.push(String(error instanceof Error ? error.message : error));
         }
     }
     abilities.seal();
 
+    // --- Swords ------------------------------------------------------------
     const swords = new SwordRegistry();
     for (const sword of swordDefinitions) {
         const issues = validateSwordDefinition(sword, (id) => abilities.has(id));
@@ -103,13 +105,20 @@ export function createFramework(options = {}) {
             swords.register(sword);
         } catch (error) {
             problems.push(String(error instanceof Error ? error.message : error));
+            continue;
+        }
+        // Record the reverse index once the sword is known to be sound, so
+        // `abilities.swordsUsing(id)` can answer "what would I break?".
+        for (const binding of sword.abilities) {
+            abilities.link(binding.abilityId, sword.id, binding.activation);
         }
     }
     swords.seal();
 
     const identifier = new ItemIdentifier({ swords });
-    const diagnostics = new Diagnostics({ swords, identifier, log });
+    const diagnostics = new Diagnostics({ swords, abilities, identifier, log });
 
+    // --- Services ----------------------------------------------------------
     const cooldowns = new CooldownManager(clock);
     const state = new PlayerStateStore();
     const targeting = new TargetingService(CONFIG, log);
@@ -118,39 +127,49 @@ export function createFramework(options = {}) {
     const effects = new EffectService(log);
     const particles = new ParticleService(CONFIG, log);
     const feedback = new FeedbackService(CONFIG, sounds, log);
+    const outcome = new OutcomeService({ damage, effects, particles, sounds });
 
     /** @type {import('./types.js').ServiceContainer} */
-    const services = { targeting, damage, effects, particles, sounds, feedback, cooldowns, state, log, config: CONFIG };
+    const services = {
+        targeting,
+        damage,
+        effects,
+        particles,
+        sounds,
+        feedback,
+        outcome,
+        cooldowns,
+        state,
+        log,
+        config: CONFIG,
+    };
 
-    const executor = new AbilityExecutor({ abilities, services, clock });
-    const combat = new CombatSystem({ executor });
-    const router = new InputRouter({ identifier, executor, combat, log });
+    // --- Engine ------------------------------------------------------------
+    const gate = new AbilityGate({ abilities, identifier, cooldowns, log });
+    const executor = new AbilityExecutor({ abilities, gate, services, clock });
+    const router = new InputRouter({ identifier, swords, executor, log });
 
-    return { abilities, swords, identifier, diagnostics, services, executor, combat, router, problems };
+    return { abilities, swords, identifier, diagnostics, services, gate, executor, router, problems };
 }
 
 /**
  * Runs each ability's own `validateParams` against the merged parameters a
- * sword actually binds. Catches "this sword passes radius: -1" at load time
+ * sword actually binds. Catches "this sword passes damage: -1" at load time
  * instead of the first time a player swings it.
  *
  * @param {SwordDefinition} sword
- * @param {Registry<AbilityDefinition>} abilities
+ * @param {AbilityRegistry} abilities
  * @returns {string[]}
  */
 function validateBindingParams(sword, abilities) {
     /** @type {string[]} */
     const problems = [];
-    for (const [trigger, binding] of [
-        ['active', sword.active],
-        ['passive', sword.passive],
-    ]) {
-        if (binding === undefined) continue;
+    for (const binding of sword.abilities ?? []) {
         const ability = abilities.get(binding.abilityId);
         if (ability?.validateParams === undefined) continue;
         const merged = { ...(ability.defaults ?? {}), ...(binding.params ?? {}) };
         for (const issue of ability.validateParams(merged)) {
-            problems.push(`${sword.id}.${trigger} -> ${ability.id}: ${issue}`);
+            problems.push(`${sword.id}[${binding.activation}] -> ${ability.id}: ${issue}`);
         }
     }
     return problems;
@@ -173,21 +192,13 @@ export function start() {
         }
     });
 
-    // Releasing per-player memory the moment a player disconnects is the whole
-    // multiplayer hygiene story: no stale handles, no cooldowns leaking into
-    // whoever reuses that slot.
-    world.afterEvents.playerLeave.subscribe(({ playerId }) => {
-        framework.services.cooldowns.clearPlayer(playerId);
-        framework.services.state.clearPlayer(playerId);
-        log.debug(`Cleared runtime state for departed player ${playerId}.`);
-    });
+    subscribePlayerLifecycle(framework);
 
     // Diagnostics are exposed as script events rather than a tick loop, so they
     // cost one namespace-filtered subscription and nothing else.
-    system.afterEvents.scriptEventReceive.subscribe(
-        (event) => framework.diagnostics.handle(event),
-        { namespaces: [NAMESPACE] },
-    );
+    system.afterEvents.scriptEventReceive.subscribe((event) => framework.diagnostics.handle(event), {
+        namespaces: [NAMESPACE],
+    });
 
     world.afterEvents.worldLoad.subscribe(() => {
         const shipped = framework.swords.shipped().length;
@@ -198,10 +209,64 @@ export function start() {
                 `${framework.abilities.size} ability(ies). ` +
                 `Run '/scriptevent ${NAMESPACE}:list' in game to inspect the registry.`,
         );
+        const unused = framework.abilities.unused();
+        if (unused.length > 0) {
+            log.warn(`Registered but unbound ability(ies): ${unused.join(', ')}.`);
+        }
         startMaintenance(framework);
     });
 
     return framework;
+}
+
+/**
+ * Per-player state hygiene.
+ *
+ * Three distinct moments, each clearing a different amount:
+ *
+ *  - **disconnect** — everything. No stale handles, no cooldowns leaking into
+ *    whoever reuses that player slot.
+ *  - **death** — life-scoped state only. A combo or a charge does not survive
+ *    dying; a cooldown does, because dying to reset a long cooldown would be an
+ *    exploit.
+ *  - **respawn** — life-scoped state again, as a backstop for the case where a
+ *    death event was missed.
+ *
+ * `entityDie` is filtered to players at subscription time, so the handler does
+ * not run for every mob that dies in the world.
+ *
+ * @param {ReturnType<typeof createFramework>} framework
+ */
+function subscribePlayerLifecycle(framework) {
+    const { cooldowns, state } = framework.services;
+
+    world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+        cooldowns.clearPlayer(playerId);
+        state.clearPlayer(playerId);
+        log.debug(`Cleared runtime state for departed player ${playerId}.`);
+    });
+
+    world.afterEvents.entityDie.subscribe(
+        (event) => {
+            const dead = event.deadEntity;
+            if (dead?.typeId !== 'minecraft:player') return;
+            try {
+                state.clearLifeScope(dead.id);
+            } catch (error) {
+                log.debug('Death cleanup skipped:', error);
+            }
+        },
+        { entityTypes: ['minecraft:player'] },
+    );
+
+    world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
+        if (initialSpawn) return; // A first join has nothing to clear.
+        try {
+            state.clearLifeScope(player.id);
+        } catch (error) {
+            log.debug('Respawn cleanup skipped:', error);
+        }
+    });
 }
 
 /**

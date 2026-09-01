@@ -6,9 +6,10 @@
  * These commands make the framework's own view of the world observable, which
  * is what turns "it seems to work" into "the registry reports it".
  *
- *   /scriptevent custom_swords:list         every registered sword and its stats
- *   /scriptevent custom_swords:held         identify the item in your main hand
- *   /scriptevent custom_swords:info <id>    full record for one sword
+ *   /scriptevent custom_swords:list           every registered sword and its stats
+ *   /scriptevent custom_swords:held           identify the item in your main hand
+ *   /scriptevent custom_swords:info <id>      full record for one sword
+ *   /scriptevent custom_swords:abilities      every registered ability and its users
  *
  * Cost when unused is a single event subscription filtered to our namespace —
  * no polling, no per-tick work. Output goes to the invoking player when there
@@ -17,6 +18,7 @@
  */
 
 import { NAMESPACE, localNameOf } from './identifiers.js';
+import { ACTIVATION_LABELS } from './activation.js';
 import { describeSword, describeAll } from './sword_stats.js';
 import { ticksToSeconds } from '../util/ticks.js';
 
@@ -26,12 +28,15 @@ export class Diagnostics {
     /**
      * @param {object} deps
      * @param {import('./sword_registry.js').SwordRegistry} deps.swords
+     * @param {import('./ability_registry.js').AbilityRegistry} deps.abilities
      * @param {import('./item_identifier.js').ItemIdentifier} deps.identifier
      * @param {typeof import('./log.js').log} deps.log
      */
-    constructor({ swords, identifier, log }) {
+    constructor({ swords, abilities, identifier, log }) {
         /** @private @readonly */
         this.swords = swords;
+        /** @private @readonly */
+        this.abilities = abilities;
         /** @private @readonly */
         this.identifier = identifier;
         /** @private @readonly */
@@ -59,8 +64,13 @@ export class Diagnostics {
                 case 'info':
                     this.reply(player, this.renderInfo(event.message.trim()));
                     return;
+                case 'abilities':
+                    this.reply(player, this.renderAbilities());
+                    return;
                 default:
-                    this.reply(player, [`§cUnknown command '${command}'. Try: list, held, info <id>.`]);
+                    this.reply(player, [
+                        `§cUnknown command '${command}'. Try: list, held, info <id>, abilities.`,
+                    ]);
             }
         } catch (error) {
             this.log.error('Diagnostics command failed:', error);
@@ -162,6 +172,31 @@ export class Diagnostics {
     }
 
     /**
+     * Every registered ability and the swords that bind it — the reuse picture
+     * at a glance.
+     *
+     * @private
+     * @returns {string[]}
+     */
+    renderAbilities() {
+        const lines = [`§b[Custom Swords]§r ${this.abilities.size} ability(ies) registered.`];
+        for (const id of this.abilities.ids().sort()) {
+            const described = this.abilities.describe(id);
+            if (described === undefined) continue;
+            lines.push(`  §b${described.name}§r §8${described.id}§r`);
+            if (described.description.length > 0) lines.push(`    §7${described.description}§r`);
+            if (described.usedBy.length === 0) {
+                lines.push('    §cBound by no sword.§r');
+            } else {
+                for (const use of described.usedBy) {
+                    lines.push(`    used by §f${use.swordId}§r on §e${use.activation}§r`);
+                }
+            }
+        }
+        return lines;
+    }
+
+    /**
      * @private
      * @param {import('./types.js').SwordDefinition} sword
      * @returns {string[]}
@@ -181,9 +216,12 @@ export class Diagnostics {
         }
         for (const ability of description.abilities) {
             lines.push(
-                `  Ability (${ability.trigger}): §b${ability.abilityId}§r · ` +
-                    `cooldown ${ticksToSeconds(ability.cooldownTicks)}s · ` +
-                    `targeting ${ability.targetingType}${ability.range === undefined ? '' : ` r=${ability.range}`}`,
+                `  §e${ACTIVATION_LABELS[ability.activation] ?? ability.activation}§r: §b${ability.abilityId}§r`,
+            );
+            lines.push(
+                `    cooldown ${ticksToSeconds(ability.cooldownTicks)}s · ` +
+                    `targeting ${ability.targetingType}${ability.range === undefined ? '' : ` r=${ability.range}`}` +
+                    `${ability.restricted ? ' · §6restricted§r' : ''}`,
             );
         }
         return lines;

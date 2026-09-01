@@ -67,29 +67,30 @@ export function repairAmountFor(durability) {
 
 /**
  * @typedef {Object} AbilitySummary
- * @property {import('./types.js').AbilityTrigger} trigger
+ * @property {import('./activation.js').ActivationMethod} activation
  * @property {string} abilityId
  * @property {number} cooldownTicks
  * @property {number} cooldownSeconds
  * @property {string} targetingType
  * @property {number | undefined} range
+ * @property {boolean} restricted True when the binding declares restrictions.
  */
 
 /**
  * @param {AbilityBinding | undefined} binding
- * @param {import('./types.js').AbilityTrigger} trigger
  * @returns {AbilitySummary | undefined}
  */
-export function summariseBinding(binding, trigger) {
+export function summariseBinding(binding) {
     if (binding === undefined) return undefined;
     const cooldownTicks = binding.cooldownTicks ?? 0;
     return {
-        trigger,
+        activation: binding.activation,
         abilityId: binding.abilityId,
         cooldownTicks,
         cooldownSeconds: ticksToSeconds(cooldownTicks),
         targetingType: binding.targeting?.type ?? 'self',
         range: binding.targeting?.range,
+        restricted: binding.restrictions !== undefined,
     };
 }
 
@@ -114,12 +115,9 @@ export function summariseBinding(binding, trigger) {
  */
 export function describeSword(sword) {
     const tier = requireRarity(sword.rarity);
-    /** @type {AbilitySummary[]} */
-    const abilities = [];
-    const active = summariseBinding(sword.active, 'use');
-    const passive = summariseBinding(sword.passive, 'hit');
-    if (active !== undefined) abilities.push(active);
-    if (passive !== undefined) abilities.push(passive);
+    const abilities = (sword.abilities ?? [])
+        .map((binding) => summariseBinding(binding))
+        .filter((summary) => summary !== undefined);
 
     return {
         id: sword.id,

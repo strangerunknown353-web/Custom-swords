@@ -133,8 +133,18 @@ export class MockEntity {
         this.location = location;
         this.dimension = dimension ?? new MockDimension();
         this.isValid = true;
+        this.isSneaking = false;
+        this.isOnGround = true;
+        this.isInWater = false;
+        /** @type {{ x: number, y: number, z: number }[]} */
+        this.impulses = [];
+        /** @type {{ seconds: number }[]} */
+        this.ignitions = [];
+        /** @type {{ location: any, options: any }[]} */
+        this.teleports = [];
         /** @type {Record<string, any>} */
         this.components = {};
+        this.setHealth(20, 20);
         /** @type {{ amount: number, options: any }[]} */
         this.damageTaken = [];
         /** @type {{ horizontal: any, vertical: number }[]} */
@@ -154,6 +164,53 @@ export class MockEntity {
     applyKnockback(horizontal, vertical) {
         if (!this.isValid) throw new Error('Entity is not valid.');
         this.knockbacks.push({ horizontal, vertical });
+    }
+
+    /**
+     * Installs a health component with the given current/max values.
+     *
+     * @param {number} current
+     * @param {number} max
+     */
+    setHealth(current, max = 20) {
+        const owner = this;
+        this.components['minecraft:health'] = {
+            get currentValue() {
+                return owner._health;
+            },
+            effectiveMax: max,
+            /** @param {number} value */
+            setCurrentValue(value) {
+                owner._health = value;
+                return true;
+            },
+        };
+        this._health = current;
+    }
+
+    /** @param {number} seconds @param {boolean} [useEffects] */
+    setOnFire(seconds, useEffects = true) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        this.ignitions.push({ seconds, useEffects });
+        return true;
+    }
+
+    extinguishFire() {
+        this.ignitions.length = 0;
+        return true;
+    }
+
+    /** @param {any} location @param {any} options */
+    teleport(location, options) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        this.teleports.push({ location: { ...location }, options });
+        this.location = { ...location };
+    }
+
+    /** @param {any} vector */
+    applyImpulse(vector) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        this.impulses.push({ ...vector });
     }
 
     /** @param {string} effect @param {number} duration @param {any} options */
@@ -242,6 +299,15 @@ export class MockPlayer extends MockEntity {
     getItemCooldown(category) {
         return this.itemCooldowns.filter((c) => c.category === category).at(-1)?.ticks ?? 0;
     }
+
+    /**
+     * The real engine documents `applyImpulse` as throwing when called on a
+     * Player, so the mock does too — that is exactly the behaviour
+     * `EffectService.impulse` has to route around.
+     */
+    applyImpulse() {
+        throw new Error('applyImpulse is not supported for Players.');
+    }
 }
 
 /**
@@ -311,6 +377,7 @@ export const world = {
         playerSpawn: new Signal(),
         worldLoad: new Signal(),
         entityHitEntity: new Signal(),
+        entityDie: new Signal(),
     },
     beforeEvents: {},
     /** @type {MockPlayer[]} */
@@ -334,6 +401,8 @@ export function resetMocks() {
     system.beforeEvents.startup = new Signal();
     system.afterEvents.scriptEventReceive = new Signal();
     world.afterEvents.playerLeave = new Signal();
+    world.afterEvents.playerSpawn = new Signal();
+    world.afterEvents.entityDie = new Signal();
     world.afterEvents.worldLoad = new Signal();
     world.players = [];
     world.messages = [];

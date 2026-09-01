@@ -10,7 +10,38 @@
  * reload, which is the correct behaviour for transient combat state; anything
  * that must survive a restart belongs in dynamic properties instead (see
  * TODO.md).
+ *
+ * ## Lifecycle
+ *
+ * Keys are namespaced by scope so the framework can clear the right subset at
+ * the right moment:
+ *
+ * | Scope | Cleared on | Use for |
+ * |---|---|---|
+ * | `life:*`  | death and disconnect | charge levels, combo counters, in-flight ability state |
+ * | (other)   | disconnect only      | anything that should survive a respawn |
+ *
+ * A player who dies mid-combo should not respawn still holding it, and an
+ * ability that was winding up when its caster died must not resume. Cooldowns
+ * are deliberately NOT in the `life:` scope: dying to reset a long cooldown
+ * would be an exploit.
  */
+
+/**
+ * Prefix marking a key as valid only for the player's current life.
+ * Use {@link lifeKey} rather than writing it out.
+ */
+export const LIFE_SCOPE = 'life:';
+
+/**
+ * Builds a life-scoped key, cleared automatically on death and respawn.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+export function lifeKey(name) {
+    return `${LIFE_SCOPE}${name}`;
+}
 
 export class PlayerStateStore {
     constructor() {
@@ -76,6 +107,27 @@ export class PlayerStateStore {
     /** @param {string} playerId */
     clearPlayer(playerId) {
         this.byPlayer.delete(playerId);
+    }
+
+    /**
+     * Drops only the life-scoped keys for a player, leaving everything else.
+     * Called when a player dies or respawns.
+     *
+     * @param {string} playerId
+     * @returns {number} Number of keys dropped.
+     */
+    clearLifeScope(playerId) {
+        const bucket = this.byPlayer.get(playerId);
+        if (bucket === undefined) return 0;
+        let removed = 0;
+        for (const key of [...bucket.keys()]) {
+            if (key.startsWith(LIFE_SCOPE)) {
+                bucket.delete(key);
+                removed++;
+            }
+        }
+        if (bucket.size === 0) this.byPlayer.delete(playerId);
+        return removed;
     }
 
     clearAll() {

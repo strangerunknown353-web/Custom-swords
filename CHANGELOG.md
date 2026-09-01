@@ -13,6 +13,69 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.3.0] — 2026-09-01
+
+Ability Engine and the permanent texture standard (roadmap step 3). Still **no
+shipped swords** — one diagnostic sword and one ability.
+
+### Added
+
+- **Activation system** (`core/activation.js`) — four player-driven methods:
+  `use`, `sneak_use`, `attack`, `sneak_attack`, resolved from the engine hook
+  plus the player's sneak state. A sneaking activation falls back to its
+  non-sneaking base, so a sword that binds only `use` still works while
+  crouching.
+- **Ability Registry** (`core/ability_registry.js`) — lookup, sealing and a
+  reverse index: `swordsUsing(abilityId)` answers "what would I break if I
+  changed this?", and `unused()` surfaces abilities no sword binds.
+- **Validation gate** (`core/ability_gate.js`) — an ordered, named chain run
+  before anything is spent: player validity, ability existence, sword still
+  equipped, declarative restrictions, cooldown. Cooldown is checked last so a
+  refusal never shows a misleading "recharging" message, and a failed gate
+  mutates nothing.
+- **Restrictions** as binding data: `minHealth`, `requireGrounded`,
+  `forbidInWater`, `dimensions`. A restriction that cannot be evaluated fails
+  closed.
+- **Outcome composition** (`systems/outcome.js`) — `applyToTargets` performs the
+  block every ability ends with, owning the ordering (damage → particles →
+  sound → effects → ignite → knockback); `playCast` covers activation visuals.
+- **Effect helpers**: `heal` (clamped to max), `ignite`, `extinguish`,
+  `teleport` (block-checked by default) and `impulse`, which routes players to
+  `applyKnockback` because `applyImpulse` throws on them.
+- **Life-scoped player state** — keys prefixed `life:` are cleared on death and
+  respawn; everything else survives until disconnect. Cooldowns are deliberately
+  not life-scoped, so dying cannot be used to reset one.
+- **`custom_swords:shockwave`** — the first real ability, fully envelope-driven.
+- **Texture pipeline** — sword icons are authored as text under `art/swords/`
+  and compiled to PNG, so art diffs in git and can be linted.
+- **`docs/TEXTURE_STANDARD.md`** — the project's permanent texture rule, the
+  visual bar, the source format, and what the automated gate can and cannot
+  judge.
+- **In-game `/scriptevent custom_swords:abilities`** — every registered ability
+  and the swords that bind it.
+- Validator gates for the texture standard (missing source, broken silhouette,
+  flat palette, missing outline, recolour detection) and for duplicate engine
+  subscriptions.
+- 72 further tests (254 total).
+
+### Changed
+
+- **Sword definitions now carry an `abilities` array keyed by activation**,
+  replacing the `active` / `passive` slots. A sword may bind several methods,
+  and the Test Blade now binds the same ability twice with different envelopes —
+  a wide burst on `use`, an aimed strike on `sneak_use` — which is the clearest
+  demonstration that behaviour comes from data.
+- `InputRouter` resolves activations and dispatches; it holds no sword or
+  ability knowledge.
+- The Test Blade's texture was **regenerated from scratch** to the new standard.
+
+### Removed
+
+- `systems/combat.js`. The router now dispatches melee activations through the
+  same path as every other activation, so the class had become pure indirection.
+  The combat layer proper is milestone 4.
+- `custom_swords:diagnostic_pulse`, superseded by `shockwave`.
+
 ## [0.2.0] — 2026-09-01
 
 Core Sword Framework (roadmap step 2). The reusable foundation the 20–25 sword
@@ -117,6 +180,7 @@ See "Current limitations" in `README.md` and the open items in `TODO.md`. In
 particular: this release has **not** been run inside a Minecraft client — it has
 been validated statically and against a mocked engine only.
 
-[Unreleased]: https://github.com/strangerunknown353-web/Custom-swords/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/strangerunknown353-web/Custom-swords/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/strangerunknown353-web/Custom-swords/releases/tag/v0.3.0
 [0.2.0]: https://github.com/strangerunknown353-web/Custom-swords/releases/tag/v0.2.0
 [0.1.0]: https://github.com/strangerunknown353-web/Custom-swords/releases/tag/v0.1.0

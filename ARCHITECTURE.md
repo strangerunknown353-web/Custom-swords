@@ -17,13 +17,15 @@ code path.**
 │ DATA          swords/*.js          abilities/builtin/*.js   config.js│
 │               (pure data)          (pure behaviour)                  │
 ├──────────────────────────────────────────────────────────────────────┤
-│ CORE          identifiers  rarity  types                             │
-│               registry  sword_registry  item_identifier  sword_stats │
-│               definition_validator  cooldown_manager  player_state   │
-│               ability_executor  input_router  diagnostics  bootstrap │
+│ CORE          identifiers  rarity  activation  types                 │
+│               registry  sword_registry  ability_registry             │
+│               item_identifier  sword_stats  definition_validator     │
+│               cooldown_manager  player_state                         │
+│               ability_gate  ability_executor  input_router           │
+│               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
 │ SYSTEMS       targeting  damage  effects  particles  sounds          │
-│               feedback   combat                                      │
+│               feedback   outcome                                     │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -46,7 +48,7 @@ Dependencies point **downward only**. In particular:
 One right-click on a custom sword travels this path, and only this path:
 
 ```
-Player uses the item
+Player input (right-click or melee hit)
         │
         ▼
 Item custom component  ── custom_swords:sword, registered once for the whole addon
@@ -55,30 +57,37 @@ Item custom component  ── custom_swords:sword, registered once for the whole
 Item identification  ───── namespace check, then O(1) registry lookup
         │                  (scripts/core/item_identifier.js)
         ▼
-Ability resolution   ───── binding.abilityId → AbilityRegistry
-        │
+Activation resolution ──── hook + sneak state → use | sneak_use | attack | sneak_attack
+        │                  then exact match, else non-sneaking fallback
         ▼
-Cooldown check       ───── CooldownManager.remaining(playerId, key)
-        │                  ├─ still cooling → feedback.onCooldown, STOP
+Binding lookup       ───── SwordRegistry.getBinding(swordId, activation)
+        │                  ├─ no binding → silently do nothing
         ▼
-Context construction ───── player, origin, view direction, merged params,
-        │                  service container
+VALIDATION GATE      ───── scripts/core/ability_gate.js, in this order:
+        │                    1. player still valid?
+        │                    2. ability registered?
+        │                    3. sword still equipped?
+        │                    4. restrictions satisfied?
+        │                    5. cooldown elapsed?
+        │                  ├─ any failure → explain, change NOTHING, STOP
+        ▼
+Context construction ───── player, origin, view direction, the binding's
+        │                  targeting / effects / particles / sounds,
+        │                  merged params, service container
         ▼
 Ability.execute(ctx) ───── guarded by try/catch
         │
-        ├── targeting.sphere / cone / raycast
-        ├── damage.apply / knockback
-        ├── effects.apply
-        ├── particles.emit / ring
-        └── sounds.playAt / playFor
-        │
+        ├── outcome.playCast              (caster particles + cast sound)
+        ├── targeting.resolve             (self | single | ray | area | cone)
+        └── outcome.applyToTargets        (damage → particles → sound →
+        │                                  effects → ignite → knockback)
         ▼
 Result               ───── { ok: true }  → start cooldown, action-bar confirmation
                            { ok: false } → NO cooldown, action-bar explanation
 ```
 
-A melee hit takes the same path through `onHitEntity → CombatSystem →
-AbilityExecutor`, with `ctx.target` pre-populated and `trigger: 'hit'`.
+The gate runs before anything is spent. A refused activation costs no cooldown,
+no durability, no particles and no sound — the world is exactly as it was.
 
 ### Why one custom component instead of global events
 
@@ -122,20 +131,29 @@ takes.
     glint:        false,                     // -> minecraft:glint
   },
 
-  // Active ability: right-click / long-press
-  active: {
-    abilityId:     'custom_swords:diagnostic_pulse',
-    cooldownTicks: 60,
-    hudCategory:   'custom_swords_test_blade',
-    targeting:     { type: 'area', range: 4, maxTargets: 8 },
-    effects:       [{ effect: 'slowness', durationTicks: 40 }],
-    particles:     [{ id: 'minecraft:critical_hit_emitter', count: 12, at: 'caster' }],
-    sounds:        { cast: 'ability_cast', impact: 'impact_light' },
-    params:        { damage: 3 },
-  },
-
-  // Passive ability: fired on melee hit. Same shape as `active`.
-  passive: undefined,
+  // One binding per activation method. A sword may carry several.
+  abilities: [
+    {
+      activation:    'use',              // right-click / long-press
+      abilityId:     'custom_swords:shockwave',
+      cooldownTicks: 60,
+      hudCategory:   'custom_swords_test_blade',
+      targeting:     { type: 'area', range: 4, maxTargets: 8 },
+      effects:       [{ effect: 'slowness', durationTicks: 40 }],
+      particles:     [{ id: 'minecraft:critical_hit_emitter', count: 12, at: 'caster' }],
+      sounds:        { cast: 'ability_cast', impact: 'impact_light' },
+      params:        { damage: 4, knockback: 0.8 },
+    },
+    {
+      activation:    'sneak_use',        // the SAME ability, aimed
+      abilityId:     'custom_swords:shockwave',
+      cooldownTicks: 100,
+      targeting:     { type: 'single', range: 7 },
+      effects:       [{ effect: 'weakness', durationTicks: 60 }],
+      restrictions:  { requireGrounded: true },
+      params:        { damage: 9, knockback: 1.4 },
+    },
+  ],
 }
 ```
 
@@ -365,17 +383,124 @@ Abilities receive `ctx.services` and nothing else. They never import
 
 ---
 
-## 5. Systems
+## 5. The Ability Engine
+
+### Activation (`core/activation.js`)
+
+Bedrock's item custom component gives two player-driven hooks — `onUse` and
+`onHitEntity`. Combined with the player's sneak state that yields four
+activation methods:
+
+| Method | Input |
+|---|---|
+| `use` | right-click / long-press |
+| `sneak_use` | sneak + right-click |
+| `attack` | melee hit |
+| `sneak_attack` | sneak + melee hit |
+
+Nothing polls input. The sneak state is read from the event's player at the
+moment the event fires.
+
+**Fallback rule.** A sneaking activation resolves to its exact binding first,
+then to the non-sneaking base. So a sword that binds only `use` still works
+while the player happens to crouch — which is what players expect, and which
+would otherwise be a baffling "my sword stops working on ladders" bug. The
+reverse never happens: a standing player cannot trigger a sneak-only ability.
+
+### Ability Registry (`core/ability_registry.js`)
+
+Mirrors the Sword Registry deliberately: same lookup semantics, same sealing,
+same "ask the registry, never hard-code" rule. There is no `switch` over ability
+ids anywhere in the addon.
+
+It also keeps a **reverse index**: `swordsUsing(abilityId)` answers "which swords
+would I affect if I changed this ability?" — essential once 25 swords share a
+dozen abilities — and `unused()` surfaces abilities no sword binds, which is
+dead behaviour worth knowing about. The world-load banner reports them.
+
+### Validation gate (`core/ability_gate.js`)
+
+An ordered, named chain rather than inline conditions, so the order is visible
+and each step is individually testable:
+
+| # | Check | Refusal reason |
+|---|---|---|
+| 1 | Player handle still valid | `invalid_player` |
+| 2 | Bound ability is registered | `unknown_ability` |
+| 3 | Caster still holds this sword | `not_equipped`, `wrong_sword` |
+| 4 | Binding's restrictions satisfied | `restricted_*` |
+| 5 | Cooldown elapsed | `cooldown` |
+
+Two properties matter:
+
+- **Cooldown is checked last.** A refusal for any other reason never shows the
+  player a misleading "still recharging" message.
+- **The gate mutates nothing.** A failed check leaves no cooldown, no
+  durability loss, no particles, no sound.
+
+Step 3 exists because the engine hands us the stack that fired the event, but by
+the time the handler runs the player may have swapped slots or the item may have
+broken. One component read on a player-initiated action is a cheap price for
+never running a sword's ability from an empty hand.
+
+**Restrictions** are declared as data on the binding, so a designer gates an
+ability without writing code:
+
+```js
+restrictions: {
+  minHealth: 6,                        // caster must have this much health left
+  requireGrounded: true,               // no mid-air casting
+  forbidInWater: true,
+  dimensions: ['minecraft:nether'],
+}
+```
+
+A restriction that cannot be evaluated **fails closed** — it refuses the
+activation rather than silently passing.
+
+### Executor (`core/ability_executor.js`)
+
+The single funnel every invocation passes through. Beyond the gate:
+
+- **Cooldown starts only on success.** An ability returning `{ ok: false }` (no
+  target, conditions unmet) does not burn the player's cooldown.
+- **`execute` is wrapped in try/catch.** One throwing ability is contained to
+  that invocation; it can never take down the handler and with it every other
+  sword in the world.
+- **Feedback is activation-aware.** Only deliberate activations (`use`,
+  `sneak_use`) write to the action bar. A melee swing that fails its gate must
+  not spam the screen on every hit.
+
+Cooldown keys default to `<swordId>#<activation>`, so each sword and each of its
+activations has an independent timer. A binding can set `cooldownKey` to
+deliberately share one across abilities or across swords.
+
+### Outcome composition (`systems/outcome.js`)
+
+Nearly every ability ends with the same block: damage each target, knock it
+back, apply the binding's effects, spray its particles, play its impact sound.
+Retyping that across twenty-five abilities is how per-sword drift gets in, so
+`applyToTargets` performs it once — and owns the ordering:
+
+```
+damage → target particles → impact sound → effects → ignite → knockback
+```
+
+Damage lands before knockback so a dying target is not pointlessly launched, and
+particles are drawn at the target's position before it is moved. `playCast`
+covers the other half: caster particles and the cast sound at activation.
+
+## 6. Systems
 
 | System | Responsibility | Safety rules it owns |
 |---|---|---|
 | `targeting` | resolve a declarative targeting spec into entities (sphere / cone / raycast) | range ceiling, target-count ceiling, PvP toggle, never-target list, stale-handle rejection |
 | `damage` | apply damage and knockback | global damage multiplier, per-hit ceiling, never damage the caster |
-| `effects` | apply status effects | duration normalisation, unknown-effect containment |
+| `effects` | status effects, healing, ignition, teleport, impulse | duration normalisation, unknown-effect containment, non-finite rejection, `applyImpulse`-on-player routing |
 | `particles` | emit particles and rings | per-emit budget, non-finite location rejection |
 | `sounds` | play sounds | named preset library, world-vs-player scoping |
 | `feedback` | action bar text, deny cues | always single-player scoped — cannot broadcast |
-| `combat` | on-hit behaviour | entry point for future life steal, combos, crit windows |
+| `outcome` | the standard "do this to these targets" block | fixed ordering: damage before knockback, particles before movement |
 
 Targeting always delegates culling to the engine's own spatial query
 (`getEntities` with `location` + `maxDistance`). The framework never iterates
@@ -383,7 +508,7 @@ every entity in a dimension.
 
 ---
 
-## 6. Lifecycle
+## 7. Lifecycle
 
 Scripting V2 runs module bodies and `system.beforeEvents.startup` in **early
 execution**, before the world exists. Touching `world.getAllPlayers()`, blocks
@@ -395,6 +520,8 @@ or entities there throws. The bootstrap is split accordingly:
 | `system.beforeEvents.startup` | build registries and services, validate definitions, register the item component, subscribe to events | reading world state |
 | `world.afterEvents.worldLoad` | readiness banner, start the maintenance interval | — |
 | `world.afterEvents.playerLeave` | drop that player's cooldowns and state | — |
+| `world.afterEvents.entityDie` | drop that player's life-scoped state (filtered to players at subscription) | — |
+| `world.afterEvents.playerSpawn` | drop life-scoped state again, as a backstop; ignore first joins | — |
 
 Registering the custom component **must** happen in `startup`, because item JSON
 is parsed after scripts run in V2 — that ordering is the reason V2 moved script
@@ -402,7 +529,7 @@ init earlier.
 
 ---
 
-## 7. Multiplayer safety
+## 8. Multiplayer safety
 
 Each of the failure modes the project set out to avoid maps to a specific
 structural guarantee:
@@ -435,17 +562,33 @@ Concretely:
   `player.id` in `CooldownManager` or `PlayerStateStore`, and is released when
   that player disconnects.
 
+Player state has two scopes, cleared at different moments:
+
+| Scope | Key prefix | Cleared on | Use for |
+|---|---|---|---|
+| Life | `life:` (via `lifeKey()`) | death, respawn, disconnect | combos, charge levels, in-flight ability state |
+| Player | anything else | disconnect | anything that should survive a respawn |
+
+Cooldowns are deliberately **not** life-scoped: dying to reset a long cooldown
+would be an exploit.
+
 There is no third category, and no API in the framework that stores per-player
 data without a player id. That is why one player's cooldown structurally cannot
 affect another's.
 
-## 8. Performance
+## 9. Performance
 
 - **Zero gameplay tick loops.** Everything is event-driven.
 - **One interval**, every 600 ticks, doing nothing but releasing memory.
 - **O(1) sword identification** — a namespace check, then a `Map` lookup on
   `typeId`. Vanilla and foreign items are rejected before the lookup happens.
 - **Diagnostics cost one filtered subscription**, not a loop.
+- **Six engine subscriptions in total**, each registered exactly once and only
+  from `core/bootstrap.js`. `tools/validate.mjs` fails the build on a duplicate
+  or a subscription made anywhere else — a second listener on one signal would
+  fire every ability twice per input.
+- **Three component reads per activation** at most (equippable, plus health only
+  when a restriction asks for it), all on player-initiated actions.
 - **Engine-side spatial queries** — no manual entity scans, no block scans.
 - **Hard particle budget** — `config.particles.maxPerEmit` caps any single call,
   so a mis-authored meteor cannot stall a low-end device.
@@ -454,17 +597,17 @@ affect another's.
 
 ---
 
-## 9. Build pipeline
+## 10. Build pipeline
 
 ```
-scripts/swords/*.js  (single source of truth)
-        │
-        ▼  tools/generate.mjs
+scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
+        │                                              │
+        ▼  tools/generate.mjs  ◄────────────────────────┘
         ├── packs/CustomSwordsBP/items/*.item.json
         ├── packs/CustomSwordsRP/textures/item_texture.json
+        ├── packs/CustomSwordsRP/textures/items/custom_swords/swords/*.png
         ├── packs/CustomSwordsRP/texts/en_US.lang
-        ├── packs/CustomSwordsBP/texts/en_US.lang
-        └── placeholder textures (only when art is absent)
+        └── packs/CustomSwordsBP/texts/en_US.lang
         │
         ▼  tools/validate.mjs      manifests, UUIDs, JSON, references, architecture rules
         ▼  npm test                84 unit + integration tests against a mocked engine
@@ -481,6 +624,19 @@ The tools import the framework's own `identifiers.js`, `rarity.js` and
 with a private copy of the conventions is a build tool that will one day
 disagree with the game.
 
+### Textures
+
+Sword icons are authored as text (`art/swords/<name>.json`: a palette plus a
+character grid) and compiled to PNG. Art that lives as text diffs in git, can be
+reviewed line by line, and can be checked automatically. The PNG in the resource
+pack is build output and must never be hand-edited.
+
+`tools/lib/texture.mjs` enforces the project's permanent texture rule — every
+sword ships a unique, hand-authored, polished icon — by failing the build for a
+missing source, a broken silhouette, a flat palette, a missing outline, or a
+grid identical in shape to another sword's. The full standard, including what
+the linter *cannot* judge, is `docs/TEXTURE_STANDARD.md`.
+
 The tools have **zero npm dependencies**: the PNG encoder
 (`tools/lib/png.mjs`) and the ZIP writer (`tools/lib/zip.mjs`) are ~150 lines
 each, and both are unit tested. `npm run all` works on a clean machine with only
@@ -488,7 +644,7 @@ Node installed.
 
 ---
 
-## 10. Version contract
+## 11. Version contract
 
 The framework targets `@minecraft/server` **2.0.0** and a minimum engine version
 of **1.21.90**. Both the Scripting V2 lifecycle and Custom Components V2 became

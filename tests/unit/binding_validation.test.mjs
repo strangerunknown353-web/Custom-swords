@@ -135,7 +135,8 @@ describe('validateBinding', () => {
         assert.deepEqual(
             validateBinding(
                 {
-                    abilityId: 'custom_swords:diagnostic_pulse',
+                    activation: 'use',
+                    abilityId: 'custom_swords:shockwave',
                     cooldownTicks: 60,
                     targeting: { type: 'area', range: 4, maxTargets: 8 },
                     effects: [{ effect: 'slowness', durationTicks: 40 }],
@@ -153,7 +154,8 @@ describe('validateBinding', () => {
     it('collects problems from every sub-block at once', () => {
         const problems = validateBinding(
             {
-                abilityId: 'custom_swords:diagnostic_pulse',
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
                 targeting: { type: 'area' },
                 effects: [{ effect: 'slowness' }],
                 particles: [{}],

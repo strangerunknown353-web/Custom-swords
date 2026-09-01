@@ -9,22 +9,25 @@
  *    `entityHitEntity` listener running for every zombie punch in the world, and
  *    vanilla swords are never touched by this addon.
  *  - There is exactly one subscription for the whole addon regardless of how
- *    many swords exist, so no duplicated event handling and no per-sword
- *    listeners to leak.
+ *    many swords or activation methods exist, so no duplicated event handling
+ *    and no per-sword listeners to leak.
  *  - There are no tick loops at all. Input is purely event-driven, so the addon
  *    costs nothing while nobody is swinging a sword.
  *
- * The router deliberately contains no sword knowledge: it asks
- * {@link ItemIdentifier} what it is holding and asks the executor to run
- * whatever the definition declared. Adding sword #26 does not touch this file.
+ * The router's only job is translation: turn an engine event plus the player's
+ * sneak state into an activation method, find the binding for it, and hand the
+ * rest to the executor. It contains no sword knowledge and no ability knowledge,
+ * so adding sword #26 does not touch this file.
  *
  * Requires `@minecraft/server` 2.0.0+ (Custom Components V2). See
  * docs/API_NOTES.md for the version contract.
  */
 
 import { SWORD_COMPONENT_ID } from './identifiers.js';
+import { activationFor, resolutionOrder } from './activation.js';
 
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
+/** @typedef {import('./activation.js').ActivationMethod} ActivationMethod */
 
 export { SWORD_COMPONENT_ID };
 
@@ -32,17 +35,17 @@ export class InputRouter {
     /**
      * @param {object} deps
      * @param {import('./item_identifier.js').ItemIdentifier} deps.identifier
+     * @param {import('./sword_registry.js').SwordRegistry} deps.swords
      * @param {import('./ability_executor.js').AbilityExecutor} deps.executor
-     * @param {import('../systems/combat.js').CombatSystem} deps.combat
      * @param {typeof import('./log.js').log} deps.log
      */
-    constructor({ identifier, executor, combat, log }) {
+    constructor({ identifier, swords, executor, log }) {
         /** @private @readonly */
         this.identifier = identifier;
         /** @private @readonly */
-        this.executor = executor;
+        this.swords = swords;
         /** @private @readonly */
-        this.combat = combat;
+        this.executor = executor;
         /** @private @readonly */
         this.log = log;
     }
@@ -67,13 +70,11 @@ export class InputRouter {
      */
     handleUse(event) {
         const sword = this.identifier.fromItemStack(event.itemStack);
-        if (sword?.active === undefined) return;
-
-        this.executor.invoke({
+        if (sword === undefined) return;
+        this.dispatch({
             player: event.source,
             sword,
-            binding: sword.active,
-            trigger: 'use',
+            hook: 'use',
             itemStack: event.itemStack,
         });
     }
@@ -90,12 +91,59 @@ export class InputRouter {
         // would otherwise reach code that assumes a Player.
         const attacker = event.attackingEntity;
         if (attacker === undefined || attacker.typeId !== 'minecraft:player') return;
+        if (!event.hitEntity?.isValid) return;
 
-        this.combat.onHitEntity({
+        this.dispatch({
             player: /** @type {import('@minecraft/server').Player} */ (/** @type {unknown} */ (attacker)),
-            target: event.hitEntity,
             sword,
+            hook: 'attack',
             itemStack: event.itemStack,
+            target: event.hitEntity,
         });
+    }
+
+    /**
+     * Resolves the activation method and runs the matching binding, if any.
+     *
+     * @private
+     * @param {object} request
+     * @param {import('@minecraft/server').Player} request.player
+     * @param {SwordDefinition} request.sword
+     * @param {'use' | 'attack'} request.hook
+     * @param {import('@minecraft/server').ItemStack} [request.itemStack]
+     * @param {import('@minecraft/server').Entity} [request.target]
+     */
+    dispatch({ player, sword, hook, itemStack, target }) {
+        const activation = activationFor(hook, this.isSneaking(player));
+
+        // Try the exact activation, then its non-sneaking base, so a sword that
+        // binds only `use` still responds while the player happens to crouch.
+        for (const candidate of resolutionOrder(activation)) {
+            const binding = this.swords.getBinding(sword.id, candidate);
+            if (binding === undefined) continue;
+            this.executor.invoke({
+                player,
+                sword,
+                binding,
+                activation: candidate,
+                itemStack,
+                target,
+            });
+            return;
+        }
+    }
+
+    /**
+     * @private
+     * @param {import('@minecraft/server').Player} player
+     * @returns {boolean}
+     */
+    isSneaking(player) {
+        try {
+            return player.isSneaking === true;
+        } catch {
+            // A player handle can go stale between the event and this read.
+            return false;
+        }
     }
 }

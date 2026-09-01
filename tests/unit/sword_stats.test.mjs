@@ -18,11 +18,14 @@ function sword(overrides = {}) {
         rarity: 'epic',
         description: 'An example sword.',
         item: { attackDamage: 8, durability: 800, enchantValue: 14, repairItems: ['minecraft:iron_ingot'] },
-        active: {
-            abilityId: 'custom_swords:diagnostic_pulse',
-            cooldownTicks: 140,
-            targeting: { type: 'cone', range: 6, angleDegrees: 60 },
-        },
+        abilities: [
+            {
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
+                cooldownTicks: 140,
+                targeting: { type: 'cone', range: 6, angleDegrees: 60 },
+            },
+        ],
         ...overrides,
     };
 }
@@ -67,7 +70,7 @@ describe('repairAmountFor', () => {
 
 describe('summariseBinding', () => {
     it('converts cooldown ticks to seconds and surfaces targeting', () => {
-        const summary = summariseBinding(sword().active, 'use');
+        const summary = summariseBinding(sword().abilities[0]);
         assert.equal(summary?.cooldownTicks, 140);
         assert.equal(summary?.cooldownSeconds, 7);
         assert.equal(summary?.targetingType, 'cone');
@@ -75,14 +78,14 @@ describe('summariseBinding', () => {
     });
 
     it('defaults an unbound envelope to self-targeting with no cooldown', () => {
-        const summary = summariseBinding({ abilityId: 'custom_swords:x' }, 'hit');
+        const summary = summariseBinding({ activation: 'attack', abilityId: 'custom_swords:x' });
         assert.equal(summary?.cooldownTicks, 0);
         assert.equal(summary?.targetingType, 'self');
         assert.equal(summary?.range, undefined);
     });
 
     it('returns undefined for an absent binding', () => {
-        assert.equal(summariseBinding(undefined, 'use'), undefined);
+        assert.equal(summariseBinding(undefined), undefined);
     });
 });
 
@@ -95,18 +98,23 @@ describe('describeSword', () => {
         assert.equal(description.isTestItem, false);
         assert.equal(description.stats.meleeDamage, 9);
         assert.deepEqual(
-            description.abilities.map((a) => a.trigger),
+            description.abilities.map((a) => a.activation),
             ['use'],
         );
     });
 
-    it('lists both bindings when a sword has an active and a passive', () => {
+    it('lists every binding a sword carries, in declaration order', () => {
         const description = describeSword(
-            sword({ passive: { abilityId: 'custom_swords:diagnostic_pulse', cooldownTicks: 20 } }),
+            sword({
+                abilities: [
+                    { activation: 'use', abilityId: 'custom_swords:shockwave', cooldownTicks: 40 },
+                    { activation: 'sneak_attack', abilityId: 'custom_swords:shockwave', cooldownTicks: 20 },
+                ],
+            }),
         );
         assert.deepEqual(
-            description.abilities.map((a) => a.trigger),
-            ['use', 'hit'],
+            description.abilities.map((a) => a.activation),
+            ['use', 'sneak_attack'],
         );
     });
 });

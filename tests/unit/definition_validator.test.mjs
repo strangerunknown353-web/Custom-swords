@@ -18,7 +18,7 @@ function sword(overrides = {}) {
         rarity: 'rare',
         description: 'An example sword.',
         item: { attackDamage: 7, durability: 500 },
-        active: { abilityId: 'custom_swords:diagnostic_pulse', cooldownTicks: 40 },
+        abilities: [{ activation: 'use', abilityId: 'custom_swords:shockwave', cooldownTicks: 40 }],
         ...overrides,
     };
 }
@@ -57,18 +57,39 @@ describe('validateSwordDefinition', () => {
     });
 
     it('requires at least one ability binding', () => {
-        const problems = validateSwordDefinition(sword({ active: undefined, passive: undefined }), always);
-        assert.ok(problems.some((p) => p.includes("'active' or 'passive'")));
+        const problems = validateSwordDefinition(sword({ abilities: [] }), always);
+        assert.ok(problems.some((p) => p.includes('at least one ability binding')));
     });
 
-    it('accepts a passive-only sword', () => {
+    it('accepts an attack-only sword', () => {
         assert.deepEqual(
             validateSwordDefinition(
-                sword({ active: undefined, passive: { abilityId: 'custom_swords:life_steal' } }),
+                sword({ abilities: [{ activation: 'attack', abilityId: 'custom_swords:life_steal' }] }),
                 always,
             ),
             [],
         );
+    });
+
+    it('rejects two bindings on the same activation, which would make dispatch ambiguous', () => {
+        const problems = validateSwordDefinition(
+            sword({
+                abilities: [
+                    { activation: 'use', abilityId: 'custom_swords:a' },
+                    { activation: 'use', abilityId: 'custom_swords:b' },
+                ],
+            }),
+            always,
+        );
+        assert.ok(problems.some((p) => p.includes("binds 'use' more than once")));
+    });
+
+    it('rejects an unknown activation method', () => {
+        const problems = validateSwordDefinition(
+            sword({ abilities: [{ activation: 'telepathy', abilityId: 'custom_swords:a' }] }),
+            always,
+        );
+        assert.ok(problems.some((p) => p.includes("'activation' must be one of")));
     });
 
     it('rejects a texture shortname that is not a plain lower-case name', () => {

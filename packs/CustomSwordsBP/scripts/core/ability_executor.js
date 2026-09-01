@@ -1,21 +1,25 @@
 /**
- * The ability pipeline.
+ * The ability pipeline — the heart of the Ability Engine.
  *
- * Every ability invocation in the addon — active or passive, sword #1 or sword
- * #26 — goes through `invoke()`. That single funnel is what makes the framework
- * scale: adding a sword adds data, never another code path.
+ * Every ability invocation in the addon, on any activation, for any sword, goes
+ * through `invoke()`. That single funnel is what lets the collection scale:
+ * adding a sword adds data, never another code path.
  *
- * Pipeline order:
+ * Pipeline:
  *
- *   resolve ability -> build context -> cooldown check -> execute (guarded)
- *   -> start cooldown on success -> player feedback
+ *   activation -> resolve ability -> VALIDATION GATE -> build context
+ *   -> execute (guarded) -> start cooldown on success -> player feedback
  *
- * Two decisions worth calling out:
+ * Three decisions worth calling out:
  *
- *  - The cooldown starts only AFTER a successful execution. An ability that
- *    reports `{ ok: false }` (no target found, wrong dimension, ...) does not
- *    burn the player's cooldown.
- *  - `execute` is wrapped in try/catch. One throwing ability is contained to
+ *  - **Validation happens before anything is spent.** The gate
+ *    (`core/ability_gate.js`) runs every pre-execution check in a fixed order.
+ *    A failed gate leaves the world untouched: no cooldown, no particles, no
+ *    sound, no damage.
+ *  - **The cooldown starts only after a successful execution.** An ability that
+ *    reports `{ ok: false }` (no target found, conditions unmet) does not burn
+ *    the player's cooldown.
+ *  - **`execute` is wrapped in try/catch.** One throwing ability is contained to
  *    that invocation; it can never take down the event handler and with it
  *    every other sword in the world.
  */
@@ -24,16 +28,16 @@
 /** @typedef {import('./types.js').AbilityContext} AbilityContext */
 /** @typedef {import('./types.js').AbilityDefinition} AbilityDefinition */
 /** @typedef {import('./types.js').AbilityResult} AbilityResult */
-/** @typedef {import('./types.js').AbilityTrigger} AbilityTrigger */
 /** @typedef {import('./types.js').ServiceContainer} ServiceContainer */
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
+/** @typedef {import('./activation.js').ActivationMethod} ActivationMethod */
 
 /**
  * @typedef {Object} InvokeRequest
  * @property {import('@minecraft/server').Player} player
  * @property {SwordDefinition} sword
  * @property {AbilityBinding} binding
- * @property {AbilityTrigger} trigger
+ * @property {ActivationMethod} activation
  * @property {import('@minecraft/server').ItemStack} [itemStack]
  * @property {import('@minecraft/server').Entity} [target]
  */
@@ -47,16 +51,22 @@ const DEFAULT_TARGETING = Object.freeze(/** @type {import('./types.js').Targetin
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
 
+/** Activations that are player-initiated and therefore deserve visible feedback. */
+const FEEDBACK_ACTIVATIONS = new Set(['use', 'sneak_use']);
+
 export class AbilityExecutor {
     /**
      * @param {object} deps
-     * @param {import('./registry.js').Registry<AbilityDefinition>} deps.abilities
+     * @param {import('./ability_registry.js').AbilityRegistry} deps.abilities
+     * @param {import('./ability_gate.js').AbilityGate} deps.gate
      * @param {ServiceContainer} deps.services
      * @param {() => number} deps.clock Returns the current tick.
      */
-    constructor({ abilities, services, clock }) {
+    constructor({ abilities, gate, services, clock }) {
         /** @private @readonly */
         this.abilities = abilities;
+        /** @private @readonly */
+        this.gate = gate;
         /** @private @readonly */
         this.services = services;
         /** @private @readonly */
@@ -64,17 +74,16 @@ export class AbilityExecutor {
     }
 
     /**
-     * Cooldown key for a binding. Defaults to the sword id so each sword has an
-     * independent cooldown; a binding can opt into a shared key to make a set of
-     * swords (or a sword's two abilities) share one timer.
+     * Cooldown key for a binding. Defaults to sword + activation so each sword
+     * and each of its activations has an independent timer; a binding can set
+     * `cooldownKey` to deliberately share one across abilities or swords.
      *
      * @param {SwordDefinition} sword
      * @param {AbilityBinding} binding
-     * @param {AbilityTrigger} trigger
      * @returns {string}
      */
-    static cooldownKey(sword, binding, trigger) {
-        return binding.cooldownKey ?? `${sword.id}#${trigger}`;
+    static cooldownKey(sword, binding) {
+        return binding.cooldownKey ?? `${sword.id}#${binding.activation}`;
     }
 
     /**
@@ -82,25 +91,18 @@ export class AbilityExecutor {
      * @returns {AbilityResult}
      */
     invoke(request) {
-        const { player, sword, binding, trigger } = request;
+        const { player, sword, binding, activation } = request;
         const services = this.services;
+        const cooldownKey = AbilityExecutor.cooldownKey(sword, binding);
 
-        const ability = this.abilities.get(binding.abilityId);
-        if (ability === undefined) {
-            // Caught at bootstrap validation too; this is the runtime backstop.
-            services.log.error(`Sword '${sword.id}' binds unknown ability '${binding.abilityId}'.`);
-            return { ok: false, reason: 'unknown_ability' };
+        const gateResult = this.gate.check({ player, sword, binding, cooldownKey });
+        if (!gateResult.ok) {
+            this.reportRefusal(request, gateResult);
+            return { ok: false, reason: gateResult.reason };
         }
 
-        if (!player.isValid) return { ok: false, reason: 'invalid_player' };
-
-        const playerId = player.id;
-        const key = AbilityExecutor.cooldownKey(sword, binding, trigger);
-        const remaining = services.cooldowns.remaining(playerId, key);
-        if (remaining > 0) {
-            services.feedback.onCooldown(player, ability.name, remaining);
-            return { ok: false, reason: 'cooldown' };
-        }
+        // Safe now: the gate has confirmed the ability is registered.
+        const ability = this.abilities.require(binding.abilityId);
 
         /** @type {AbilityContext} */
         let ctx;
@@ -122,15 +124,39 @@ export class AbilityExecutor {
         }
 
         if (result.ok) {
-            this.startCooldown(player, playerId, key, binding);
-            if (trigger === 'use') {
+            this.startCooldown(player, player.id, cooldownKey, binding);
+            if (FEEDBACK_ACTIVATIONS.has(activation)) {
                 services.feedback.abilityUsed(player, ability.name, result.message);
             }
-        } else if (trigger === 'use') {
+        } else if (FEEDBACK_ACTIVATIONS.has(activation)) {
             services.feedback.denied(player, result.message ?? 'Nothing happened.');
         }
 
         return result;
+    }
+
+    /**
+     * Tells the player why an activation was refused — but only for activations
+     * they deliberately made, and only when there is something useful to say.
+     * A melee swing that silently fails its gate must not spam the action bar.
+     *
+     * @private
+     * @param {InvokeRequest} request
+     * @param {import('./ability_gate.js').GateResult} gateResult
+     */
+    reportRefusal(request, gateResult) {
+        if (!FEEDBACK_ACTIVATIONS.has(request.activation)) return;
+        const { player, binding } = request;
+        const ability = this.abilities.get(binding.abilityId);
+        const name = ability?.name ?? 'Ability';
+
+        if (gateResult.reason === 'cooldown') {
+            this.services.feedback.onCooldown(player, name, gateResult.remainingTicks ?? 0);
+            return;
+        }
+        if (gateResult.message !== undefined) {
+            this.services.feedback.denied(player, gateResult.message);
+        }
     }
 
     /**
@@ -164,7 +190,7 @@ export class AbilityExecutor {
      * @returns {AbilityContext}
      */
     buildContext(request, ability) {
-        const { player, sword, binding, trigger, itemStack, target } = request;
+        const { player, sword, binding, activation, itemStack, target } = request;
         return {
             player,
             playerId: player.id,
@@ -175,7 +201,7 @@ export class AbilityExecutor {
             origin: player.getHeadLocation(),
             viewDirection: player.getViewDirection(),
             currentTick: this.clock(),
-            trigger,
+            activation,
             target,
             // The binding's declarative fields are surfaced directly on the
             // context with safe defaults, so an ability never has to write

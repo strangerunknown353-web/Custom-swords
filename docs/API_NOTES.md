@@ -4,7 +4,7 @@ This project's rule is: **never invent an API.** Everything below was verified
 against a primary source before it was used. This file records what was
 verified, where, and what a version change would cost.
 
-Verified on **2026-09-01** (milestone 1), extended for milestone 2.
+Verified on **2026-09-01** (milestone 1), extended for milestones 2 and 3.
 
 ---
 
@@ -87,6 +87,27 @@ declaration (`"custom_swords:sword": {}`) serves every sword.
 | `system.afterEvents.scriptEventReceive` | `subscribe(callback, options?: ScriptEventMessageFilterOptions)` — the options object takes `namespaces: string[]`, which is what keeps our handler off other add-ons' script events |
 | `ScriptEventCommandMessageAfterEvent` | `id`, `message`, `sourceEntity?`, `sourceBlock?`, `sourceType`, `initiator?` |
 | `Player.sendMessage` | `(message: RawMessage \| string \| (…)[]) => void` |
+
+### Ability Engine
+
+| API | Signature | Used for |
+|---|---|---|
+| `Player.isSneaking` | `boolean` property | resolving `sneak_use` / `sneak_attack` |
+| `Player.isOnGround` | `boolean` property | the `requireGrounded` restriction |
+| `Player.isInWater` | `boolean` property | the `forbidInWater` restriction |
+| `Entity.getComponent('minecraft:health')` | `EntityHealthComponent` — `currentValue`, `effectiveMax`, `setCurrentValue(v)` | the `minHealth` restriction, and `effects.heal` |
+| `Entity.setOnFire` | `(seconds: number, useEffects?: boolean) => boolean` | `effects.ignite` |
+| `Entity.extinguishFire` | `(useEffects?: boolean) => boolean` | `effects.extinguish` |
+| `Entity.teleport` | `(location: Vector3, options?: TeleportOptions)` — options `{ checkForBlocks?, dimension?, facingLocation?, keepVelocity? }` | `effects.teleport` |
+| `Entity.applyImpulse` | `(vector: Vector3) => void` | `effects.impulse` — **throws on Players**, see below |
+| `world.afterEvents.entityDie` | `subscribe(cb, options?: EntityEventOptions)`; options take `entityTypes: string[]`; event has `deadEntity`, `damageSource` | clearing life-scoped state |
+| `world.afterEvents.playerSpawn` | event has `player`, `initialSpawn` | respawn cleanup |
+
+**`applyImpulse` throws on Players.** The type definitions state it plainly:
+"this method throws an error if called on Players and will have no impact."
+`EffectService.impulse` therefore routes players to `applyKnockback`, which is
+the supported equivalent, so callers get one method that works on anything. This
+is engine behaviour, not a bug to work around.
 
 ### Player, feedback and audio
 

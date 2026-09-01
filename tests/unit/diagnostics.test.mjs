@@ -11,6 +11,7 @@ import { MockItemStack, MockPlayer } from '../mocks/minecraft_server.mjs';
 import { Diagnostics } from '../../packs/CustomSwordsBP/scripts/core/diagnostics.js';
 import { ItemIdentifier } from '../../packs/CustomSwordsBP/scripts/core/item_identifier.js';
 import { SwordRegistry } from '../../packs/CustomSwordsBP/scripts/core/sword_registry.js';
+import { AbilityRegistry } from '../../packs/CustomSwordsBP/scripts/core/ability_registry.js';
 import { log } from '../../packs/CustomSwordsBP/scripts/core/log.js';
 
 function setup() {
@@ -22,16 +23,24 @@ function setup() {
         description: 'Framework diagnostic sword.',
         isTestItem: true,
         item: { attackDamage: 6, durability: 250, enchantValue: 10, repairItems: ['minecraft:iron_ingot'] },
-        active: {
-            abilityId: 'custom_swords:diagnostic_pulse',
-            cooldownTicks: 60,
-            targeting: { type: 'area', range: 4 },
-        },
+        abilities: [
+            {
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
+                cooldownTicks: 60,
+                targeting: { type: 'area', range: 4 },
+            },
+        ],
     });
     swords.seal();
 
+    const abilities = new AbilityRegistry();
+    abilities.register({ id: 'custom_swords:shockwave', name: 'Shockwave', description: 'Test.', execute() {} });
+    abilities.link('custom_swords:shockwave', 'custom_swords:test_blade', 'use');
+    abilities.seal();
+
     const identifier = new ItemIdentifier({ swords });
-    const diagnostics = new Diagnostics({ swords, identifier, log });
+    const diagnostics = new Diagnostics({ swords, abilities, identifier, log });
     const player = new MockPlayer({ id: 'player-a' });
     return { diagnostics, player, swords };
 }

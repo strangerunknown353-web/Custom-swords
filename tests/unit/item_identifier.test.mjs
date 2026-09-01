@@ -22,7 +22,7 @@ function definition(id, name) {
         rarity: 'common',
         description: `${name}.`,
         item: { attackDamage: 5, durability: 100 },
-        active: { abilityId: 'custom_swords:diagnostic_pulse' },
+        abilities: [{ activation: 'use', abilityId: 'custom_swords:shockwave' }],
     };
 }
 

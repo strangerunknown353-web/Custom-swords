@@ -1,35 +1,40 @@
 # TODO
 
 Open work, grouped by when it matters. Milestone numbers refer to `ROADMAP.md`.
-Only items actually finished are struck through.
+Only items actually finished are ticked.
 
-## Completed in milestone 2 (v0.2.0)
+## Completed in milestone 3 (v0.3.0)
 
-- [x] Sword Registry with a sword-specific query API.
-- [x] Item identification system that fails safe and never touches vanilla.
-- [x] Identifier convention single-sourced and documented in `ARCHITECTURE.md`.
-- [x] Rarity single-sourced across runtime, generator and validator.
-- [x] Sword stats resolution and a shared display record.
-- [x] `targeting`, `effects`, `particles` and `sounds` promoted from untyped
-      `params` to validated binding fields.
-- [x] Texture architecture reworked for the full collection.
-- [x] `minecraft:rarity` schema verified — and deliberately **not** adopted;
-      see `docs/API_NOTES.md`.
-- [x] Test Blade converted to the new framework and kept as the diagnostic item
-      (milestone 2's brief requires a working test sword, so it is no longer a
-      candidate for deletion — it will be debug-gated before release).
+- [x] Activation system covering `use`, `sneak_use`, `attack`, `sneak_attack`,
+      with a documented fallback rule.
+- [x] Dedicated Ability Registry with a sword reverse-index and unused-ability
+      reporting.
+- [x] Ordered validation gate run before anything is spent, including the
+      "is the sword still equipped?" re-check.
+- [x] Declarative restrictions (`minHealth`, `requireGrounded`, `forbidInWater`,
+      `dimensions`) that fail closed.
+- [x] Outcome composition helper — abilities no longer retype
+      damage + knockback + effects + particles.
+- [x] Effect helpers: heal, ignite, extinguish, teleport, impulse.
+- [x] Life-scoped player state cleared on death and respawn; cooldowns
+      deliberately excluded so death cannot reset one.
+- [x] One real, fully envelope-driven ability (`custom_swords:shockwave`),
+      bound twice on the test sword to prove reuse.
+- [x] Premium texture standard, authored-as-text pipeline, automated quality
+      gate, and a regenerated benchmark texture.
+- [x] Duplicate-engine-subscription check in the validator.
 
-## Blocking the next milestone (3 — Ability Engine)
+## Blocking the next milestone (4 — combat, damage and safety)
 
-- [ ] Ability composition helper so "damage + effect + knockback + particles"
-      is not retyped in every ability.
-- [ ] Second ability trigger (sneak + use). `AbilityTrigger` and the binding
-      shape already allow it; `InputRouter.handleUse` needs to branch on
-      `source.isSneaking`, and a sword needs a second active slot.
 - [ ] Multi-stage abilities (wind-up → impact) on `system.runTimeout`, with
-      cancellation when the player dies, disconnects or changes dimension.
-- [ ] Ability-level cost/condition checks (health, hunger, dimension) before the
-      cooldown gate.
+      cancellation when the caster dies, disconnects or changes dimension.
+      `life:`-scoped state exists for exactly this; nothing uses it yet.
+- [ ] Combo and crit-window tracking on melee activations.
+- [ ] Damage attribution and resistance handling; friendly-fire / team rules
+      beyond the current global PvP toggle.
+- [ ] Per-player activation rate limiting, so a spam-clicked sword cannot
+      dominate a busy server's tick budget.
+- [ ] Target-count budgeting when several players fire area abilities at once.
 
 ## Data model gaps
 
@@ -40,12 +45,11 @@ Only items actually finished are struck through.
       event-driven `ItemStack.setLore` hook. Do not add a `lore` field until one
       of those exists.
 - [ ] `minecraft:swing_duration` — requires item `format_version` **1.21.120 or
-      higher**, above our current 1.21.90 target. Revisit when the minimum
-      engine version is raised.
+      higher**, above our current 1.21.90 target.
 - [ ] `minecraft:cooldown` item component so the vanilla HUD sweep works without
       a script-side mirror.
-- [ ] Sword-level (rather than binding-level) sound and particle themes, so a
-      family of swords can share an audio identity.
+- [ ] Sword-level sound and particle themes, so a family of swords can share an
+      audio and visual identity without repeating it per binding.
 
 ## Framework
 
@@ -61,9 +65,11 @@ Only items actually finished are struck through.
 
 - [ ] Optional type-check step (`npm i -D @minecraft/server && tsc -p jsconfig.json`)
       wired into CI. Skipped for now to keep the project dependency-free.
-- [ ] Standalone balance report command. The validator already prints a roster;
-      a dedicated `tools/report.mjs` writing Markdown would serve the docs.
-- [ ] Texture linting: assert every committed icon is 16×16 RGBA.
+- [ ] Texture preview command — render an art source enlarged, next to a 1:1
+      copy, so a reviewer can judge it without importing the pack. This was done
+      by hand this milestone; it should be a script.
+- [ ] Standalone balance report. The validator prints a roster; a dedicated
+      `tools/report.mjs` writing Markdown would serve the docs.
 - [ ] A `--watch` mode for `tools/generate.mjs` during development.
 
 ## Testing

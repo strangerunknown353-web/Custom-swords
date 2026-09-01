@@ -23,6 +23,7 @@ import { colorize, rarityOf, compareRarity } from './rarity.js';
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 /** @typedef {import('./types.js').SwordItemStats} SwordItemStats */
 /** @typedef {import('./types.js').AbilityBinding} AbilityBinding */
+/** @typedef {import('./activation.js').ActivationMethod} ActivationMethod */
 
 /**
  * Recursively freezes a definition so shared metadata cannot be mutated at
@@ -39,6 +40,9 @@ function deepFreeze(value) {
     }
     return Object.freeze(value);
 }
+
+/** Shared empty result, so a miss allocates nothing. */
+const EMPTY_BINDINGS = Object.freeze([]);
 
 export class SwordRegistry {
     constructor() {
@@ -102,29 +106,40 @@ export class SwordRegistry {
     }
 
     /**
-     * Both ability bindings for a sword. Always returns an object so callers
-     * can destructure without a null check.
+     * Every ability binding on a sword. Always returns an array so callers can
+     * iterate without a null check.
      *
      * @param {string} id
-     * @returns {{ active: AbilityBinding | undefined, passive: AbilityBinding | undefined }}
+     * @returns {readonly AbilityBinding[]}
      */
     getAbilities(id) {
-        const sword = this.registry.get(id);
-        return { active: sword?.active, passive: sword?.passive };
+        return this.registry.get(id)?.abilities ?? EMPTY_BINDINGS;
     }
 
     /**
-     * The binding for one trigger, or undefined when the sword does not bind
-     * that trigger.
+     * The binding for one activation method, or undefined when the sword does
+     * not bind that method.
+     *
+     * A sword may hold at most one binding per activation — enforced by
+     * `definition_validator.js` — so this is an unambiguous lookup rather than
+     * a "first match wins" scan.
      *
      * @param {string} id
-     * @param {import('./types.js').AbilityTrigger} trigger
+     * @param {ActivationMethod} activation
      * @returns {AbilityBinding | undefined}
      */
-    getBinding(id, trigger) {
-        const sword = this.registry.get(id);
-        if (sword === undefined) return undefined;
-        return trigger === 'use' ? sword.active : sword.passive;
+    getBinding(id, activation) {
+        return this.getAbilities(id).find((binding) => binding.activation === activation);
+    }
+
+    /**
+     * The activation methods a sword responds to.
+     *
+     * @param {string} id
+     * @returns {ActivationMethod[]}
+     */
+    getActivations(id) {
+        return this.getAbilities(id).map((binding) => binding.activation);
     }
 
     /**

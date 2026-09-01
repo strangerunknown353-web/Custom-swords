@@ -31,50 +31,74 @@ export const emberfang = {
         repairItems: ['minecraft:blaze_rod'],
     },
 
-    // --- Active ability: right-click / long-press --------------------------
-    active: {
-        abilityId: 'custom_swords:flame_nova',
-        cooldownTicks: 140,               // 7 seconds
-        hudCategory: 'custom_swords_emberfang',   // optional vanilla HUD sweep
+    // --- Abilities: one binding per activation method ----------------------
+    abilities: [
+        {
+            activation: 'use',            // right-click / long-press
+            abilityId: 'custom_swords:flame_nova',
+            cooldownTicks: 140,           // 7 seconds
+            hudCategory: 'custom_swords_emberfang',
 
-        targeting: { type: 'area', range: 5, maxTargets: 10 },
-        effects: [{ effect: 'weakness', durationTicks: 80 }],
-        particles: [{ id: 'minecraft:basic_flame_particle', count: 16, at: 'caster' }],
-        sounds: { cast: 'ability_cast', impact: 'impact_heavy' },
+            targeting: { type: 'area', range: 5, maxTargets: 10 },
+            effects: [{ effect: 'weakness', durationTicks: 80 }],
+            particles: [{ id: 'minecraft:basic_flame_particle', count: 16, at: 'caster' }],
+            sounds: { cast: 'ability_cast', impact: 'impact_heavy' },
 
-        params: { damage: 6, igniteSeconds: 4 },   // numbers only the ability understands
-    },
+            params: { damage: 6, igniteSeconds: 4 },   // numbers only the ability understands
+        },
+        {
+            activation: 'sneak_use',      // the SAME ability, aimed
+            abilityId: 'custom_swords:flame_nova',
+            cooldownTicks: 200,
 
-    // --- Passive ability: fired on melee hit -------------------------------
-    passive: {
-        abilityId: 'custom_swords:ignite_on_hit',
-        targeting: { type: 'self' },
-        params: { chance: 0.35 },
-    },
+            targeting: { type: 'single', range: 8 },
+            restrictions: { requireGrounded: true, minHealth: 6 },
+
+            params: { damage: 14, igniteSeconds: 8 },
+        },
+    ],
 };
 ```
 
 ### The envelope is the point
 
-`targeting`, `effects`, `particles` and `sounds` are the *invocation envelope*.
-Binding the same ability twice with different envelopes gives you two swords
-that feel genuinely different, with no new code:
-
-```js
-// A precise duellist's blade.
-active: { abilityId: 'custom_swords:flame_nova',
-          targeting: { type: 'single', range: 6 }, params: { damage: 10 } }
-
-// A crowd-clearing greatsword, same ability.
-active: { abilityId: 'custom_swords:flame_nova',
-          targeting: { type: 'cone', range: 9, angleDegrees: 120 }, params: { damage: 4 } }
-```
+`targeting`, `effects`, `particles`, `sounds` and `restrictions` are the
+*invocation envelope*. Binding the same ability twice with different envelopes
+gives you two attacks that feel genuinely different, with no new code — exactly
+as above: a crowd-clearing burst on `use`, a committed aimed strike on
+`sneak_use`.
 
 `params` is reserved for numbers only the ability itself understands. Anything
 the framework can interpret belongs in a typed field, where `npm run validate`
 checks it at build time — a targeting block missing its `range` fails the build,
 whereas the same mistake hidden in `params` would ship as an ability that
 silently does nothing.
+
+### Activation methods
+
+| Method | Input | Notes |
+|---|---|---|
+| `use` | right-click / long-press | also catches sneak + use when no `sneak_use` binding exists |
+| `sneak_use` | sneak + right-click | |
+| `attack` | melee hit | no action-bar feedback, to avoid spam |
+| `sneak_attack` | sneak + melee hit | falls back to `attack` |
+
+A sword may bind at most one ability per method; two bindings on the same
+activation is a build error.
+
+### Restrictions
+
+Gate an ability without writing code. Each field is optional, and a restriction
+that cannot be evaluated refuses the activation rather than passing:
+
+```js
+restrictions: {
+    minHealth: 6,
+    requireGrounded: true,
+    forbidInWater: true,
+    dimensions: ['minecraft:nether'],
+}
+```
 
 Sword definitions are **pure data**. They must not import `@minecraft/server` —
 `npm run validate` fails the build if they do.
@@ -108,23 +132,23 @@ export const flameNova = {
 
     execute(ctx) {
         const { params, services } = ctx;
-        const origin = ctx.player.location;
 
-        // Presentation comes from the binding, not from here.
-        for (const particle of ctx.particles) {
-            if ((particle.at ?? 'caster') === 'caster') services.particles.emit(ctx.dimension, particle, origin);
-        }
-        if (ctx.sounds.cast) services.sounds.playAt(ctx.dimension, ctx.sounds.cast, origin);
+        // Caster visuals: the binding decides what they are.
+        services.outcome.playCast(ctx);
 
-        // So does targeting — this ability never learns which shape it got.
+        // Targeting is data — this ability never learns which shape it got.
         const targets = services.targeting.resolve(ctx);
         if (targets.length === 0) return { ok: false, message: 'Nothing to burn.' };
 
-        for (const target of targets) {
-            services.damage.apply(ctx, target, params.damage, { cause: 'fire' });
-            services.effects.applyMany(target, ctx.effects);
-        }
-        return { ok: true, message: `${targets.length} scorched` };
+        // One call does damage, particles, sound, effects, ignition and knockback,
+        // in a fixed, sensible order.
+        const report = services.outcome.applyToTargets(ctx, targets, {
+            damage: params.damage,
+            igniteSeconds: params.igniteSeconds,
+            damageCause: 'fire',
+        });
+
+        return { ok: true, message: `${report.damaged} scorched` };
     },
 };
 ```
@@ -136,6 +160,8 @@ Add it to `abilities/index.js`.
 - no `@minecraft/server` import — use `ctx.services`;
 - read targeting, effects, particles and sounds from `ctx`, never hard-code
   them — that is what keeps one ability reusable across many swords;
+- prefer `services.outcome.applyToTargets` over hand-rolling the
+  damage/knockback/effects/particles block, so ordering stays consistent;
 - no module-level mutable state — use `ctx.services.state`, keyed by
   `ctx.playerId`;
 - no `system.runInterval` — the framework allows exactly one interval, and it
@@ -154,16 +180,22 @@ item JSON, the texture atlas entry and the `.lang` names, and drops in a
 deterministic placeholder icon if `packs/CustomSwordsRP/textures/items/custom_swords/<texture>.png`
 does not exist yet.
 
-## 4. Add real art
+## 4. Author the texture
 
-Replace the placeholder with a 16×16 RGBA PNG at:
+**This is not optional.** `npm run validate` fails for a sword with no authored
+texture source. Write `art/swords/<texture>.json` — a palette plus a 16×16
+character grid — then `npm run generate` compiles it into the resource pack.
 
-```
-packs/CustomSwordsRP/textures/items/custom_swords/swords/<texture>.png
-```
+Read **`docs/TEXTURE_STANDARD.md`** first: it defines the quality bar, the
+letter convention, what the automated gate checks, and what it cannot check.
+The short version:
 
-The generator never overwrites an existing texture, and the validator fails the
-build if an icon sits outside that directory.
+- upper-left light source, always;
+- three or more tones per material, plus a full dark outline;
+- its own silhouette — a recolour of another sword is a build error;
+- render it enlarged and **look at it** before accepting it.
+
+Never hand-edit the PNG in the resource pack. It is build output.
 
 ## 5. Test in Minecraft
 
@@ -214,6 +246,7 @@ enchant. See `docs/API_NOTES.md`.
 - [ ] Definition file created and exported from `swords/index.js`
 - [ ] Ability reused, or new ability added to `abilities/index.js`
 - [ ] `npm run all` is green
-- [ ] Real texture committed (or placeholder deliberately kept for now)
+- [ ] Texture source authored in `art/swords/`, rendered, inspected and passing
+      the quality gate with zero errors and zero warnings
 - [ ] Tested in-game and the result recorded
 - [ ] `CHANGELOG.md` updated

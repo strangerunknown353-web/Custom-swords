@@ -83,6 +83,22 @@
  */
 
 /**
+ * Conditions the caster must satisfy before an ability may run.
+ *
+ * Restrictions are declared as data so a designer can gate an ability without
+ * writing code, and so the gate runs in one place — before the cooldown is
+ * consumed. Every field is optional; an absent field is not checked.
+ *
+ * Only conditions the engine can answer cheaply and reliably are supported.
+ *
+ * @typedef {Object} RestrictionSpec
+ * @property {number} [minHealth] Caster must have at least this much health remaining.
+ * @property {boolean} [requireGrounded] Caster must be standing on the ground.
+ * @property {boolean} [forbidInWater] Caster must not be in water.
+ * @property {string[]} [dimensions] Allowed dimension ids, e.g. `['minecraft:nether']`.
+ */
+
+/**
  * Binds one registered ability to one sword.
  *
  * A binding is the complete *invocation envelope*: which ability, how it is
@@ -97,14 +113,16 @@
  * be validated at build time rather than discovered at runtime.
  *
  * @typedef {Object} AbilityBinding
+ * @property {import('./activation.js').ActivationMethod} activation How the player triggers it.
  * @property {string} abilityId Id of an ability in the ability registry.
  * @property {number} [cooldownTicks] Defaults to 0 (no cooldown).
- * @property {string} [cooldownKey] Share a cooldown across several bindings. Defaults to `<swordId>#<trigger>`.
+ * @property {string} [cooldownKey] Share a cooldown across several bindings. Defaults to `<swordId>#<activation>`.
  * @property {string} [hudCategory] Vanilla item-cooldown category to mirror onto the HUD.
  * @property {TargetingSpec} [targeting] Defaults to `{ type: 'self' }`.
  * @property {EffectSpec[]} [effects] Applied to each affected target.
  * @property {ParticleSpec[]} [particles]
  * @property {SoundSlots} [sounds]
+ * @property {RestrictionSpec} [restrictions] Checked before the cooldown is consumed.
  * @property {Record<string, unknown>} [params] Merged over the ability's `defaults`.
  */
 
@@ -118,8 +136,7 @@
  * @property {string} description One-line summary used in docs and in the item tooltip.
  * @property {string} [texture] Resource-pack texture shortname. Defaults to the id's local part.
  * @property {SwordItemStats} item
- * @property {AbilityBinding} [active] Fired when the player uses (right-click / long-press) the sword.
- * @property {AbilityBinding} [passive] Fired when the sword hits an entity.
+ * @property {AbilityBinding[]} abilities One binding per activation method. A sword may bind several.
  * @property {string[]} [tags] Extra `minecraft:tags` entries.
  * @property {boolean} [isTestItem] True for diagnostic items that are NOT part of the shipped collection.
  */
@@ -136,9 +153,10 @@
  */
 
 /**
- * What triggered an ability invocation.
+ * What triggered an ability invocation. Re-exported from `activation.js` so
+ * definitions can refer to one name.
  *
- * @typedef {'use' | 'hit'} AbilityTrigger
+ * @typedef {import('./activation.js').ActivationMethod} AbilityTrigger
  */
 
 /**
@@ -156,8 +174,8 @@
  * @property {{ x: number, y: number, z: number }} origin Player head location at invocation time.
  * @property {{ x: number, y: number, z: number }} viewDirection
  * @property {number} currentTick
- * @property {AbilityTrigger} trigger
- * @property {import('@minecraft/server').Entity} [target] Present when `trigger` is `hit`.
+ * @property {AbilityTrigger} activation The method that triggered this invocation.
+ * @property {import('@minecraft/server').Entity} [target] Present for melee activations.
  * @property {TargetingSpec} targeting Resolved from the binding; always present, defaulting to `{ type: 'self' }`.
  * @property {readonly EffectSpec[]} effects From the binding; empty when none are declared.
  * @property {readonly ParticleSpec[]} particles From the binding; empty when none are declared.
@@ -190,6 +208,7 @@
  * @property {import('../systems/particles.js').ParticleService} particles
  * @property {import('../systems/sounds.js').SoundService} sounds
  * @property {import('../systems/feedback.js').FeedbackService} feedback
+ * @property {import('../systems/outcome.js').OutcomeService} outcome
  * @property {import('./cooldown_manager.js').CooldownManager} cooldowns
  * @property {import('./player_state.js').PlayerStateStore} state
  * @property {typeof import('./log.js').log} log

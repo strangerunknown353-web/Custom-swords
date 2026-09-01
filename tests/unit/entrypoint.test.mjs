@@ -27,10 +27,16 @@ after(() => {
 await import('../../packs/CustomSwordsBP/scripts/main.js');
 
 describe('scripts/main.js', () => {
-    it('subscribes to startup, playerLeave and worldLoad at module load', () => {
+    it('subscribes to the whole lifecycle exactly once each, at module load', () => {
         assert.equal(system.beforeEvents.startup.handlers.length, 1);
         assert.equal(world.afterEvents.playerLeave.handlers.length, 1);
+        assert.equal(world.afterEvents.entityDie.handlers.length, 1);
+        assert.equal(world.afterEvents.playerSpawn.handlers.length, 1);
         assert.equal(world.afterEvents.worldLoad.handlers.length, 1);
+    });
+
+    it('filters the death subscription to players, not every mob in the world', () => {
+        assert.deepEqual(world.afterEvents.entityDie.options?.entityTypes, ['minecraft:player']);
     });
 
     it('subscribes diagnostics to script events, filtered to our namespace', () => {
@@ -71,6 +77,11 @@ describe('scripts/main.js', () => {
             logged.some((line) => /ready - 1 sword\(s\) \(0 shipped, 1 diagnostic\), 1 ability\(ies\)/.test(line)),
             `expected a readiness banner, got: ${logged.join(' | ')}`,
         );
+        assert.equal(
+            logged.some((line) => line.includes('unbound ability')),
+            false,
+            'every registered ability should be bound by a sword',
+        );
         assert.equal(system.intervals.length, 1);
         assert.equal(system.intervals[0].interval, 600, 'the sweep must be low frequency, not per tick');
     });
@@ -83,5 +94,18 @@ describe('scripts/main.js', () => {
         const player = new MockPlayer({ id: 'departing-player' });
         world.players.push(player);
         assert.doesNotThrow(() => world.afterEvents.playerLeave.emit({ playerId: player.id, playerName: 'x' }));
+    });
+
+    it('handles death and respawn without throwing, and ignores a first join', () => {
+        const player = new MockPlayer({ id: 'dying-player' });
+        assert.doesNotThrow(() => world.afterEvents.entityDie.emit({ deadEntity: player, damageSource: {} }));
+        assert.doesNotThrow(() => world.afterEvents.playerSpawn.emit({ player, initialSpawn: false }));
+        assert.doesNotThrow(() => world.afterEvents.playerSpawn.emit({ player, initialSpawn: true }));
+    });
+
+    it('ignores the death of a non-player entity', () => {
+        assert.doesNotThrow(() =>
+            world.afterEvents.entityDie.emit({ deadEntity: { typeId: 'minecraft:zombie' }, damageSource: {} }),
+        );
     });
 });

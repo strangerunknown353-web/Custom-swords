@@ -54,15 +54,38 @@ A finished sword icon has:
 The set must look coherent *and* varied. Same quality bar, same light source,
 same outline discipline — but each sword carries its own theme:
 
-| Theme | Direction |
-|---|---|
-| Fire | volcanic, forged, glowing seams in dark metal |
-| Thunder | bright polished metal, arcing highlights, cold blue-white |
-| Frost | crystalline, translucent edges, pale blue with white refraction |
-| Shadow | matte near-black, violet rim light, ragged edge |
-| Dragon | ancient bronze and bone, scaled guard, warm patina |
+| Theme | Direction | Shipped |
+|---|---|---|
+| Fire | volcanic, forged, glowing seams in dark metal | Inferno — dark iron blade with orange ember seams, brass fittings |
+| Thunder | dark storm-iron, a live arc along the fuller, violet discharge at the point | Thunder — narrow forked spike, gold arc, copper guard |
+| Frost | crystalline, translucent edges, pale blue with white refraction | Frost — a grown shard widening toward the tip, rimed silver guard |
+| Wind | light, slim, desaturated mint and white; nothing heavy | Wind — the slimmest blade in the set, swept guard, pale grip |
+| Earth | rough stone, brown and grey, chunky and blunt, a fleck of moss | Earth — the widest and shortest blade, deliberately unrefined |
+| Water | deep teal with a coral guard and a pearl pommel | Tidal — flowing edge, warm guard against a cold blade |
+| Nature | living wood and leaf-green, gold sap, growth over metal | Nature — leaf-shaped blade, branching guard |
+| Shadow | matte near-black, violet rim light, ragged edge | *(not yet)* |
+| Dragon | ancient bronze and bone, scaled guard, warm patina | *(not yet)* |
 
-Two swords should never be distinguishable only by hue.
+**Two swords must never be distinguishable only by hue.** Every sword in the
+table above differs from every other in silhouette *and* palette. This is the
+rule the linter enforces least well, so it is the one to check by eye.
+
+### A worked example of the rule being applied
+
+Thunder's first version used a pale blue-white blade — "bright polished metal,
+cold blue-white", as the direction above originally read. Rendered next to
+Frost on a contact sheet, it read as *ice*: same hue family, same brightness,
+and it looked like a weaker Frost despite being the collection's only Legendary.
+
+Every automated check passed. The linter had nothing to say, because nothing was
+wrong at the pixel level — the two grids are different shapes, both palettes are
+well spread, both silhouettes are clean.
+
+It was rebuilt as dark storm-iron with a gold arc crawling the fuller and a
+violet discharge at the tip, and the theme direction in the table above was
+rewritten to match. That is what "regenerate a texture that does not meet the
+standard" means in practice, and it is why step 3 of the workflow below is
+*look at it*, not *check the linter passed*.
 
 ## 4. Technical requirements
 
@@ -154,8 +177,11 @@ the first result.
 1. Write `art/swords/<shortname>.json`.
 2. `npm run generate` — compiles it into the resource pack.
 3. Render it enlarged and **look at it**. Iterate.
-4. `npm run validate` — the gate must pass with zero errors and zero warnings.
-5. Only then is the sword complete.
+4. Render it **beside every other sword in the set**, at both scales, on a dark
+   background. A texture that is fine alone and indistinct in company has
+   failed. This is how the Thunder revision above was caught.
+5. `npm run validate` — the gate must pass with zero errors and zero warnings.
+6. Only then is the sword complete.
 
 ## 9. Benchmark
 

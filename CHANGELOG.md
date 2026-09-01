@@ -44,6 +44,16 @@ abilities and systems the previous two milestones shipped.
   silhouette, palette and material story (see `docs/TEXTURE_STANDARD.md`). All
   seven pass the texture linter with zero warnings, including the palette
   near-duplicate check.
+
+### Changed
+
+- **Thunder's texture was rebuilt.** Its first version passed every automated
+  check but, rendered beside Frost, read as ice rather than lightning — the
+  collection's only Legendary looked like a weaker Rare. It is now dark
+  storm-iron with a gold arc along the fuller and a violet discharge at the tip,
+  and `docs/TEXTURE_STANDARD.md` gained a "render it beside the whole set" step
+  plus the worked example, because the linter cannot catch this class of
+  failure.
 - **Sword test matrix** in `docs/TESTING.md`, recording per sword what has been
   verified statically and what still requires a real client.
 

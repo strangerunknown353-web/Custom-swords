@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "custom_swords",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "test_blade": {
+      "textures": "textures/items/custom_swords/test_blade"
+    }
+  }
+}

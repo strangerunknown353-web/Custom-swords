@@ -1,0 +1,6 @@
+{
+  "note": "Written by tools/generate.mjs so stale generated files can be pruned. Not read by Minecraft.",
+  "items": [
+    "test_blade.item.json"
+  ]
+}

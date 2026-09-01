@@ -1,0 +1,68 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "pack.name",
+    "description": "pack.description",
+    "uuid": "fdd16c39-2448-469e-8eac-547434249afe",
+    "version": [
+      0,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      90
+    ]
+  },
+  "modules": [
+    {
+      "description": "Custom Swords item and loot data.",
+      "type": "data",
+      "uuid": "c6c23a32-5f57-4d90-b278-b9bc59262e83",
+      "version": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "description": "Custom Swords scripting framework.",
+      "type": "script",
+      "language": "javascript",
+      "uuid": "f6e67f49-f0b6-4421-8ab0-8f65d1c08097",
+      "version": [
+        0,
+        1,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "6780b103-7f85-4346-8926-502ad61f2040",
+      "version": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      "Custom Swords Project"
+    ],
+    "license": "MIT",
+    "product_type": "addon",
+    "generated_with": {
+      "custom_swords_tools": [
+        "0.1.0"
+      ]
+    }
+  }
+}

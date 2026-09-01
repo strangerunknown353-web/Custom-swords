@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "checkJs": true,
+    "allowJs": true,
+    "noEmit": true,
+    "strict": true,
+    "types": []
+  },
+  "include": [
+    "packs/CustomSwordsBP/scripts/**/*.js",
+    "tools/**/*.mjs",
+    "tests/**/*.mjs"
+  ]
+}

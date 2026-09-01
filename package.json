@@ -1,6 +1,6 @@
 {
   "name": "custom-swords",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Custom Swords - a data-driven custom sword framework for Minecraft Bedrock Edition.",
   "type": "module",
@@ -12,8 +12,9 @@
     "validate": "node tools/validate.mjs",
     "test": "node --import ./tests/register-mocks.mjs --test 'tests/unit/*.test.mjs'",
     "build": "node tools/build.mjs",
-    "check": "npm run generate && npm run validate && npm run test",
+    "check": "npm run generate && npm run catalog && npm run validate && npm run test",
     "all": "npm run check && npm run build",
-    "version:set": "node tools/set-version.mjs"
+    "version:set": "node tools/set-version.mjs",
+    "catalog": "node tools/catalog.mjs"
   }
 }

@@ -1,0 +1,36 @@
+{
+  "name": "Frost Sword",
+  "description": "A grown crystal shard that widens toward the tip, its facets catching pale blue light; rimed silver guard and a frost-bound grip.",
+  "palette": {
+    "o": "#0b1420",
+    "H": "#e8f8ff",
+    "B": "#a9dcf2",
+    "S": "#5fa5cc",
+    "D": "#2f6a92",
+    "G": "#b9cddb",
+    "g": "#7591a6",
+    "e": "#43596b",
+    "W": "#4c6a7d",
+    "k": "#1d2c39",
+    "P": "#dff3ff",
+    "p": "#7fb3cd"
+  },
+  "pixels": [
+    ".............oo.",
+    "...........ooHBo",
+    "..........oHHBSo",
+    ".........oHHBSo.",
+    ".........oHBSDo.",
+    "......oooHBSDo..",
+    ".....ogGHBSoo...",
+    "......ogGSo.....",
+    ".....oWoeGo.....",
+    "....oWkkoeo.....",
+    "...oWkko.o......",
+    "..oPkko.........",
+    ".oPPpo..........",
+    "..opo...........",
+    "...o............",
+    "................"
+  ]
+}

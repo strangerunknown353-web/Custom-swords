@@ -79,6 +79,32 @@ declaration (`"custom_swords:sword": {}`) serves every sword.
 | `Entity.addEffect` | `(effectType, duration, options?: { amplifier?, showParticles? })` |
 | `Dimension.getEntities` | `(options?: EntityQueryOptions) => Entity[]`; `location` + `maxDistance` + `excludeTypes` are all supported |
 | `Dimension.getEntitiesFromRay` | `(location, direction, options?) => EntityRaycastHit[]` |
+| `Dimension.getBlockFromRay` | `(location, direction, options?: BlockRaycastOptions) => BlockRaycastHit \| undefined` — **returns `undefined` in open air**, which is the normal case for a skyward aim, not an error |
+| `Entity.getComponent('minecraft:type_family')` | `EntityTypeFamilyComponent` — `getTypeFamilies(): string[]`, `hasTypeFamily(f): boolean` |
+| `EntityQueryOptions.families` | `string[]` — **AND semantics**, see below |
+| `Entity.matches` | `(options: EntityQueryOptions) => boolean` — the same filter language applied to one entity |
+
+**`EntityQueryOptions.families` is AND, not OR.** An entity must belong to
+*every* family listed, so `families: ['monster', 'animal']` matches nothing at
+all rather than "monsters or animals". `core/target_categories.js` therefore
+pushes at most **one** category down to the engine query and returns `{}` for a
+union, applying the union in script via `matchesCategories`. Getting this
+backwards produces an ability that silently never hits anything — the failure
+mode is an empty result, not an exception, which is why it is documented here
+rather than left to be rediscovered.
+
+**Vanilla type families used**, all verified against the vanilla entity
+definitions rather than assumed:
+
+| Category | `minecraft:type_family` |
+|---|---|
+| `mob` | `mob` |
+| `hostile` | `monster` |
+| `passive` | `animal` |
+| `player` | `player` |
+| `undead` | `undead` |
+| `arthropod` | `arthropod` |
+| `any` | — no family filter |
 
 ### Diagnostics
 
@@ -169,6 +195,27 @@ is engine behaviour, not a bug to work around.
 
 ---
 
+## 3a. The vanilla effect catalogue
+
+`core/effect_catalogue.js` lists all **37** vanilla status effects. They were
+transcribed from the `MinecraftEffectTypes` enum in `@minecraft/vanilla-data`
+**1.26.44**, not written from memory, and the module carries that provenance in
+its header.
+
+The reason it exists: `Entity.addEffect` with an unknown effect id fails at
+runtime, inside an event handler, on a player's machine. Validating against a
+transcribed list moves that failure to startup, where `definition_validator.js`
+can name the sword, the binding and the nearest real effect ("did you mean
+`mining_fatigue`?"). The catalogue is data the framework never calls into the
+engine to obtain, so it costs nothing at runtime.
+
+The trade-off is that the list is a snapshot: an effect added in a later
+Minecraft release will be rejected until the catalogue is updated. That is the
+right direction to fail — a rejected new effect is a build error with a clear
+message; an accepted typo is a silent no-op in someone's world.
+
+---
+
 ## 4. Experiment requirements
 
 **None.** Custom Components V2 requires no experimental toggle when the
@@ -194,6 +241,8 @@ from experimental in Minecraft 1.21.90 for both blocks and items.
 ## 6. Sources
 
 - `@minecraft/server` 2.0.0 TypeScript definitions, npm registry.
+- `@minecraft/vanilla-data` 1.26.44, npm registry — source of the effect
+  catalogue and the vanilla type-family names.
 - Minecraft Creator documentation: Scripting V2 overview, Introducing Custom
   Components, Item Components reference, individual item component pages
   (`minecraft:display_name`, `minecraft:damage`, `minecraft:enchantable`,

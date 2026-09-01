@@ -1,18 +1,30 @@
 /**
- * Target detection.
+ * Target detection and filtering.
  *
- * Every ability that needs to find entities goes through here, which means the
- * safety rules (range ceiling, target ceiling, PvP toggle, never-target list,
- * stale-handle rejection) are written once and cannot be forgotten by sword #26.
+ * Every ability that needs entities goes through here, so the safety rules —
+ * range ceiling, target-count ceiling, PvP toggle, never-target list,
+ * stale-handle rejection, category filtering — are written once and cannot be
+ * forgotten by sword #26.
  *
- * All queries are event-driven and one-shot. Nothing here polls.
+ * ## Query strategy
+ *
+ * All queries are one-shot and event-driven; nothing here polls. Each query
+ * delegates the expensive work to the engine's own spatial index via
+ * `getEntities({ location, maxDistance, ... })`, so the framework never walks
+ * the entity list of a dimension itself. Category constraints are pushed down
+ * into that same query whenever it is provably safe to do so (see
+ * `core/target_categories.js`), and applied per entity otherwise.
+ *
+ * Range is clamped to `config.targeting.maxRange` and the result count to
+ * `config.targeting.maxTargets` on every path, so no definition — however
+ * mis-authored — can ask the engine for a thousand-block sweep.
  */
 
 import * as Vec3 from '../util/vec3.js';
 import { clamp } from '../util/mathx.js';
+import { DEFAULT_CATEGORIES, matchesCategories, queryFor } from '../core/target_categories.js';
 
 /** @typedef {import('@minecraft/server').Entity} Entity */
-/** @typedef {import('@minecraft/server').Dimension} Dimension */
 /** @typedef {import('../util/vec3.js').Vec3} Vec3Like */
 
 /**
@@ -22,6 +34,7 @@ import { clamp } from '../util/mathx.js';
  * @property {Vec3Like} [origin] Defaults to the caster's head location.
  * @property {boolean} [includeCaster] Defaults to false.
  * @property {boolean} [includePlayers] Defaults to `config.combat.allowPlayerVersusPlayer`.
+ * @property {readonly string[]} [allowedCategories] Category ids; defaults to `['any']`.
  * @property {number} [coneAngleDegrees] When set, restricts hits to a forward cone.
  * @property {Vec3Like} [direction] Cone axis. Defaults to the caster's view direction.
  */
@@ -41,23 +54,59 @@ export class TargetingService {
     }
 
     /**
+     * The type families an entity belongs to, or an empty list when it declares
+     * none (a foreign add-on's entity may not use `minecraft:type_family`).
+     *
+     * @param {Entity} entity
+     * @returns {string[]}
+     */
+    familiesOf(entity) {
+        try {
+            const component = entity.getComponent('minecraft:type_family');
+            if (component === undefined) return [];
+            return /** @type {import('@minecraft/server').EntityTypeFamilyComponent} */ (component).getTypeFamilies();
+        } catch {
+            return [];
+        }
+    }
+
+    /**
      * True when an entity handle is still usable AND allowed to be targeted.
      *
      * `isValid` is checked first because acting on a removed entity throws, and
-     * a thrown error inside an ability aborts the rest of that ability.
+     * a throw inside an ability aborts the rest of it.
      *
-     * @param {Entity | undefined} entity
-     * @param {{ casterId?: string, includeCaster?: boolean, includePlayers?: boolean }} [options]
+     * @param {Entity | undefined | null} entity
+     * @param {{
+     *   casterId?: string,
+     *   includeCaster?: boolean,
+     *   includePlayers?: boolean,
+     *   allowedCategories?: readonly string[],
+     * }} [options]
      * @returns {boolean}
      */
     isTargetable(entity, options = {}) {
-        if (entity === undefined) return false;
-        if (!entity.isValid) return false;
+        if (entity === undefined || entity === null) return false;
+        try {
+            if (!entity.isValid) return false;
+        } catch {
+            return false;
+        }
+
         if (this.neverTarget.has(entity.typeId)) return false;
+
+        // Self-damage protection: the caster is excluded unless an ability
+        // deliberately opts in.
         if (!options.includeCaster && options.casterId !== undefined && entity.id === options.casterId) return false;
+
         if (entity.typeId === 'minecraft:player') {
             const allowPlayers = options.includePlayers ?? this.config.combat.allowPlayerVersusPlayer;
             if (!allowPlayers) return false;
+        }
+
+        const categories = options.allowedCategories ?? DEFAULT_CATEGORIES;
+        if (categories.length > 0 && !categories.includes('any')) {
+            if (!matchesCategories(entity.typeId, this.familiesOf(entity), categories)) return false;
         }
         return true;
     }
@@ -72,7 +121,7 @@ export class TargetingService {
      *
      * @param {import('../core/types.js').AbilityContext} ctx
      * @param {import('../core/types.js').TargetingSpec} [spec] Defaults to `ctx.targeting`.
-     * @returns {Entity[]} Empty for `self`, which acts on the caster only.
+     * @returns {Entity[]} Empty for `self` and `point`, which act on no entities.
      */
     resolve(ctx, spec = ctx.targeting) {
         const range = spec.range ?? 0;
@@ -82,10 +131,14 @@ export class TargetingService {
             maxTargets: spec.maxTargets,
             includeCaster: spec.includeCaster,
             includePlayers: spec.includePlayers,
+            allowedCategories: ctx.allowedTargets,
         };
 
         switch (spec.type) {
             case 'self':
+            case 'point':
+                // Both act on a location rather than a set of entities; an
+                // ability wanting entities near the point asks for them itself.
                 return [];
             case 'area':
                 // Area abilities originate at the caster's feet, not their head,
@@ -95,7 +148,11 @@ export class TargetingService {
                 return this.cone(ctx, { ...query, coneAngleDegrees: spec.angleDegrees ?? 60 });
             case 'single':
             case 'ray': {
-                const hit = this.raycast(ctx, { range, includePlayers: spec.includePlayers });
+                const hit = this.raycast(ctx, {
+                    range,
+                    includePlayers: spec.includePlayers,
+                    allowedCategories: ctx.allowedTargets,
+                });
                 return hit === undefined ? [] : [hit];
             }
             default:
@@ -107,11 +164,37 @@ export class TargetingService {
     }
 
     /**
-     * Entities in a sphere around a point.
+     * The world point a `point`-targeted ability should act on: where the
+     * caster is looking, or the end of their reach if nothing is in the way.
      *
-     * Uses the engine's own `getEntities` spatial query with `location` +
-     * `maxDistance`, so the engine does the culling. We never iterate every
-     * entity in the dimension ourselves.
+     * This is the anchor future projectile-style and ground-targeted abilities
+     * need (a meteor's impact site, an area placed at range). It resolves to a
+     * location only — no entity search — so it costs one block raycast.
+     *
+     * @param {import('../core/types.js').AbilityContext} ctx
+     * @param {number} [range] Defaults to the binding's targeting range.
+     * @returns {Vec3Like} Always finite, always within the range ceiling.
+     */
+    resolvePoint(ctx, range = ctx.targeting.range ?? 0) {
+        const capped = clamp(range, 0, this.config.targeting.maxRange);
+        const fallback = Vec3.project(ctx.origin, ctx.viewDirection, capped);
+        if (capped <= 0) return ctx.origin;
+
+        try {
+            const hit = ctx.dimension.getBlockFromRay(ctx.origin, ctx.viewDirection, { maxDistance: capped });
+            if (hit?.block !== undefined) {
+                // Centre of the struck block's top face reads better than its
+                // corner for anything that lands on the ground.
+                return { x: hit.block.x + 0.5, y: hit.block.y + 1, z: hit.block.z + 0.5 };
+            }
+        } catch (error) {
+            this.log.debug('targeting.resolvePoint raycast failed:', error);
+        }
+        return fallback;
+    }
+
+    /**
+     * Entities in a sphere around a point.
      *
      * @param {import('../core/types.js').AbilityContext} ctx
      * @param {TargetQuery} query
@@ -123,6 +206,8 @@ export class TargetingService {
         const limit = clamp(query.maxTargets ?? this.config.targeting.maxTargets, 1, this.config.targeting.maxTargets);
         if (range <= 0) return [];
 
+        const categories = query.allowedCategories ?? DEFAULT_CATEGORIES;
+
         /** @type {Entity[]} */
         let candidates;
         try {
@@ -130,6 +215,9 @@ export class TargetingService {
                 location: origin,
                 maxDistance: range,
                 excludeTypes: [...this.neverTarget],
+                // Pushed down to the engine when a single category makes it
+                // unambiguous; otherwise the union is applied below.
+                ...queryFor(categories),
             });
         } catch (error) {
             this.log.warn('targeting.sphere query failed:', error);
@@ -145,6 +233,7 @@ export class TargetingService {
                     casterId: ctx.playerId,
                     includeCaster: query.includeCaster,
                     includePlayers: query.includePlayers,
+                    allowedCategories: categories,
                 })
             ) {
                 continue;
@@ -165,21 +254,20 @@ export class TargetingService {
     cone(ctx, query) {
         const axis = Vec3.normalize(query.direction ?? ctx.viewDirection);
         const origin = query.origin ?? ctx.origin;
-        const cosLimit = Math.cos(clamp(query.coneAngleDegrees, 1, 180) * (Math.PI / 180) / 2);
+        const cosLimit = Math.cos((clamp(query.coneAngleDegrees, 1, 360) * (Math.PI / 180)) / 2);
 
         return this.sphere(ctx, query).filter((entity) => {
             const toTarget = Vec3.subtract(entity.location, origin);
-            const lengthSquared = Vec3.lengthSquared(toTarget);
-            if (lengthSquared === 0) return true;
+            if (Vec3.lengthSquared(toTarget) === 0) return true;
             return Vec3.dot(Vec3.normalize(toTarget), axis) >= cosLimit;
         });
     }
 
     /**
-     * First entity along the caster's view vector.
+     * First permitted entity along the caster's view vector.
      *
      * @param {import('../core/types.js').AbilityContext} ctx
-     * @param {{ range: number, includePlayers?: boolean }} query
+     * @param {{ range: number, includePlayers?: boolean, allowedCategories?: readonly string[] }} query
      * @returns {Entity | undefined}
      */
     raycast(ctx, query) {
@@ -195,6 +283,7 @@ export class TargetingService {
                     this.isTargetable(hit.entity, {
                         casterId: ctx.playerId,
                         includePlayers: query.includePlayers,
+                        allowedCategories: query.allowedCategories,
                     })
                 ) {
                     return hit.entity;

@@ -16,19 +16,21 @@
 import { IDENTIFIER_PATTERN, isValidIdentifier, isValidLocalName } from './identifiers.js';
 import { RARITIES, isRarity } from './rarity.js';
 import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
+import { TARGET_CATEGORY_IDS, isTargetCategory } from './target_categories.js';
+import { isVanillaEffect, suggestEffect } from './effect_catalogue.js';
 
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 /** @typedef {import('./types.js').AbilityDefinition} AbilityDefinition */
 /** @typedef {import('./types.js').AbilityBinding} AbilityBinding */
 
 /** Re-exported so callers that only need these lists have one import. */
-export { RARITIES, ACTIVATION_METHODS };
+export { RARITIES, ACTIVATION_METHODS, TARGET_CATEGORY_IDS };
 
 /** Targeting shapes the framework knows how to resolve. */
-export const TARGETING_TYPES = Object.freeze(['self', 'single', 'area', 'cone', 'ray']);
+export const TARGETING_TYPES = Object.freeze(['self', 'single', 'area', 'cone', 'ray', 'point']);
 
-/** Targeting types that act on entities and therefore need a range. */
-const RANGED_TARGETING_TYPES = Object.freeze(['single', 'area', 'cone', 'ray']);
+/** Targeting types that act on entities or a location and therefore need a range. */
+const RANGED_TARGETING_TYPES = Object.freeze(['single', 'area', 'cone', 'ray', 'point']);
 
 /**
  * @param {unknown} value
@@ -137,6 +139,14 @@ export function validateEffects(effects, label) {
         }
         if (typeof effect.effect !== 'string' || effect.effect.length === 0) {
             problems.push(`${where}: 'effect' must be a non-empty effect id.`);
+        } else if (!isVanillaEffect(effect.effect)) {
+            // A typo here would load fine and then silently do nothing, which
+            // reads as "this sword is weak" rather than "this sword is broken".
+            const suggestion = suggestEffect(effect.effect);
+            problems.push(
+                `${where}: '${effect.effect}' is not a vanilla effect` +
+                    `${suggestion === undefined ? '' : ` (did you mean '${suggestion}'?)`}.`,
+            );
         }
         if (!isPositiveNumber(effect.durationTicks)) {
             problems.push(`${where}: 'durationTicks' must be a positive number.`);
@@ -204,6 +214,69 @@ export function validateSounds(sounds, label) {
     for (const key of Object.keys(sounds)) {
         if (key !== 'cast' && key !== 'impact') {
             problems.push(`${label}.sounds: unknown slot '${key}'. Valid slots: cast, impact.`);
+        }
+    }
+    return problems;
+}
+
+/**
+ * @param {unknown} knockback
+ * @param {string} label
+ * @returns {string[]}
+ */
+export function validateKnockback(knockback, label) {
+    if (knockback === undefined) return [];
+    if (!isPlainObject(knockback)) return [`${label}.knockback: must be an object.`];
+
+    /** @type {string[]} */
+    const problems = [];
+    const known = ['horizontal', 'vertical', 'mode', 'from', 'direction', 'pull'];
+    if (knockback.mode !== undefined && knockback.mode !== 'away' && knockback.mode !== 'forward') {
+        problems.push(`${label}.knockback: 'mode' must be 'away' or 'forward' when present.`);
+    }
+
+    for (const field of ['horizontal', 'vertical']) {
+        const value = knockback[field];
+        if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value))) {
+            problems.push(`${label}.knockback: '${field}' must be a finite number when present.`);
+        }
+    }
+    if (knockback.pull !== undefined && typeof knockback.pull !== 'boolean') {
+        problems.push(`${label}.knockback: 'pull' must be a boolean when present.`);
+    }
+    for (const field of ['from', 'direction']) {
+        const value = knockback[field];
+        if (value === undefined) continue;
+        if (!isPlainObject(value) || !['x', 'y', 'z'].every((axis) => Number.isFinite(value[axis]))) {
+            problems.push(`${label}.knockback: '${field}' must be a finite {x, y, z} vector when present.`);
+        }
+    }
+    for (const key of Object.keys(knockback)) {
+        if (!known.includes(key)) {
+            problems.push(`${label}.knockback: unknown field '${key}'. Valid: ${known.join(', ')}.`);
+        }
+    }
+    return problems;
+}
+
+/**
+ * @param {unknown} allowedTargets
+ * @param {string} label
+ * @returns {string[]}
+ */
+export function validateAllowedTargets(allowedTargets, label) {
+    if (allowedTargets === undefined) return [];
+    if (!Array.isArray(allowedTargets) || allowedTargets.length === 0) {
+        return [`${label}.allowedTargets: must be a non-empty array when present.`];
+    }
+    /** @type {string[]} */
+    const problems = [];
+    for (const category of allowedTargets) {
+        if (!isTargetCategory(category)) {
+            problems.push(
+                `${label}.allowedTargets: unknown category '${category}'. ` +
+                    `Valid: ${TARGET_CATEGORY_IDS.join(', ')}.`,
+            );
         }
     }
     return problems;
@@ -285,6 +358,8 @@ export function validateBinding(binding, label, abilityExists) {
     problems.push(...validateEffects(binding.effects, label));
     problems.push(...validateParticles(binding.particles, label));
     problems.push(...validateSounds(binding.sounds, label));
+    problems.push(...validateKnockback(binding.knockback, label));
+    problems.push(...validateAllowedTargets(binding.allowedTargets, label));
     problems.push(...validateRestrictions(binding.restrictions, label));
 
     return problems;

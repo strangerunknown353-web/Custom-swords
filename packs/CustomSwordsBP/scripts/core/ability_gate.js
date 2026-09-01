@@ -11,7 +11,8 @@
  *   2. ability  — is the bound ability actually registered?
  *   3. equipped — is the caster still holding this sword?
  *   4. limits   — do the binding's declared restrictions allow it?
- *   5. cooldown — has the timer elapsed?
+ *   5. rate    — is this player activating faster than the anti-spam floor?
+ *   6. cooldown — has the timer elapsed?
  *
  * The cooldown is checked LAST of the pre-execution checks so that a refusal
  * for any other reason never shows the player a misleading cooldown message.
@@ -34,15 +35,21 @@
 
 const PASS = Object.freeze({ ok: true });
 
+/** Cooldown key backing the per-player activation rate limit. */
+const RATE_KEY = 'rate:activation';
+
 export class AbilityGate {
     /**
      * @param {object} deps
      * @param {import('./ability_registry.js').AbilityRegistry} deps.abilities
      * @param {import('./item_identifier.js').ItemIdentifier} deps.identifier
      * @param {import('./cooldown_manager.js').CooldownManager} deps.cooldowns
+     * @param {typeof import('../config.js').CONFIG} deps.config
      * @param {typeof import('./log.js').log} deps.log
      */
-    constructor({ abilities, identifier, cooldowns, log }) {
+    constructor({ abilities, identifier, cooldowns, config, log }) {
+        /** @private @readonly */
+        this.config = config;
         /** @private @readonly */
         this.abilities = abilities;
         /** @private @readonly */
@@ -75,6 +82,9 @@ export class AbilityGate {
 
         const restrictionCheck = this.checkRestrictions(player, binding.restrictions);
         if (!restrictionCheck.ok) return restrictionCheck;
+
+        const rateCheck = this.checkRate(player.id);
+        if (!rateCheck.ok) return rateCheck;
 
         return this.checkCooldown(player.id, cooldownKey);
     }
@@ -160,6 +170,29 @@ export class AbilityGate {
             this.log.warn('Restriction check failed; refusing the activation:', error);
             return { ok: false, reason: 'restriction_error' };
         }
+        return PASS;
+    }
+
+    /**
+     * Anti-spam floor beneath the gameplay cooldowns.
+     *
+     * A held right-click re-fires every tick; without a floor, an ability with
+     * no cooldown would run twenty times a second per player. This is not a
+     * balance mechanism — it is the budget guard that keeps one player from
+     * dominating a busy server's tick.
+     *
+     * It is silent: a refusal here produces no message, because the player did
+     * not do anything wrong and a burst of "too fast!" text would be worse than
+     * the spam it prevents.
+     *
+     * @param {string} playerId
+     * @returns {GateResult}
+     */
+    checkRate(playerId) {
+        const minimum = this.config.combat.minActivationIntervalTicks;
+        if (minimum <= 0) return PASS;
+        if (!this.cooldowns.isReady(playerId, RATE_KEY)) return { ok: false, reason: 'rate_limited' };
+        this.cooldowns.start(playerId, RATE_KEY, minimum);
         return PASS;
     }
 

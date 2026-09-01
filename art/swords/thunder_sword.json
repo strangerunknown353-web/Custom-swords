@@ -1,0 +1,37 @@
+{
+  "name": "Thunder Sword",
+  "description": "A long, narrow storm-iron spike with a forked tip and pale arc-runes crawling the fuller; swept copper guard, dark corded grip.",
+  "palette": {
+    "o": "#080a14",
+    "X": "#f6fbff",
+    "H": "#cfe3f7",
+    "B": "#8fa8c6",
+    "S": "#54688a",
+    "M": "#7ee7ff",
+    "G": "#c98b3a",
+    "g": "#8a5a1e",
+    "e": "#4d3110",
+    "W": "#2b3350",
+    "k": "#12172a",
+    "P": "#ffe08a",
+    "p": "#b07a24"
+  },
+  "pixels": [
+    "............ooHo",
+    "...........oXHBS",
+    "...........oMBSo",
+    "..........oHMSXo",
+    ".........oHBSoo.",
+    ".....o..oMBSo...",
+    "....oGooHMSo....",
+    "....ogGHBSo.....",
+    ".....ogGSo......",
+    "....oWkeGo......",
+    "...oWkkoeGo.....",
+    "..oWkko.oo......",
+    ".oPPko..........",
+    ".oPpo...........",
+    "..oo............",
+    "................"
+  ]
+}

@@ -15,6 +15,10 @@ import { SwordRegistry } from '../../packs/CustomSwordsBP/scripts/core/sword_reg
 import { ItemIdentifier } from '../../packs/CustomSwordsBP/scripts/core/item_identifier.js';
 import { CooldownManager } from '../../packs/CustomSwordsBP/scripts/core/cooldown_manager.js';
 import { log } from '../../packs/CustomSwordsBP/scripts/core/log.js';
+import { CONFIG } from '../../packs/CustomSwordsBP/scripts/config.js';
+
+/** The rate limiter is exercised in its own test; disable it elsewhere. */
+const NO_RATE_LIMIT = { ...CONFIG, combat: { ...CONFIG.combat, minActivationIntervalTicks: 0 } };
 
 const SWORD_ID = 'custom_swords:probe';
 const ABILITY_ID = 'custom_swords:shockwave';
@@ -42,7 +46,7 @@ function setup({ restrictions } = {}) {
 
     const cooldowns = new CooldownManager(() => tick);
     const identifier = new ItemIdentifier({ swords });
-    const gate = new AbilityGate({ abilities, identifier, cooldowns, log });
+    const gate = new AbilityGate({ abilities, identifier, cooldowns, config: NO_RATE_LIMIT, log });
 
     const dimension = new MockDimension();
     const player = new MockPlayer({ id: 'player-a', dimension });
@@ -123,6 +127,7 @@ describe('AbilityGate', () => {
                 abilities: { has: () => true },
                 identifier,
                 cooldowns: new CooldownManager(() => 0),
+                config: NO_RATE_LIMIT,
                 log,
             }).check({ player, sword: { id: SWORD_ID }, binding, cooldownKey: 'key' });
             assert.equal(result.reason, 'wrong_sword');

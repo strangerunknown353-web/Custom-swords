@@ -1,0 +1,35 @@
+{
+  "name": "Wind Sword",
+  "description": "A slim, guardless sabre of pale sky-metal, so light it seems to be drawn forward by the air; wrapped grip and a ring pommel.",
+  "palette": {
+    "o": "#101a1c",
+    "H": "#eafaf7",
+    "B": "#b7d8d3",
+    "S": "#7ba7a2",
+    "G": "#9fe0d6",
+    "g": "#5f9a92",
+    "e": "#365c57",
+    "W": "#d8d2c2",
+    "k": "#5d564a",
+    "P": "#f7e9b8",
+    "p": "#b0964f"
+  },
+  "pixels": [
+    ".............oHo",
+    "............oHBS",
+    "...........oHBSo",
+    "..........oHBSo.",
+    ".........oHBSo..",
+    "........oHBSo...",
+    ".....oooHBSo....",
+    "....ogGHBSo.....",
+    ".....ogGSo......",
+    "....oWkeGo......",
+    "..ooWkkoeo......",
+    ".oPWkko.o.......",
+    "oPPPko..........",
+    ".oPppo..........",
+    "..opo...........",
+    "...o............"
+  ]
+}

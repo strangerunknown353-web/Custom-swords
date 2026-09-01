@@ -62,8 +62,8 @@ export const emberfang = {
 
 ### The envelope is the point
 
-`targeting`, `effects`, `particles`, `sounds` and `restrictions` are the
-*invocation envelope*. Binding the same ability twice with different envelopes
+`targeting`, `allowedTargets`, `knockback`, `effects`, `particles`, `sounds`
+and `restrictions` are the *invocation envelope*. Binding the same ability twice with different envelopes
 gives you two attacks that feel genuinely different, with no new code — exactly
 as above: a crowd-clearing burst on `use`, a committed aimed strike on
 `sneak_use`.
@@ -73,6 +73,38 @@ the framework can interpret belongs in a typed field, where `npm run validate`
 checks it at build time — a targeting block missing its `range` fails the build,
 whereas the same mistake hidden in `params` would ship as an ability that
 silently does nothing.
+
+### Targeting, filters and knockback
+
+All three are envelope data, so an ability never decides who it hits or how hard
+they fly:
+
+```js
+targeting:      { type: 'cone', range: 6, angleDegrees: 90, maxTargets: 8 },
+allowedTargets: ['hostile', 'player'],
+knockback:      { horizontal: 2.2, vertical: 0.4, mode: 'away' },
+```
+
+| `targeting.type` | Resolves to |
+|---|---|
+| `self` | the caster alone |
+| `single` | the first valid entity along the view line, within `range` |
+| `area` | everything within `range` of the caster |
+| `cone` | everything within `range` **and** inside `angleDegrees` of the view direction |
+| `ray` | everything the view line passes through, in order |
+| `point` | nothing — resolves the *location* the caster is looking at, up to `range`, for abilities that detonate there |
+
+`allowedTargets` accepts `any`, `mob`, `hostile`, `passive`, `player`, `undead`
+and `arthropod`. Omit it and the binding hits anything but the caster. It is a
+union: `['hostile', 'undead']` means either.
+
+`knockback.mode` is `'away'` (radially outward from the caster — a scatter) or
+`'forward'` (along the caster's view direction — a wave). The Wind and Tidal
+swords differ by little more than this field and their targeting shape, and they
+play nothing alike.
+
+Both forces are clamped by `config.combat`, so an over-enthusiastic number is
+capped rather than launching a zombie into orbit.
 
 ### Activation methods
 
@@ -134,18 +166,21 @@ export const flameNova = {
         const { params, services } = ctx;
 
         // Caster visuals: the binding decides what they are.
-        services.outcome.playCast(ctx);
+        services.combat.playCast(ctx);
 
         // Targeting is data — this ability never learns which shape it got.
         const targets = services.targeting.resolve(ctx);
         if (targets.length === 0) return { ok: false, message: 'Nothing to burn.' };
 
-        // One call does damage, particles, sound, effects, ignition and knockback,
-        // in a fixed, sensible order.
-        const report = services.outcome.applyToTargets(ctx, targets, {
+        // One call validates, damages, emits target particles, plays the impact
+        // sound, applies the binding's effects, ignites and knocks back — in a
+        // fixed order, with hit protection and self-damage refusal already
+        // handled. The report says how many landed and why the rest did not.
+        const report = services.combat.strike(ctx, targets, {
             damage: params.damage,
             igniteSeconds: params.igniteSeconds,
             damageCause: 'fire',
+            knockback: ctx.knockback,
         });
 
         return { ok: true, message: `${report.damaged} scorched` };
@@ -160,8 +195,12 @@ Add it to `abilities/index.js`.
 - no `@minecraft/server` import — use `ctx.services`;
 - read targeting, effects, particles and sounds from `ctx`, never hard-code
   them — that is what keeps one ability reusable across many swords;
-- prefer `services.outcome.applyToTargets` over hand-rolling the
-  damage/knockback/effects/particles block, so ordering stays consistent;
+- go through `services.combat.strike` (or `strikeOne`) rather than calling
+  `damage`, `effects` and `particles` yourself — the combat system owns the
+  ordering, the validation, the self-damage refusal and the hit protection, and
+  an ability that bypasses it bypasses all four;
+- never call `services.damage.apply` directly from an ability; that is the
+  combat system's job;
 - no module-level mutable state — use `ctx.services.state`, keyed by
   `ctx.playerId`;
 - no `system.runInterval` — the framework allows exactly one interval, and it
@@ -175,10 +214,10 @@ Add it to `abilities/index.js`.
 npm run all
 ```
 
-That runs `generate` → `validate` → `test` → `build`. The generator writes the
-item JSON, the texture atlas entry and the `.lang` names, and drops in a
-deterministic placeholder icon if `packs/CustomSwordsRP/textures/items/custom_swords/<texture>.png`
-does not exist yet.
+That runs `generate` → `catalog` → `validate` → `test` → `build`. The generator
+writes the item JSON, the texture atlas entry, the compiled PNG and the `.lang`
+names; `catalog` refreshes `SWORD_CATALOG.md` so the published roster matches
+the definitions. Neither is hand-editable — regenerate instead.
 
 ## 4. Author the texture
 

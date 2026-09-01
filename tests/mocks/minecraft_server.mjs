@@ -108,6 +108,17 @@ export class MockDimension {
         }));
     }
 
+    /**
+     * Block raycast. The mock world is empty air, so this reports no hit and
+     * callers fall back to their maximum reach — which is the common outdoor
+     * case in a real world too.
+     *
+     * @param {any} location @param {any} direction @param {any} options
+     */
+    getBlockFromRay(location, direction, options) {
+        return undefined;
+    }
+
     /** @param {string} id @param {any} location @param {any} molang */
     spawnParticle(id, location, molang) {
         this.particles.push({ id, location: { ...location }, molang });
@@ -119,6 +130,19 @@ export class MockDimension {
     }
 }
 
+/** Type families the real game assigns, keyed by entity type id. */
+const DEFAULT_FAMILIES = Object.freeze({
+    'minecraft:zombie': ['zombie', 'undead', 'monster', 'mob'],
+    'minecraft:skeleton': ['skeleton', 'undead', 'monster', 'mob'],
+    'minecraft:creeper': ['creeper', 'monster', 'mob'],
+    'minecraft:spider': ['spider', 'arthropod', 'monster', 'mob'],
+    'minecraft:pig': ['pig', 'mob'],
+    'minecraft:cow': ['cow', 'mob'],
+    'minecraft:villager_v2': ['villager', 'mob'],
+    'minecraft:armor_stand': ['armor_stand', 'inanimate', 'mob'],
+    'minecraft:player': ['player'],
+});
+
 export class MockEntity {
     /**
      * @param {object} options
@@ -127,9 +151,15 @@ export class MockEntity {
      * @param {{x: number, y: number, z: number}} [options.location]
      * @param {MockDimension} [options.dimension]
      */
-    constructor({ id, typeId = 'minecraft:zombie', location = { x: 0, y: 0, z: 0 }, dimension }) {
+    constructor({ id, typeId = 'minecraft:zombie', location = { x: 0, y: 0, z: 0 }, dimension, families }) {
         this.id = id;
         this.typeId = typeId;
+        /**
+         * Vanilla `minecraft:type_family` values. Defaulted from the type id so
+         * tests get realistic categorisation without restating it every time;
+         * a Blaze really is `["blaze", "monster", "mob"]` in the game data.
+         */
+        this.families = families ?? DEFAULT_FAMILIES[typeId] ?? ['mob'];
         this.location = location;
         this.dimension = dimension ?? new MockDimension();
         this.isValid = true;
@@ -232,6 +262,12 @@ export class MockEntity {
      */
     getComponent(componentId) {
         if (!this.isValid) throw new Error('Entity is not valid.');
+        if (componentId === 'minecraft:type_family') {
+            return {
+                getTypeFamilies: () => [...this.families],
+                hasTypeFamily: (family) => this.families.includes(family),
+            };
+        }
         return this.components[componentId];
     }
 

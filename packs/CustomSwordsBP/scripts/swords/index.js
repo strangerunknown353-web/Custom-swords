@@ -9,12 +9,27 @@
  *      texture entries and `.lang` names from these numbers),
  *   3. the Node unit tests and validator.
  *
- * Because the item JSON is generated, the stats a designer edits here are
- * guaranteed to be the stats the game loads. Adding sword #26 is: write one
- * module, add it to this array, drop in a 16x16 texture, run `npm run all`.
+ * Adding a sword is: write one module, add it here, author its texture source
+ * under `art/swords/`, run `npm run all`.
  */
 
 import { testBlade } from './test_blade.js';
+import { infernoSword } from './inferno_sword.js';
+import { thunderSword } from './thunder_sword.js';
+import { frostSword } from './frost_sword.js';
+import { windSword } from './wind_sword.js';
+import { earthSword } from './earth_sword.js';
+import { tidalSword } from './tidal_sword.js';
+import { natureSword } from './nature_sword.js';
 
 /** @type {readonly import('../core/types.js').SwordDefinition[]} */
-export const SWORDS = Object.freeze([testBlade]);
+export const SWORDS = Object.freeze([
+    testBlade,
+    infernoSword,
+    thunderSword,
+    frostSword,
+    windSword,
+    earthSword,
+    tidalSword,
+    natureSword,
+]);

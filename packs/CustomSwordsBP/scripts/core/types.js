@@ -36,13 +36,15 @@
  * into a concrete entity list.
  *
  * @typedef {Object} TargetingSpec
- * @property {'self' | 'single' | 'area' | 'cone' | 'ray'} type
+ * @property {'self' | 'single' | 'area' | 'cone' | 'ray' | 'point'} type
  *   `self` acts on the caster only and finds no entities;
  *   `single` takes the first entity along the view vector;
  *   `area` takes everything within `range` of the caster;
  *   `cone` narrows `area` to `angleDegrees` around the view vector;
  *   `ray` behaves like `single` but is documented separately so future
- *   piercing/multi-hit rays can extend it without changing existing swords.
+ *   piercing/multi-hit rays can extend it without changing existing swords;
+ *   `point` resolves a world location the caster is looking at and finds no
+ *   entities, for ground-targeted and projectile-style abilities.
  * @property {number} [range] Blocks. Ignored for `self`. Clamped to `config.targeting.maxRange`.
  * @property {number} [maxTargets] Clamped to `config.targeting.maxTargets`.
  * @property {number} [angleDegrees] Full cone width; required in practice for `cone`.
@@ -80,6 +82,20 @@
  * @typedef {Object} SoundSlots
  * @property {string} [cast] Played at the caster when the ability fires.
  * @property {string} [impact] Played at each target that was affected.
+ */
+
+/**
+ * How an ability pushes what it hits.
+ *
+ * Both components are clamped by `config.combat.maxKnockback*`, so a
+ * mis-authored definition cannot fling a player out of the world.
+ *
+ * @typedef {Object} KnockbackSpec
+ * @property {number} [horizontal] Force away from the origin.
+ * @property {number} [vertical] Upward strength.
+ * @property {{ x: number, y: number, z: number }} [from] Point to push away from. Defaults to the caster's feet.
+ * @property {{ x: number, y: number, z: number }} [direction] Explicit direction; overrides `from`.
+ * @property {boolean} [pull] Reverse the push, dragging targets inward.
  */
 
 /**
@@ -122,6 +138,11 @@
  * @property {EffectSpec[]} [effects] Applied to each affected target.
  * @property {ParticleSpec[]} [particles]
  * @property {SoundSlots} [sounds]
+ * @property {readonly string[]} [allowedTargets]
+ *   Target category ids this ability may affect — see `core/target_categories.js`.
+ *   Defaults to `['any']`. Applied by targeting AND re-checked by the damage
+ *   system, so an ability cannot bypass it by finding entities another way.
+ * @property {KnockbackSpec} [knockback] Default push applied by the combat system.
  * @property {RestrictionSpec} [restrictions] Checked before the cooldown is consumed.
  * @property {Record<string, unknown>} [params] Merged over the ability's `defaults`.
  */
@@ -180,6 +201,8 @@
  * @property {readonly EffectSpec[]} effects From the binding; empty when none are declared.
  * @property {readonly ParticleSpec[]} particles From the binding; empty when none are declared.
  * @property {SoundSlots} sounds From the binding; empty object when none are declared.
+ * @property {readonly string[]} allowedTargets Resolved target categories; always present.
+ * @property {KnockbackSpec | undefined} knockback From the binding, when declared.
  * @property {Record<string, any>} params Ability defaults merged with binding params.
  * @property {ServiceContainer} services
  */
@@ -208,7 +231,7 @@
  * @property {import('../systems/particles.js').ParticleService} particles
  * @property {import('../systems/sounds.js').SoundService} sounds
  * @property {import('../systems/feedback.js').FeedbackService} feedback
- * @property {import('../systems/outcome.js').OutcomeService} outcome
+ * @property {import('../systems/combat.js').CombatSystem} combat
  * @property {import('./cooldown_manager.js').CooldownManager} cooldowns
  * @property {import('./player_state.js').PlayerStateStore} state
  * @property {typeof import('./log.js').log} log

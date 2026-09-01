@@ -61,9 +61,19 @@ function install(framework) {
 /** @param {MockItemComponentRegistry} registry */
 const component = (registry) => registry.components.get(SWORD_COMPONENT_ID);
 
-/** @param {MockItemComponentRegistry} registry @param {MockPlayer} player @param {string} [swordId] */
-const use = (registry, player, swordId = TEST_SWORD_ID) =>
-    component(registry).onUse({ source: player, itemStack: new MockItemStack(swordId) });
+/**
+ * Fires a use activation. Advances the clock past the anti-spam floor first, so
+ * tests exercise cooldowns rather than the rate limiter — which has its own
+ * test.
+ *
+ * @param {MockItemComponentRegistry} registry
+ * @param {MockPlayer} player
+ * @param {string} [swordId]
+ */
+const use = (registry, player, swordId = TEST_SWORD_ID) => {
+    tick += 3;
+    return component(registry).onUse({ source: player, itemStack: new MockItemStack(swordId) });
+};
 
 /** @param {object} overrides */
 function swordDefinition(overrides = {}) {
@@ -73,7 +83,7 @@ function swordDefinition(overrides = {}) {
         rarity: 'common',
         description: 'A probe sword.',
         item: { attackDamage: 1, durability: 10 },
-        abilities: [{ activation: 'use', abilityId: 'custom_swords:shockwave' }],
+        abilities: [{ activation: 'use', abilityId: 'custom_swords:burst', targeting: { type: 'area', range: 5 } }],
         ...overrides,
     };
 }
@@ -88,7 +98,7 @@ describe('framework bootstrap', () => {
         const framework = createFramework({ clock });
         assert.deepEqual(framework.problems, []);
         assert.equal(framework.swords.has(TEST_SWORD_ID), true);
-        assert.equal(framework.abilities.has('custom_swords:shockwave'), true);
+        assert.equal(framework.abilities.has('custom_swords:burst'), true);
     });
 
     it('seals both registries so nothing can register late', () => {
@@ -99,11 +109,10 @@ describe('framework bootstrap', () => {
 
     it('indexes which swords use each ability', () => {
         const framework = createFramework({ clock });
-        const usage = framework.abilities.swordsUsing('custom_swords:shockwave');
-        assert.deepEqual(
-            usage.map((u) => `${u.swordId}:${u.activation}`),
-            [`${TEST_SWORD_ID}:use`, `${TEST_SWORD_ID}:sneak_use`],
-        );
+        const usage = framework.abilities.swordsUsing('custom_swords:burst');
+        // The diagnostic sword binds `burst` on use; the elemental collection
+        // binds the rest, so nothing should be orphaned.
+        assert.ok(usage.some((u) => u.swordId === TEST_SWORD_ID && u.activation === 'use'));
         assert.deepEqual(framework.abilities.unused(), []);
     });
 
@@ -128,7 +137,12 @@ describe('framework bootstrap', () => {
             swords: [
                 swordDefinition({
                     abilities: [
-                        { activation: 'use', abilityId: 'custom_swords:shockwave', params: { damage: -3 } },
+                        {
+                            activation: 'use',
+                            abilityId: 'custom_swords:burst',
+                            targeting: { type: 'area', range: 4 },
+                            params: { damage: -3 },
+                        },
                     ],
                 }),
             ],
@@ -144,7 +158,7 @@ describe('framework bootstrap', () => {
             swords: [
                 swordDefinition({
                     abilities: [
-                        { activation: 'use', abilityId: 'custom_swords:shockwave', targeting: { type: 'area' } },
+                        { activation: 'use', abilityId: 'custom_swords:burst', targeting: { type: 'area' } },
                     ],
                 }),
             ],
@@ -186,7 +200,7 @@ describe('input router and activation', () => {
         assert.equal(zombies.every((z) => z.effects[0].effect === 'slowness'), true);
         assert.ok(dimension.particles.length > 0, 'expected particles');
         assert.ok(dimension.sounds.length > 0, 'expected a sound');
-        assert.match(player.actionBarMessages.at(-1), /Shockwave/);
+        assert.match(player.actionBarMessages.at(-1), /Burst/);
     });
 
     it('routes sneak + use to the sword\'s sneak binding', () => {
@@ -211,7 +225,7 @@ describe('input router and activation', () => {
             abilities: [
                 {
                     activation: 'use',
-                    abilityId: 'custom_swords:shockwave',
+                    abilityId: 'custom_swords:burst',
                     targeting: { type: 'area', range: 5 },
                     params: { damage: 2 },
                 },
@@ -228,7 +242,7 @@ describe('input router and activation', () => {
 
     it('does nothing when a sword binds no matching activation', () => {
         const sword = swordDefinition({
-            abilities: [{ activation: 'attack', abilityId: 'custom_swords:shockwave' }],
+            abilities: [{ activation: 'attack', abilityId: 'custom_swords:burst' }],
         });
         const registry = install(createFramework({ clock, swords: [sword] }));
         const { player } = makeWorld(2, { swordId: sword.id });
@@ -242,7 +256,7 @@ describe('input router and activation', () => {
             abilities: [
                 {
                     activation: 'attack',
-                    abilityId: 'custom_swords:shockwave',
+                    abilityId: 'custom_swords:burst',
                     targeting: { type: 'area', range: 3 },
                     params: { damage: 2, knockback: 0 },
                 },
@@ -288,7 +302,7 @@ describe('input router and activation', () => {
         // The same ability, bound twice with different envelopes, must behave
         // differently. This is the property the whole framework rests on.
         const base = {
-            abilityId: 'custom_swords:shockwave',
+            abilityId: 'custom_swords:burst',
             sounds: { cast: 'ability_cast' },
         };
         const wide = swordDefinition({
@@ -381,10 +395,42 @@ describe('cooldown behaviour through the executor', () => {
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 1);
 
-        // The standing burst is cooling down; the sneak strike is its own timer.
+        // Past the per-target hit-protection window, so this test measures
+        // cooldowns rather than that. The standing burst is still cooling down;
+        // the sneak strike runs on its own timer.
+        tick += 20;
         player.isSneaking = true;
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 2, 'the sneak binding has its own cooldown');
+    });
+
+    it('protects a target from being re-hit by the same player immediately', () => {
+        const framework = createFramework({ clock });
+        const registry = install(framework);
+        const { player, dimension } = makeWorld(1, { distance: 2 });
+        const zombie = dimension.entities.find((e) => e.typeId === 'minecraft:zombie');
+
+        use(registry, player);
+        assert.equal(zombie.damageTaken.length, 1);
+
+        // Different activation, so no cooldown blocks it — but the target is
+        // still inside its hit-protection window.
+        player.isSneaking = true;
+        use(registry, player);
+        assert.equal(zombie.damageTaken.length, 1, 'the follow-up hit must be absorbed');
+    });
+
+    it('rate-limits activations below the anti-spam floor', () => {
+        const framework = createFramework({ clock });
+        const registry = install(framework);
+        const { player, dimension } = makeWorld(1);
+        const zombie = dimension.entities.find((e) => e.typeId === 'minecraft:zombie');
+
+        // Two activations in the same tick: the second must never reach the
+        // ability, regardless of cooldowns.
+        component(registry).onUse({ source: player, itemStack: new MockItemStack(TEST_SWORD_ID) });
+        component(registry).onUse({ source: player, itemStack: new MockItemStack(TEST_SWORD_ID) });
+        assert.equal(zombie.damageTaken.length, 1);
     });
 
     it('does not consume the cooldown when the ability finds nothing', () => {

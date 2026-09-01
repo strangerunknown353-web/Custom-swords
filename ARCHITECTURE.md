@@ -17,15 +17,16 @@ code path.**
 │ DATA          swords/*.js          abilities/builtin/*.js   config.js│
 │               (pure data)          (pure behaviour)                  │
 ├──────────────────────────────────────────────────────────────────────┤
-│ CORE          identifiers  rarity  activation  types                 │
+│ CORE          identifiers  rarity  activation  target_categories     │
+│               effect_catalogue  types                                │
 │               registry  sword_registry  ability_registry             │
 │               item_identifier  sword_stats  definition_validator     │
 │               cooldown_manager  player_state                         │
 │               ability_gate  ability_executor  input_router           │
 │               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
-│ SYSTEMS       targeting  damage  effects  particles  sounds          │
-│               feedback   outcome                                     │
+│ SYSTEMS       targeting  damage  combat  effects  particles          │
+│               sounds     feedback                                    │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -111,6 +112,21 @@ the input source can be swapped later without touching a single ability.
 A sword is **pure data**: no code, no conditionals, no engine calls. This is the
 Test Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
+
+Eight swords are registered today: the seven Elemental Collection blades
+(Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade, which
+is flagged `testItem: true` and excluded from `shipped`. All seven were added
+without a single new engine call — six of the seven reuse abilities the previous
+milestone already shipped, and the seventh, `cleave`, is generic enough that a
+future sword can bind it too. `SWORD_CATALOG.md` is generated from those
+definitions by `tools/catalog.mjs`, so the published stats cannot drift from the
+code.
+
+Wind and Tidal are the clearest demonstration that behaviour comes from data:
+both bind the same `repulse` ability, but Wind's binding targets an area with
+`knockback.mode: 'away'` (a scatter in every direction) while Tidal's targets a
+cone with `knockback.mode: 'forward'` (a wave pushed along the view vector).
+Same code, two different weapons.
 
 ```js
 {
@@ -490,17 +506,142 @@ Damage lands before knockback so a dying target is not pointlessly launched, and
 particles are drawn at the target's position before it is moved. `playCast`
 covers the other half: caster particles and the cast sound at activation.
 
-## 6. Systems
+## 6. The combat layer
+
+### Damage (`systems/damage.js`)
+
+The only module in the addon that can hurt anything. Every request runs the
+full chain before a hit point is dealt:
+
+| # | Check | Refusal |
+|---|---|---|
+| 1 | attacker exists | `no_attacker` |
+| 2 | attacker still valid | `invalid_attacker` |
+| 3 | target exists | `no_target` |
+| 4 | target handle still valid | `invalid_target` |
+| 5 | target is alive | `target_dead` |
+| 6 | amount is finite and positive | `invalid_amount` |
+| 7 | target is permitted (not the caster, not never-target, PvP, category) | `target_not_permitted` |
+
+A refusal returns a reason rather than throwing, so a partially-applied area
+ability continues with its remaining targets instead of aborting. `resolveAmount`
+is pure and collapses `NaN`, `Infinity`, negatives and overflow to zero — a bad
+number in a definition can never reach `applyDamage`.
+
+Knockback is a declarative spec, clamped on both axes by
+`config.combat.maxKnockback*`. Its `mode` field is worth calling out because it
+carries real design weight:
+
+| Mode | Behaviour | Feels like |
+|---|---|---|
+| `away` (default) | each target is pushed radially from the origin | an explosion |
+| `forward` | every target is pushed along one shared vector | a wave |
+
+The Wind and Tidal Swords bind the *same ability* and differ mainly by this one
+field — scatter versus sweep — which is the clearest demonstration in the
+project that behaviour comes from data.
+
+### Combat (`systems/combat.js`)
+
+Turns an ability's intent into consequences, in a fixed order:
+
+```
+validate → damage → target particles → impact sound → effects → ignite → knockback
+```
+
+Damage lands before knockback so a dying target is not pointlessly launched, and
+particles are drawn at the target's position before it is moved.
+
+**Hit protection**, in two layers that solve different problems:
+
+- *Per execution, always on.* A `Set` of entity ids scoped to one `strike` call.
+  An ability that combines a raycast with an area sweep can hand the same
+  entity in twice; it takes damage once. Costs one `Set` per activation.
+- *Per player, across executions, configurable.* After a hit, that attacker
+  cannot damage that target again for `config.combat.hitProtectionTicks`. This
+  is what stops a held right-click grinding a mob down at twenty hits a second.
+  It reuses `CooldownManager` under a `hit:` key namespace, inheriting its
+  per-player isolation, lazy expiry and sweeping — no new subsystem, no tick loop.
+
+A target refused as `target_not_permitted` receives none of the rest of the
+outcome either; otherwise the category filter could be bypassed by the effects
+and knockback paths.
+
+### Target filtering (`core/target_categories.js`)
+
+A binding declares `allowedTargets: ['hostile']` and the framework does the
+rest. Categories resolve in two stages:
+
+1. **Engine-side pre-filter.** With exactly one category, its family constraints
+   are handed to `getEntities`, so the engine culls before anything reaches
+   script.
+2. **Client-side union.** `families` is documented as matching *all* listed
+   families, so `['monster', 'player']` would match nothing. With several
+   categories the engine query is widened and the union applied per entity.
+
+| Category | Vanilla families |
+|---|---|
+| `any` | — (the default) |
+| `mob` | `mob`, not `inanimate` |
+| `hostile` | `monster` |
+| `passive` | `mob`, not `monster`, not `inanimate` |
+| `player` | type id `minecraft:player` |
+| `undead` | `undead` |
+| `arthropod` | `arthropod` |
+
+Family names are the vanilla `minecraft:type_family` values — a Blaze really is
+`["blaze", "monster", "mob"]`. Add-on entities that follow the convention are
+categorised for free; ones that declare no families match only `any`, so a
+hostile-only ability never sweeps up a foreign entity it cannot classify.
+
+### Area of effect
+
+An AoE is not a separate system — it is a targeting spec plus a strike spec:
+
+```js
+targeting: { type: 'area', range: 6, maxTargets: 12 },
+allowedTargets: ['hostile'],
+knockback: { horizontal: 1.0, vertical: 1.1 },
+params: { damage: 11, edgeDamageFactor: 0.35 }
+```
+
+Searches happen only when an ability runs. Range is clamped to
+`config.targeting.maxRange` (32) and results to `config.targeting.maxTargets`
+(64) on every path, so no definition can ask the engine for a thousand-block
+sweep or act on an unbounded crowd.
+
+### Status effects (`core/effect_catalogue.js`)
+
+Effect ids in definitions are free-form strings, so a typo would load fine and
+then silently do nothing — which reads as "this sword is weak", not "this sword
+is broken". The catalogue is the engine's own list of 37 effects, transcribed
+from `@minecraft/vanilla-data`, and `npm run validate` fails on anything not in
+it, suggesting the nearest match.
+
+### Attack damage versus ability damage
+
+These are deliberately separate and never interact:
+
+| | Source | Where it lives |
+|---|---|---|
+| Melee attack | `minecraft:damage` component | `sword.item.attackDamage`, baked into the generated item JSON |
+| Ability damage | `DamageService.apply` | `binding.params.damage`, resolved per activation |
+
+No ability writes to the item. Swinging a sword harder is a permanent property
+of the item; an ability is an event. Confusing the two is how "my sword got
+stronger and never went back" bugs happen.
+
+## 7. Systems
 
 | System | Responsibility | Safety rules it owns |
 |---|---|---|
 | `targeting` | resolve a declarative targeting spec into entities (sphere / cone / raycast) | range ceiling, target-count ceiling, PvP toggle, never-target list, stale-handle rejection |
-| `damage` | apply damage and knockback | global damage multiplier, per-hit ceiling, never damage the caster |
+| `damage` | validate and apply damage; knockback | seven-step validation chain, global multiplier, per-hit ceiling, knockback clamping, never damage the caster |
 | `effects` | status effects, healing, ignition, teleport, impulse | duration normalisation, unknown-effect containment, non-finite rejection, `applyImpulse`-on-player routing |
 | `particles` | emit particles and rings | per-emit budget, non-finite location rejection |
 | `sounds` | play sounds | named preset library, world-vs-player scoping |
 | `feedback` | action bar text, deny cues | always single-player scoped — cannot broadcast |
-| `outcome` | the standard "do this to these targets" block | fixed ordering: damage before knockback, particles before movement |
+| `combat` | the whole "do this to these targets" pipeline | fixed ordering, per-execution and per-player hit protection, category re-check |
 
 Targeting always delegates culling to the engine's own spatial query
 (`getEntities` with `location` + `maxDistance`). The framework never iterates
@@ -508,7 +649,7 @@ every entity in a dimension.
 
 ---
 
-## 7. Lifecycle
+## 8. Lifecycle
 
 Scripting V2 runs module bodies and `system.beforeEvents.startup` in **early
 execution**, before the world exists. Touching `world.getAllPlayers()`, blocks
@@ -529,7 +670,7 @@ init earlier.
 
 ---
 
-## 8. Multiplayer safety
+## 9. Multiplayer safety
 
 Each of the failure modes the project set out to avoid maps to a specific
 structural guarantee:
@@ -540,9 +681,14 @@ structural guarantee:
 | Global ability state | abilities have no module-level mutable state; `PlayerStateStore` is the only sanctioned store, and it is player-keyed |
 | Shared metadata being mutated | sword definitions are **deep-frozen** at registration, so the object handed to every player on every invocation cannot be changed by any of them |
 | One player's ability affecting another | `TargetingService` excludes the caster by default and gates other players behind `config.combat.allowPlayerVersusPlayer`; `FeedbackService` can only address one player |
+| A player damaging themselves with their own sword | `DamageService.validate` refuses `source === target` unless the binding sets `allowSelfDamage`; the check is in the damage layer, so no ability can bypass it by targeting differently |
+| Two players' area abilities interfering | targeting resolves from each caster's own position and view vector, and every hit-protection key is `player.id`-scoped, so simultaneous casters never share a budget |
+| One activation hitting the same entity repeatedly | two independent layers: a per-execution `Set` of entity ids, and a per-player `hit:` cooldown key lasting `config.combat.hitProtectionTicks` |
+| Input spam | `AbilityGate.checkRate` enforces `config.combat.minActivationIntervalTicks` per player before any work is done, ahead of the cooldown check |
 | Stale player/entity references | nothing is cached across ticks; `isValid` is checked before every mutation, and every engine call is wrapped so a removed entity aborts one target, not the ability |
 | Duplicated event handling | exactly one subscription for the entire addon (`tools/validate.mjs` enforces the single-interval rule and the router owns the only component registration) |
 | Runaway loops | no gameplay tick loops exist; the only `system.runInterval` is a 30-second memory sweep, and the validator fails the build if a second one appears |
+| Unbounded damage or knockback | `resolveAmount` collapses `NaN`, `Infinity` and negatives to 0; knockback is clamped to `maxKnockbackHorizontal` / `maxKnockbackVertical`; targeting clamps range to `maxRange` and count to `maxTargets` |
 | Memory growth | `playerLeave` clears per-player buckets immediately; the sweep is a backstop for missed events |
 
 ---
@@ -569,6 +715,10 @@ Player state has two scopes, cleared at different moments:
 | Life | `life:` (via `lifeKey()`) | death, respawn, disconnect | combos, charge levels, in-flight ability state |
 | Player | anything else | disconnect | anything that should survive a respawn |
 
+The combat layer stores nothing of its own: hit protection lives in
+`CooldownManager` under `hit:<entityId>` keys owned by the striking player, and
+the per-execution duplicate set is a local variable that dies with the call.
+
 Cooldowns are deliberately **not** life-scoped: dying to reset a long cooldown
 would be an exploit.
 
@@ -576,7 +726,7 @@ There is no third category, and no API in the framework that stores per-player
 data without a player id. That is why one player's cooldown structurally cannot
 affect another's.
 
-## 9. Performance
+## 10. Performance
 
 - **Zero gameplay tick loops.** Everything is event-driven.
 - **One interval**, every 600 ticks, doing nothing but releasing memory.
@@ -589,15 +739,39 @@ affect another's.
   fire every ability twice per input.
 - **Three component reads per activation** at most (equippable, plus health only
   when a restriction asks for it), all on player-initiated actions.
-- **Engine-side spatial queries** — no manual entity scans, no block scans.
-- **Hard particle budget** — `config.particles.maxPerEmit` caps any single call,
-  so a mis-authored meteor cannot stall a low-end device.
+- **Engine-side spatial queries** — `Dimension.getEntities` with a bounded
+  `maxDistance` does the search; the framework never scans entity lists or
+  blocks itself. Cone and directional modes narrow an engine sphere rather than
+  replacing it.
+- **One spatial query per activation.** A binding with both a targeting spec and
+  an ability that queries on its own (`surge`) costs two; nothing costs more.
+- **Cheapest rejection first.** `AbilityGate` runs player → ability → equipped →
+  restrictions → rate → cooldown, so a spammed input is refused after a `Map`
+  lookup, before any targeting or damage work.
+- **Hard caps on every unbounded quantity:**
+
+  | Quantity | Cap | Where |
+  |---|---|---|
+  | Particles per emit | 64 | `config.particles.maxPerEmit` |
+  | Targets per activation | 64 | `config.combat.maxTargets` |
+  | Targeting range | 32 blocks | `config.combat.maxRange` |
+  | Horizontal knockback | 4 | `config.combat.maxKnockbackHorizontal` |
+  | Vertical knockback | 2 | `config.combat.maxKnockbackVertical` |
+  | Activations per player | 1 per 2 ticks | `config.combat.minActivationIntervalTicks` |
+
+  The caps are applied in the systems layer, so a mis-authored sword definition
+  is clamped rather than trusted.
+- **Measured worst case**: Inferno's `use` binding — the most expensive
+  activation shipped — emits 72 particles across an arc plus one per target, in
+  a single tick, with one entity query. No shipped sword schedules work into a
+  later tick.
 - **Cost scales with player actions, not with sword count.** 25 swords cost the
-  same at idle as 1.
+  same at idle as 1: registration is startup-only, and idle cost is exactly one
+  600-tick sweep.
 
 ---
 
-## 10. Build pipeline
+## 11. Build pipeline
 
 ```
 scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
@@ -610,7 +784,8 @@ scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
         └── packs/CustomSwordsBP/texts/en_US.lang
         │
         ▼  tools/validate.mjs      manifests, UUIDs, JSON, references, architecture rules
-        ▼  npm test                84 unit + integration tests against a mocked engine
+        ▼  tools/catalog.mjs        SWORD_CATALOG.md (regenerated; `--check` in CI)
+        ▼  npm test                322 unit + integration tests against a mocked engine
         ▼  tools/build.mjs         dist/CustomSwords-v<version>.mcaddon
 ```
 
@@ -644,7 +819,7 @@ Node installed.
 
 ---
 
-## 11. Version contract
+## 12. Version contract
 
 The framework targets `@minecraft/server` **2.0.0** and a minimum engine version
 of **1.21.90**. Both the Scripting V2 lifecycle and Custom Components V2 became

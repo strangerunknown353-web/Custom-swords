@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.3.0.mcaddon` | Roadmap step 3 — Ability Engine and texture standard. Activation system, ability registry, validation gate, cooldowns, targeting, effects and outcome composition, plus one diagnostic sword with a finished texture and two abilities. **No collection swords yet.** |
+| `CustomSwords-v0.5.0.mcaddon` | Roadmap step 5 — the Elemental Collection. The first seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) on top of the framework, the Ability Engine and the combat/safety layer. Plus the Test Blade, a diagnostic item. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -22,10 +22,21 @@ toggles are needed.
 1. Download the `.mcaddon` onto a device with Minecraft installed.
 2. Open it — Minecraft imports both the behaviour pack and the resource pack.
 3. Create a **new** world, enable both packs, and turn on Creative plus cheats.
-4. `/give @s custom_swords:test_blade`, then right-click (or long-press) with
-   mobs nearby.
-5. Right-click for a wide burst; **sneak + right-click** for an aimed strike.
-   Both run the same ability with different data.
+4. Give yourself a sword and right-click (or long-press) with mobs nearby:
+
+   ```
+   /give @s custom_swords:inferno_sword
+   /give @s custom_swords:thunder_sword
+   /give @s custom_swords:frost_sword
+   /give @s custom_swords:wind_sword
+   /give @s custom_swords:earth_sword
+   /give @s custom_swords:tidal_sword
+   /give @s custom_swords:nature_sword
+   ```
+
+5. Every sword has an active on right-click and a passive that fires on a melee
+   hit. Try Wind and Tidal back to back: same ability, completely different
+   feel.
 6. Confirm the framework recognises it:
 
    ```
@@ -34,4 +45,6 @@ toggles are needed.
    /scriptevent custom_swords:abilities
    ```
 
-Then work through the checklist in `../docs/TESTING.md`.
+Then work through the checklist in `../docs/TESTING.md`. **Nobody has done this
+yet** — no build of this project has been loaded into a Minecraft client, so if
+you are reading this, you would be the first. Results are recorded in that file.

@@ -4,6 +4,27 @@
   "texture_data": {
     "test_blade": {
       "textures": "textures/items/custom_swords/swords/test_blade"
+    },
+    "inferno_sword": {
+      "textures": "textures/items/custom_swords/swords/inferno_sword"
+    },
+    "thunder_sword": {
+      "textures": "textures/items/custom_swords/swords/thunder_sword"
+    },
+    "frost_sword": {
+      "textures": "textures/items/custom_swords/swords/frost_sword"
+    },
+    "wind_sword": {
+      "textures": "textures/items/custom_swords/swords/wind_sword"
+    },
+    "earth_sword": {
+      "textures": "textures/items/custom_swords/swords/earth_sword"
+    },
+    "tidal_sword": {
+      "textures": "textures/items/custom_swords/swords/tidal_sword"
+    },
+    "nature_sword": {
+      "textures": "textures/items/custom_swords/swords/nature_sword"
     }
   }
 }

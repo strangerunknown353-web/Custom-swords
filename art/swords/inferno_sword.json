@@ -1,0 +1,37 @@
+{
+  "name": "Inferno Sword",
+  "description": "Dark forged iron with molten seams running the length of a broad, serrated blade; obsidian guard set with an ember, and a fire-scorched leather grip.",
+  "palette": {
+    "o": "#140805",
+    "H": "#6e4030",
+    "B": "#4a2a20",
+    "S": "#301a14",
+    "D": "#1e100c",
+    "M": "#ff9421",
+    "G": "#5d4a55",
+    "g": "#3b2c38",
+    "e": "#241a24",
+    "W": "#7a4526",
+    "k": "#2b1608",
+    "P": "#ffb03a",
+    "p": "#a95c16"
+  },
+  "pixels": [
+    ".............o..",
+    "...........ooHo.",
+    "..........oHHMSo",
+    ".........oHHMSo.",
+    ".....oo.oHHBSoo.",
+    "....ogGoHHMSDo..",
+    ".....ogGHMSDo...",
+    "......ogGSoo....",
+    ".....oWoeGo.....",
+    "....oWkkoeGo....",
+    "..ooWkko.oeo....",
+    ".oPPkko...o.....",
+    ".oPPpo..........",
+    "..oppo..........",
+    "...oo...........",
+    "................"
+  ]
+}

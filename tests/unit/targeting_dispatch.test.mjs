@@ -32,6 +32,7 @@ function scenario(targeting) {
         origin: player.getHeadLocation(),
         viewDirection: { x: 0, y: 0, z: 1 },
         targeting,
+        allowedTargets: ['any'],
         services: { log, config: CONFIG, targeting: targetingService },
     };
     return { targetingService, ctx };

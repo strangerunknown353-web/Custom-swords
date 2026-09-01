@@ -74,7 +74,7 @@ describe('scripts/main.js', () => {
         world.afterEvents.worldLoad.emit({});
 
         assert.ok(
-            logged.some((line) => /ready - 1 sword\(s\) \(0 shipped, 1 diagnostic\), 1 ability\(ies\)/.test(line)),
+            logged.some((line) => /ready - \d+ sword\(s\) \(7 shipped, 1 diagnostic\), \d+ ability\(ies\)/.test(line)),
             `expected a readiness banner, got: ${logged.join(' | ')}`,
         );
         assert.equal(

@@ -15,7 +15,7 @@ export const CONFIG = Object.freeze({
     namespace: 'custom_swords',
 
     /** Semantic version of the framework. Kept in sync by `tools/set-version.mjs`. */
-    version: '0.3.0',
+    version: '0.5.0',
 
     debug: Object.freeze({
         /** Emit lifecycle + dispatch logs to the content log. */
@@ -38,6 +38,30 @@ export const CONFIG = Object.freeze({
          * Targeting filters this out before damage is ever applied.
          */
         allowPlayerVersusPlayer: true,
+        /**
+         * Ceilings on knockback, so a mis-authored definition cannot fling a
+         * player across the world or out of the sky.
+         */
+        maxKnockbackHorizontal: 4,
+        maxKnockbackVertical: 2,
+
+        /**
+         * Ticks a target is immune to *further hits from the same player's
+         * abilities* after being struck. Guards against an ability that fires
+         * repeatedly hitting one entity dozens of times a second. 0 disables it;
+         * per-execution protection (one hit per target per activation) is always
+         * on and is not affected by this.
+         */
+        hitProtectionTicks: 10,
+
+        /**
+         * Minimum ticks between two ability activations by the same player.
+         * Purely anti-spam: a held right-click can otherwise re-fire every tick
+         * and dominate a busy server's budget. Cooldowns are the gameplay
+         * mechanism; this is the floor beneath them.
+         */
+        minActivationIntervalTicks: 2,
+
         /** Entity type ids that abilities must never target. */
         neverTarget: Object.freeze([
             'minecraft:item',

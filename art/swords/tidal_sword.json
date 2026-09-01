@@ -1,0 +1,36 @@
+{
+  "name": "Tidal Sword",
+  "description": "A flamberge whose edge undulates like a swell, cast in prismarine and abyssal teal; coral-branch guard and a kelp-wound grip.",
+  "palette": {
+    "o": "#04141a",
+    "H": "#7fe3d8",
+    "B": "#31a5a8",
+    "S": "#1a6a78",
+    "D": "#0d3d4c",
+    "G": "#e08a6a",
+    "g": "#a4553c",
+    "e": "#5f2d1f",
+    "W": "#3c6152",
+    "k": "#152720",
+    "P": "#eafcff",
+    "p": "#4c9aa5"
+  },
+  "pixels": [
+    ".............oo.",
+    "...........ooHBo",
+    "..........oHHBSo",
+    ".........ooHBSo.",
+    "......o.oHHBSDo.",
+    ".....oGooHBSoo..",
+    ".....ogGHBSDo...",
+    "......ogGSoo....",
+    ".....oWoeGo.....",
+    "....oWkkoeGo....",
+    "..ooWkko.oo.....",
+    ".oPPkko.........",
+    ".oPPpo..........",
+    "..oppo..........",
+    "...oo...........",
+    "................"
+  ]
+}

@@ -40,7 +40,7 @@ import { EffectService } from '../systems/effects.js';
 import { ParticleService } from '../systems/particles.js';
 import { SoundService } from '../systems/sounds.js';
 import { FeedbackService } from '../systems/feedback.js';
-import { OutcomeService } from '../systems/outcome.js';
+import { CombatSystem } from '../systems/combat.js';
 
 import { ABILITIES } from '../abilities/index.js';
 import { SWORDS } from '../swords/index.js';
@@ -127,7 +127,7 @@ export function createFramework(options = {}) {
     const effects = new EffectService(log);
     const particles = new ParticleService(CONFIG, log);
     const feedback = new FeedbackService(CONFIG, sounds, log);
-    const outcome = new OutcomeService({ damage, effects, particles, sounds });
+    const combat = new CombatSystem({ config: CONFIG, damage, effects, particles, sounds, cooldowns });
 
     /** @type {import('./types.js').ServiceContainer} */
     const services = {
@@ -137,7 +137,7 @@ export function createFramework(options = {}) {
         particles,
         sounds,
         feedback,
-        outcome,
+        combat,
         cooldowns,
         state,
         log,
@@ -145,7 +145,7 @@ export function createFramework(options = {}) {
     };
 
     // --- Engine ------------------------------------------------------------
-    const gate = new AbilityGate({ abilities, identifier, cooldowns, log });
+    const gate = new AbilityGate({ abilities, identifier, cooldowns, config: CONFIG, log });
     const executor = new AbilityExecutor({ abilities, gate, services, clock });
     const router = new InputRouter({ identifier, swords, executor, log });
 
@@ -235,9 +235,12 @@ export function start() {
  * `entityDie` is filtered to players at subscription time, so the handler does
  * not run for every mob that dies in the world.
  *
+ * Exported so the edge-case suite can install it without booting the whole
+ * addon; `start()` is the only caller in the game.
+ *
  * @param {ReturnType<typeof createFramework>} framework
  */
-function subscribePlayerLifecycle(framework) {
+export function subscribePlayerLifecycle(framework) {
     const { cooldowns, state } = framework.services;
 
     world.afterEvents.playerLeave.subscribe(({ playerId }) => {

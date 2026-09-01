@@ -21,6 +21,9 @@ jobs:
       - name: Generated content is up to date
         run: node tools/generate.mjs --check
 
+      - name: Sword catalogue is up to date
+        run: node tools/catalog.mjs --check
+
       - name: Validate packs and architecture rules
         run: npm run validate
 

@@ -1,0 +1,38 @@
+{
+  "name": "Nature Sword",
+  "description": "A living blade of heartwood with a leaf-shaped swell, bound in creeping vine and edged with hardened amber sap; root-woven grip.",
+  "palette": {
+    "o": "#0f1408",
+    "H": "#c9d98a",
+    "B": "#8fa34f",
+    "S": "#5c6c2f",
+    "D": "#36421c",
+    "M": "#ffd76a",
+    "V": "#3f8f3a",
+    "G": "#7a5a2c",
+    "g": "#513a1a",
+    "e": "#2b2010",
+    "W": "#6b4a24",
+    "k": "#26190b",
+    "P": "#e8f0b0",
+    "p": "#c2a63f"
+  },
+  "pixels": [
+    "............ooo.",
+    "...........oHHBo",
+    "..........oHVBSo",
+    ".........oHHBSDo",
+    "......o.oHVMVDo.",
+    ".....oGooHBSDo..",
+    ".....ogGHBVDo...",
+    "......ogGSoo....",
+    ".....oWoeGo.....",
+    "....oWkkoeGo....",
+    "..ooWkko.oo.....",
+    ".oPPkko.........",
+    ".oPPpo..........",
+    "..oppo..........",
+    "...oo...........",
+    "................"
+  ]
+}

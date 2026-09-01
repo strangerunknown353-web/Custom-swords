@@ -1,0 +1,51 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:item": {
+    "description": {
+      "identifier": "custom_swords:wind_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "wind_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.custom_swords:wind_sword.name"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 5
+      },
+      "minecraft:durability": {
+        "max_durability": 800
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 20
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:phantom_membrane"
+            ],
+            "repair_amount": 200
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "custom_swords:is_custom_sword"
+        ]
+      },
+      "custom_swords:sword": {}
+    }
+  }
+}

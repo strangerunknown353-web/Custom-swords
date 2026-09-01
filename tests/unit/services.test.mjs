@@ -94,6 +94,7 @@ describe('TargetingService', () => {
             dimension,
             origin: { x: 0, y: 64, z: 0 },
             viewDirection: { x: 0, y: 0, z: 1 },
+            allowedTargets: ['any'],
             services: { log, config: CONFIG },
         };
 
@@ -142,7 +143,7 @@ describe('DamageService', () => {
         const service = new DamageService(CONFIG, targeting, log);
         const { ctx, player } = makeContext({ targeting });
 
-        assert.equal(service.apply(ctx, player, 5), false);
+        assert.equal(service.apply(ctx, player, 5).ok, false);
         assert.equal(player.damageTaken.length, 0);
     });
 
@@ -154,14 +155,14 @@ describe('DamageService', () => {
         zombie.isValid = false;
 
         assert.doesNotThrow(() => service.apply(ctx, zombie, 5));
-        assert.equal(service.apply(ctx, zombie, 5), false);
+        assert.equal(service.apply(ctx, zombie, 5).ok, false);
     });
 
     it('pushes a target directly away from the origin', () => {
         const service = new DamageService(CONFIG, new TargetingService(CONFIG), log);
         const zombie = new MockEntity({ id: 'z', location: { x: 0, y: 64, z: 4 } });
 
-        assert.equal(service.knockback(zombie, { x: 0, y: 64, z: 0 }, 1.5, 0.4), true);
+        assert.equal(service.knockback(zombie, { horizontal: 1.5, vertical: 0.4 }, { x: 0, y: 64, z: 0 }), true);
         const [{ horizontal, vertical }] = zombie.knockbacks;
         assert.equal(Math.abs(horizontal.z - 1.5) < 1e-12, true);
         assert.equal(horizontal.x, 0);

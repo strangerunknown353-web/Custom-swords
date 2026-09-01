@@ -50,6 +50,7 @@
 const DEFAULT_TARGETING = Object.freeze(/** @type {import('./types.js').TargetingSpec} */ ({ type: 'self' }));
 const EMPTY_ARRAY = Object.freeze([]);
 const EMPTY_OBJECT = Object.freeze({});
+const DEFAULT_TARGETS = Object.freeze(['any']);
 
 /** Activations that are player-initiated and therefore deserve visible feedback. */
 const FEEDBACK_ACTIVATIONS = new Set(['use', 'sneak_use']);
@@ -210,6 +211,8 @@ export class AbilityExecutor {
             effects: binding.effects ?? EMPTY_ARRAY,
             particles: binding.particles ?? EMPTY_ARRAY,
             sounds: binding.sounds ?? EMPTY_OBJECT,
+            allowedTargets: binding.allowedTargets ?? DEFAULT_TARGETS,
+            knockback: binding.knockback,
             params: { ...(ability.defaults ?? {}), ...(binding.params ?? {}) },
             services: this.services,
         };

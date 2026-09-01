@@ -18,6 +18,9 @@ import { RARITIES, isRarity } from './rarity.js';
 import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
 import { TARGET_CATEGORY_IDS, isTargetCategory } from './target_categories.js';
 import { isVanillaEffect, suggestEffect } from './effect_catalogue.js';
+import { explainParticle } from './particle_catalogue.js';
+import { isVisualProfile, PROFILE_NAMES } from './visual_profiles.js';
+import { SOUND_PRESETS } from '../systems/sounds.js';
 
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 /** @typedef {import('./types.js').AbilityDefinition} AbilityDefinition */
@@ -180,6 +183,12 @@ export function validateParticles(particles, label) {
         }
         if (typeof particle.id !== 'string' || particle.id.length === 0) {
             problems.push(`${where}: 'id' must be a non-empty particle identifier.`);
+        } else {
+            // Shape was never the problem. v0.5.1 shipped five well-formed
+            // identifiers that render nothing — two nonexistent, three needing
+            // Molang context from a host entity. Existence is checked here.
+            const complaint = explainParticle(particle.id);
+            if (complaint !== undefined) problems.push(`${where}: ${complaint}`);
         }
         if (particle.count !== undefined && (!Number.isInteger(particle.count) || Number(particle.count) < 1)) {
             problems.push(`${where}: 'count' must be an integer of at least 1 when present.`);
@@ -207,6 +216,12 @@ export function validateSounds(sounds, label) {
     const problems = [];
     for (const slot of ['cast', 'impact']) {
         const value = sounds[slot];
+        if (typeof value === 'string' && !SOUND_PRESETS.includes(value)) {
+            problems.push(
+                `${label}.sounds.${slot}: '${value}' is not a preset in SOUND_LIBRARY. ` +
+                    `Add it there, or pass an explicit { id } spec. Known presets: ${SOUND_PRESETS.join(', ')}.`,
+            );
+        }
         if (value !== undefined && (typeof value !== 'string' || value.length === 0)) {
             problems.push(`${label}.sounds.${slot}: must be a non-empty string when present.`);
         }
@@ -358,6 +373,13 @@ export function validateBinding(binding, label, abilityExists) {
     problems.push(...validateEffects(binding.effects, label));
     problems.push(...validateParticles(binding.particles, label));
     problems.push(...validateSounds(binding.sounds, label));
+
+    if (binding.visual !== undefined && !isVisualProfile(binding.visual)) {
+        problems.push(
+            `${label}.visual: '${binding.visual}' is not a visual profile. ` +
+                `Known profiles: ${PROFILE_NAMES.join(', ')}.`,
+        );
+    }
     problems.push(...validateKnockback(binding.knockback, label));
     problems.push(...validateAllowedTargets(binding.allowedTargets, label));
     problems.push(...validateRestrictions(binding.restrictions, label));
@@ -381,6 +403,15 @@ function validateItemStats(stats, label) {
     }
     if (!Number.isInteger(stats.durability) || Number(stats.durability) < 1) {
         problems.push(`${label}: 'item.durability' must be a positive integer.`);
+    }
+    if (
+        stats.swingDuration !== undefined &&
+        (typeof stats.swingDuration !== 'number' ||
+            !Number.isFinite(stats.swingDuration) ||
+            stats.swingDuration <= 0 ||
+            stats.swingDuration > 2)
+    ) {
+        problems.push(`${label}.item.swingDuration: must be a number in seconds, greater than 0 and at most 2.`);
     }
     if (stats.enchantValue !== undefined && (!Number.isInteger(stats.enchantValue) || Number(stats.enchantValue) < 0)) {
         problems.push(`${label}: 'item.enchantValue' must be a non-negative integer when present.`);

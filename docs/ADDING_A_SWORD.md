@@ -74,6 +74,47 @@ checks it at build time — a targeting block missing its `range` fails the buil
 whereas the same mistake hidden in `params` would ship as an ability that
 silently does nothing.
 
+### Presentation: pick a visual profile
+
+Do not write particle ids and sound names into a binding by hand. Name a
+profile:
+
+```js
+visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | arcane
+```
+
+That supplies the caster particle, the target particle, the trail used for arcs
+and rings, and the cast and impact sounds — all from
+`core/visual_profiles.js`. Anything the binding states explicitly still wins, so
+overriding one slot does not cost you the rest.
+
+Two rules, and they are not stylistic:
+
+- **Every particle identifier must be in `core/particle_catalogue.js`.** Bedrock
+  has two ways to fail here and neither throws: an identifier that does not
+  exist renders nothing, and one authored for a host entity logs errors instead
+  of rendering. The validator rejects both and names the sibling that works.
+- **Every sound must be a `SOUND_LIBRARY` preset.** `playSound` with an unknown
+  id is silent. If you need a vanilla sound the library does not cover, add it
+  to `SOUND_LIBRARY` — the validator then checks it against the real vanilla
+  sound event list.
+
+Adding a new theme means adding a profile, not editing seven swords.
+
+### Sword feel: swing duration
+
+```js
+item: { attackDamage: 8, durability: 900, swingDuration: 0.4 }
+```
+
+`minecraft:swing_duration` is the only item-side control Bedrock gives you over
+the attack animation, and it is **visual only** — it does not change attack
+rate, cooldown or damage. Vanilla's default is about 0.3s; the collection runs
+from Wind at 0.25 to Earth at 0.55, so weight reads in the swing.
+
+There is no per-item attack animation beyond this. The swing itself belongs to
+the player, not the item, and applies to every item held.
+
 ### Targeting, filters and knockback
 
 All three are envelope data, so an ability never decides who it hits or how hard

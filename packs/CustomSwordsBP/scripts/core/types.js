@@ -25,6 +25,9 @@
  * @property {number} [enchantValue] Becomes `minecraft:enchantable.value` (slot `sword`). Omit to make the sword unenchantable.
  * @property {string[]} [repairItems] Item ids accepted by `minecraft:repairable`.
  * @property {boolean} [glint] Force the enchanted shimmer via `minecraft:glint`.
+ * @property {number} [swingDuration] Seconds for the swing animation, via `minecraft:swing_duration`
+ *   (requires item format_version 1.21.120). Visual only — it does not change attack speed or damage.
+ *   Vanilla's default swing is about 0.3s; a heavier sword reads better nearer 0.4-0.5.
  */
 
 /**

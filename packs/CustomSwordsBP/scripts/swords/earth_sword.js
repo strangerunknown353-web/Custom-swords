@@ -19,6 +19,7 @@ export const earthSword = {
     item: {
         attackDamage: 9,
         durability: 1500,
+        swingDuration: 0.55,
         enchantValue: 10,
         repairItems: ['minecraft:deepslate'],
     },
@@ -27,6 +28,7 @@ export const earthSword = {
         {
             // EARTHQUAKE — heavy area damage, upward force, no block damage.
             activation: 'use',
+            visual: 'stone',
             abilityId: 'custom_swords:burst',
             cooldownTicks: 180,
             hudCategory: 'custom_swords_earth',
@@ -41,6 +43,7 @@ export const earthSword = {
         {
             // Passive: the stone steadies its wielder.
             activation: 'attack',
+            visual: 'stone',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 160,
             targeting: { type: 'self' },

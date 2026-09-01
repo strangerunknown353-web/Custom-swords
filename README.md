@@ -5,17 +5,22 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.5.1 — the Elemental Collection, item registration fixed.**
+> **Status: v0.5.2 — the Elemental Collection, registration and presentation
+> fixed.**
 > The first **seven** final swords are in: Inferno 🔥, Thunder ⚡, Frost ❄️,
 > Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿, on top of the framework, the
 > Ability Engine and the combat layer. See `SWORD_CATALOG.md` for the full
 > roster and `ROADMAP.md` for what comes next.
 >
-> **v0.5.0 was tested in a client and failed**: the swords registered but landed
-> in the wrong creative tab with a raw translation key for a name. Both defects
-> are fixed in v0.5.1 and guarded by new tests, but **the fix itself has not been
-> re-tested in a client**. `docs/TESTING.md` records exactly what was and was
-> not verified.
+> **Two client tests, two failures, two fixes.** v0.5.0 put the swords in the
+> wrong creative tab with a raw translation key for a name. v0.5.1 fixed that
+> and the abilities turned out to be invisible and silent — fourteen sound
+> presets that were never defined, five particle identifiers that render
+> nothing. Both classes are now build-time errors, checked against transcribed
+> vanilla lists.
+>
+> **Neither fix has been confirmed in a client.** `docs/TESTING.md` records
+> exactly what was and was not verified, per version.
 
 ---
 
@@ -34,11 +39,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.5.1.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.5.1.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.5.1.mcpack` | resource pack alone |
+| `CustomSwords-v0.5.2.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.5.2.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.5.2.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.5.1.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.5.2.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -67,7 +72,8 @@ melee hit. The Wind and Tidal swords run the *same* ability with different
 data — one scatters targets outward, the other pushes them forward — which is
 the framework's whole point.
 
-Requires **Minecraft Bedrock 1.21.90 or newer**. No experimental toggles.
+Requires **Minecraft Bedrock 1.21.120 or newer** (raised in v0.5.2 for the
+swing-animation component). No experimental toggles.
 
 ---
 
@@ -117,7 +123,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 331 unit and integration tests against a mocked engine |
+| `npm test` | 347 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |

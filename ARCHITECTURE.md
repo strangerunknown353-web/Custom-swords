@@ -18,7 +18,8 @@ code path.**
 │               (pure data)          (pure behaviour)                  │
 ├──────────────────────────────────────────────────────────────────────┤
 │ CORE          identifiers  rarity  activation  target_categories     │
-│               effect_catalogue  types                                │
+│               effect_catalogue  particle_catalogue  visual_profiles  │
+│               types                                                  │
 │               registry  sword_registry  ability_registry             │
 │               item_identifier  sword_stats  definition_validator     │
 │               cooldown_manager  player_state                         │
@@ -874,7 +875,113 @@ three of those tests.
 
 ---
 
-## 12. Build pipeline
+## 12. Rendering, animation and presentation
+
+The section above gets a sword into the game. This one covers what the player
+*sees and hears*, which is where v0.5.1 failed: the abilities were firing
+correctly and were completely invisible.
+
+### What Bedrock actually gives you, and what it does not
+
+The first job here was separating "animation" into the three different things
+people mean by it, because only one of them is item-side at all.
+
+| Wanted | Mechanism in Bedrock | Where it lives |
+|---|---|---|
+| Sword renders as a tool in hand, not a flat card | `minecraft:hand_equipped: true` | item JSON |
+| Icon in hotbar, inventory and hand | `minecraft:icon` → `item_texture.json` → PNG | §11 |
+| Arm swing on attack | the **player's** animation, applied to every item | nothing to author |
+| Swing speed | `minecraft:swing_duration` (format_version **1.21.120**) | item JSON |
+| Ability visuals | `Dimension.spawnParticle` from script | systems + profiles |
+| Ability audio | `Dimension.playSound` / `Player.playSound` | systems + profiles |
+
+Two consequences worth stating plainly, because both are places to waste a
+week:
+
+- **There is no per-item attack animation in Bedrock.** The swing belongs to
+  the player entity. A custom item cannot replace it, and does not need to —
+  it already swings. `swing_duration` changes how *long* the swing takes, and
+  is explicitly visual only: it does not touch attack rate, cooldown or damage.
+- **This project ships no attachables, geometry, animations or animation
+  controllers, and needs none.** Those are for items that must render as a 3D
+  model rather than a sprite. A sprite sword with `hand_equipped` is the
+  correct architecture here, so the resource pack contains exactly textures and
+  text. An empty `animations/` folder would be a liability, not a feature.
+
+### Visual profiles
+
+Ability presentation is a named, reusable bundle rather than per-binding
+inline data:
+
+```
+Sword definition
+  └── binding: visual: 'fire'
+        └── VISUAL_PROFILES.fire
+              ├── caster particle   (the flare at the wielder)
+              ├── target particle   (what lands on each victim)
+              ├── trail particle    (arcs, rings, trails)
+              ├── cast sound
+              └── impact sound
+                    └── AbilityExecutor.resolvePresentation()
+                          └── ctx.particles / ctx.sounds / ctx.visual
+```
+
+Resolution happens **once per activation**, not per target, in
+`ability_executor.js`. Anything the binding states explicitly wins; the profile
+only fills gaps. Abilities read `ctx.visual?.trail` for decorative geometry, so
+`cleave` draws its arc in flame on Inferno and in storm-sparks on Thunder
+without knowing either theme exists.
+
+Eight profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
+`grove`, and `arcane` for the diagnostic Test Blade. A test asserts no two
+share a caster particle or a cast sound, so "distinct look per theme" is
+enforced rather than intended.
+
+### Why this layer exists
+
+Before it, every binding restated its own particle ids and sound names inline.
+There was no single place where "what fire looks like" was written down, so
+there was no single place to get it wrong once and fix it once. Five unusable
+particle identifiers and fourteen missing sound presets spread across seven
+swords, and:
+
+| Layer | Why it did not catch this |
+|---|---|
+| Unit tests | the mocked engine accepts any string as a particle or sound id |
+| Validator | it checked the *shape* of a particle spec, never the *identifier* |
+| The game | `spawnParticle` renders nothing; `playSound` is silent. Neither throws |
+
+Nothing failed. That is the whole lesson: **an identifier handed to the engine
+is only as good as the catalogue it was checked against.**
+
+### The catalogues
+
+Three now, all the same pattern — a transcribed snapshot, checked at build
+time, failing towards a build error rather than a silent no-op in someone's
+world:
+
+| Catalogue | Contents | Source |
+|---|---|---|
+| `core/effect_catalogue.js` | 37 status effects | `@minecraft/vanilla-data` 1.26.44 |
+| `core/particle_catalogue.js` | usable particles, plus Molang-dependent ones mapped to their usable sibling | Bedrock Wiki vanilla particle list |
+| `tools/data/vanilla_sound_events.json` | 1824 sound events | the vanilla resource pack's `sound_definitions.json` |
+
+The particle catalogue encodes the distinction that caused the bug. An
+identifier fails for one of two reasons, and the error says which:
+
+- **It does not exist.** `minecraft:wind_explosion_emitter` is not a vanilla
+  particle. It reads plausibly, which is exactly the problem.
+- **It exists but needs a host entity.** Many vanilla particles read Molang
+  variables from the entity they were authored for. Spawned standalone they log
+  errors instead of rendering. Each is mapped to the sibling that works —
+  `electric_spark_particle` → `endrod` — so the error carries its own fix.
+
+The sound snapshot is build-time only and is never shipped in the add-on; it
+exists solely to prove every `SOUND_LIBRARY` id is a real event.
+
+---
+
+## 13. Build pipeline
 
 ```
 scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
@@ -922,7 +1029,7 @@ Node installed.
 
 ---
 
-## 13. Version contract
+## 14. Version contract
 
 The framework targets `@minecraft/server` **2.0.0** and a minimum engine version
 of **1.21.90**. Both the Scripting V2 lifecycle and Custom Components V2 became

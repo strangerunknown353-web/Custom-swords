@@ -140,7 +140,7 @@ describe('validateBinding', () => {
                     cooldownTicks: 60,
                     targeting: { type: 'area', range: 4, maxTargets: 8 },
                     effects: [{ effect: 'slowness', durationTicks: 40 }],
-                    particles: [{ id: 'minecraft:basic_crit_particle', count: 4, at: 'target' }],
+                    particles: [{ id: 'minecraft:critical_hit_emitter', count: 4, at: 'target' }],
                     sounds: { cast: 'ability_cast' },
                     params: { damage: 3 },
                 },
@@ -149,6 +149,67 @@ describe('validateBinding', () => {
             ),
             [],
         );
+    });
+
+    // Regression: v0.5.1 validated particle *shape* but never *existence*, so
+    // five unusable identifiers shipped across four swords. Wind had no working
+    // particle at all and its ability was completely invisible in-game.
+    it('rejects a particle identifier that does not exist', () => {
+        const problems = validateBinding(
+            {
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
+                cooldownTicks: 60,
+                particles: [{ id: 'minecraft:wind_explosion_emitter', count: 3, at: 'caster' }],
+            },
+            'sword.active',
+            always,
+        );
+        assert.equal(problems.length, 1);
+        assert.match(problems[0], /not a usable vanilla particle identifier/);
+    });
+
+    it('rejects a particle that needs Molang context, and names the sibling to use', () => {
+        const problems = validateBinding(
+            {
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
+                cooldownTicks: 60,
+                particles: [{ id: 'minecraft:electric_spark_particle', count: 3, at: 'caster' }],
+            },
+            'sword.active',
+            always,
+        );
+        assert.equal(problems.length, 1);
+        assert.match(problems[0], /Molang variables/);
+        assert.match(problems[0], /minecraft:endrod/);
+    });
+
+    // Regression: the fourteen elemental sound presets were never defined, and
+    // SoundService silently treated the names as raw vanilla sound ids.
+    it('rejects a sound name that is not a SOUND_LIBRARY preset', () => {
+        const problems = validateBinding(
+            {
+                activation: 'use',
+                abilityId: 'custom_swords:shockwave',
+                cooldownTicks: 60,
+                sounds: { cast: 'inferno_cast_typo' },
+            },
+            'sword.active',
+            always,
+        );
+        assert.equal(problems.length, 1);
+        assert.match(problems[0], /not a preset in SOUND_LIBRARY/);
+    });
+
+    it('rejects an unknown visual profile', () => {
+        const problems = validateBinding(
+            { activation: 'use', abilityId: 'custom_swords:shockwave', cooldownTicks: 60, visual: 'flamey' },
+            'sword.active',
+            always,
+        );
+        assert.equal(problems.length, 1);
+        assert.match(problems[0], /not a visual profile/);
     });
 
     it('collects problems from every sub-block at once', () => {

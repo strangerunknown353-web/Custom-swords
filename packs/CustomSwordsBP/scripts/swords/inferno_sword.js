@@ -16,6 +16,7 @@ export const infernoSword = {
     item: {
         attackDamage: 8,
         durability: 1100,
+        swingDuration: 0.4,
         enchantValue: 14,
         repairItems: ['minecraft:blaze_rod'],
         glint: true,
@@ -25,6 +26,7 @@ export const infernoSword = {
         {
             // INFERNO SLASH — a sweeping arc of fire in front of the wielder.
             activation: 'use',
+            visual: 'fire',
             abilityId: 'custom_swords:cleave',
             cooldownTicks: 140,
             hudCategory: 'custom_swords_inferno',
@@ -32,17 +34,23 @@ export const infernoSword = {
             allowedTargets: ['mob', 'player'],
             knockback: { horizontal: 0.6, vertical: 0.2 },
             effects: [{ effect: 'weakness', durationTicks: 80 }],
+            // Three layers, deliberately: the flare at the hand, the smoke it
+            // leaves hanging, and molten spatter where the arc lands. The arc
+            // itself is drawn by `cleave` along the swing, which is what makes
+            // the effect read as directional rather than as a puff at the feet.
             particles: [
-                { id: 'minecraft:basic_flame_particle', count: 18, spread: 1.4, at: 'caster' },
-                { id: 'minecraft:lava_particle', count: 5, spread: 0.5, at: 'target' },
+                { id: 'minecraft:basic_flame_particle', count: 16, spread: 1.4, at: 'caster' },
+                { id: 'minecraft:campfire_smoke_particle', count: 5, spread: 1, at: 'caster' },
+                { id: 'minecraft:lava_particle', count: 4, spread: 0.5, at: 'target' },
             ],
             sounds: { cast: 'inferno_cast', impact: 'inferno_impact' },
-            params: { damage: 7, edgeDamageFactor: 0.65, igniteSeconds: 6, cause: 'fire', arcPoints: 14, arcParticle: 'minecraft:basic_flame_particle' },
+            params: { damage: 7, edgeDamageFactor: 0.65, igniteSeconds: 6, cause: 'fire', arcPoints: 16, arcParticle: 'minecraft:basic_flame_particle' },
         },
         {
             // Passive: contact leaves embers. Brief, and on its own short timer
             // so it cannot proc on every swing of a fast attack.
             activation: 'attack',
+            visual: 'fire',
             abilityId: 'custom_swords:brand',
             cooldownTicks: 60,
             targeting: { type: 'single', range: 4 },

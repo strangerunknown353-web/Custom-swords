@@ -20,6 +20,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { PATHS, MODULES, artFile, resourceFile } from './lib/project.mjs';
 import { verifyPng } from './lib/png.mjs';
@@ -652,6 +653,49 @@ function validateArchitecture() {
 }
 
 // ---------------------------------------------------------------------------
+// 5b. Audio catalogue
+// ---------------------------------------------------------------------------
+
+/**
+ * Every id in `SOUND_LIBRARY` must be a real vanilla sound event.
+ *
+ * `Dimension.playSound` with an unknown id is silent, not an error, so a wrong
+ * id is invisible in-game and invisible to a mocked test suite. v0.5.1 shipped
+ * fourteen sword bindings whose sounds never played for exactly that reason.
+ *
+ * Checked against `tools/data/vanilla_sound_events.json` — the event names from
+ * the vanilla resource pack's own `sound_definitions.json`. That file is
+ * build-time reference material and is not shipped in the add-on.
+ */
+async function validateSoundLibrary() {
+    const snapshotPath = path.join(PATHS.root, 'tools', 'data', 'vanilla_sound_events.json');
+    if (!fs.existsSync(snapshotPath)) {
+        error('tools/data/vanilla_sound_events.json is missing — sound ids cannot be verified.');
+        return;
+    }
+
+    const snapshot = readJson(snapshotPath);
+    if (snapshot === undefined) return;
+    const events = new Set(snapshot.events ?? []);
+
+    const { SOUND_LIBRARY } = await import(
+        pathToFileURL(path.join(PATHS.bpScripts, 'systems', 'sounds.js')).href
+    );
+
+    let checked = 0;
+    for (const [preset, spec] of Object.entries(SOUND_LIBRARY)) {
+        checked += 1;
+        if (!events.has(spec.id)) {
+            error(
+                `SOUND_LIBRARY.${preset}: '${spec.id}' is not a vanilla sound event. ` +
+                    'playSound would be silent rather than failing.',
+            );
+        }
+    }
+    note(`${checked} sound preset(s) verified against ${events.size} vanilla sound events.`);
+}
+
+// ---------------------------------------------------------------------------
 
 async function main() {
     validateManifests();
@@ -659,6 +703,7 @@ async function main() {
     const swords = await validateDefinitions();
     validateItemsAndResources(swords);
     validateTextures(swords);
+    await validateSoundLibrary();
     validateArchitecture();
 
     for (const message of notes) console.log(`validate: note    ${message}`);

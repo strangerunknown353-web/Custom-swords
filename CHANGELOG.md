@@ -13,6 +13,83 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.5.2] — 2026-09-01
+
+**Bug fix: ability presentation.** Reported as "the sword animations are not
+working". The audit found the abilities were firing correctly the whole time —
+they were simply invisible and inaudible, because most of the identifiers they
+handed the engine were not real.
+
+Neither failure mode raises an error. `spawnParticle` with a bad identifier
+renders nothing or spams the content log; `playSound` with a bad id is silent.
+A mocked engine accepts both, so 337 passing tests and a clean validator meant
+nothing here.
+
+### Fixed
+
+- **All ability audio was silent.** The seven elemental swords referenced
+  fourteen sound presets — `inferno_cast`, `thunder_impact`, and twelve more —
+  that were never added to `SOUND_LIBRARY`. `SoundService.resolve()` treated an
+  unknown preset name as a raw vanilla sound id and passed `'inferno_cast'`
+  straight to `playSound`, which is not a sound event. All fourteen presets now
+  exist, mapped to real vanilla sound events.
+- **Five of twelve particle identifiers were unusable**, across four swords:
+  - `minecraft:sculk_soul_particle` and `minecraft:wind_explosion_emitter` do
+    not exist. Both were Wind's, so **Wind's ability had no visual at all**.
+  - `minecraft:electric_spark_particle` (Thunder's only particle),
+    `minecraft:water_splash_particle` (Tidal's only particle) and
+    `minecraft:basic_crit_particle` exist but read Molang variables from a host
+    entity; spawned from script they log errors instead of rendering.
+- **The silent fallback that hid it.** `resolve()` no longer guesses that an
+  unknown name is a raw sound id. It returns `undefined` and logs. A sound is a
+  library preset or an explicit `{ id }` spec.
+
+### Added
+
+- **`core/particle_catalogue.js`** — vanilla particle identifiers split by
+  whether they can actually be spawned from script, plus `explainParticle()`,
+  which names the usable sibling for every Molang-dependent particle
+  (`electric_spark_particle` → `endrod`). Transcribed from the Bedrock Wiki's
+  vanilla particle list.
+- **`core/visual_profiles.js`** — a sword's presentation as one named bundle:
+  `fire`, `storm`, `frost`, `gale`, `stone`, `tide`, `grove`, `arcane`. A
+  binding says `visual: 'fire'` and inherits caster/target/trail particles and
+  cast/impact sounds; anything it states explicitly still wins. This is the
+  layer whose absence let five bad identifiers spread across seven swords.
+- **`minecraft:swing_duration`** on every sword, weighted by character — Wind
+  0.25s through Earth 0.55s. This is the only item-side control Bedrock offers
+  over the swing animation, and it is visual only.
+- **`tools/data/vanilla_sound_events.json`** — the 1824 sound event names from
+  the vanilla resource pack's own `sound_definitions.json`. Build-time
+  reference only, not shipped. The validator proves every `SOUND_LIBRARY` id is
+  a real event against it.
+- **`tests/unit/presentation.test.mjs`** — asserts every shipped binding
+  resolves to catalogued particles and real sound presets, that no two profiles
+  share a look, and that resolving never mutates a frozen profile.
+- Validator gates for particle usability, sound presets, visual profile names
+  and `SOUND_LIBRARY` ids. Each negative-tested by seeding the defect.
+
+### Changed
+
+- Item `format_version` **1.21.90 → 1.21.120**, and `min_engine_version` in
+  both manifests with it, because `swing_duration` requires it. **This raises
+  the minimum Minecraft version.**
+- **Inferno's texture regenerated.** It was the weakest in the set — a muddy
+  brown that read as wood, with the lowest luminance spread of the eight (174).
+  Now cold charcoal iron with a molten seam and a white-hot core: spread 218.
+- Decorative particle params (`arcParticle`, `ringParticle`, `trailParticle`,
+  `impactParticle`) default to the binding's visual profile rather than a
+  hard-coded id.
+- A test that asserted `resolve()` mapped unknown names to raw sound ids —
+  "resolves library names and raw ids alike" — was rewritten. It had encoded
+  the bug as intended behaviour, which is why the bug survived every run.
+
+### Not changed
+
+- **No attachables, geometry, animations or animation controllers were added.**
+  A flat-sprite sword needs none, and the swing is the player's arm animation,
+  which applies to every item. See `ARCHITECTURE.md` §12.
+
 ## [0.5.1] — 2026-09-01
 
 **Bug fix: item registration.** The first real in-game test of this project

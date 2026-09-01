@@ -21,7 +21,8 @@ export const cleave = {
         cause: 'entityAttack',
         /** Particles drawn along the arc. 0 disables. */
         arcPoints: 12,
-        arcParticle: 'minecraft:basic_crit_particle',
+        /** Falls back to the binding's visual profile trail; see visual_profiles.js. */
+        arcParticle: undefined,
     },
 
     /**
@@ -90,7 +91,7 @@ function drawArc(ctx, origin, range, halfAngle, params) {
         const angle = baseAngle - halfAngle + t * halfAngle * 2;
         ctx.services.particles.emit(
             ctx.dimension,
-            { id: params.arcParticle, count: 1 },
+            { id: params.arcParticle ?? ctx.visual?.trail ?? 'minecraft:critical_hit_emitter', count: 1 },
             {
                 x: origin.x + Math.cos(angle) * range * 0.7,
                 y: origin.y + 1,

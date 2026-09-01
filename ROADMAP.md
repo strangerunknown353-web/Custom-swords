@@ -77,6 +77,18 @@ automated check had passed. Fixed, with contract tests against the real
 generated files and three new validator checks so the class cannot recur.
 Milestone 6 does not start until the fix is confirmed in a client.
 
+### Interlude — two client bug-fix rounds (v0.5.1, v0.5.2) — **done**
+Not roadmap milestones; the roadmap stays at fifteen. The first real in-client
+tests found that the swords registered into the wrong creative tab under a raw
+translation key, and then that their abilities were invisible and silent. Both
+rounds ended with the defect class turned into a build-time error, and both are
+recorded in `CHANGELOG.md` and `docs/TESTING.md`.
+
+The lesson worth carrying: **every identifier handed to Bedrock is only as good
+as the catalogue it was checked against.** There are now three such catalogues —
+effects, particles and sound events — and milestone 11 will add custom assets
+behind the same gate.
+
 ### 6. Ability library — spatial (planned)
 Teleportation, gravity manipulation, earthquakes and area denial. Introduces
 block-aware targeting beyond the `point` mode already shipped, and the safety

@@ -22,7 +22,8 @@ export const burst = {
         /** Particles in the outline ring marking the blast radius. 0 disables. */
         ringPoints: 20,
         /** Particle drawn in the ring. */
-        ringParticle: 'minecraft:basic_smoke_particle',
+        /** Falls back to the binding's visual profile trail; see visual_profiles.js. */
+        ringParticle: undefined,
     },
 
     /**
@@ -55,7 +56,13 @@ export const burst = {
 
         services.combat.playCast(ctx, origin);
         if (params.ringPoints > 0 && radius > 0) {
-            services.particles.ring(ctx.dimension, { id: params.ringParticle }, origin, radius, params.ringPoints);
+            services.particles.ring(
+                ctx.dimension,
+                { id: params.ringParticle ?? ctx.visual?.trail ?? 'minecraft:critical_hit_emitter' },
+                origin,
+                radius,
+                params.ringPoints,
+            );
         }
 
         const targets = services.targeting.resolve(ctx);

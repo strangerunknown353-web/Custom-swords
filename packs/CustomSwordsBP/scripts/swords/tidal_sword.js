@@ -19,6 +19,7 @@ export const tidalSword = {
     item: {
         attackDamage: 7,
         durability: 1200,
+        swingDuration: 0.38,
         enchantValue: 15,
         repairItems: ['minecraft:prismarine_shard'],
     },
@@ -28,6 +29,7 @@ export const tidalSword = {
             // TIDAL WAVE — a directional surge. Everything caught is driven the
             // same way rather than scattered.
             activation: 'use',
+            visual: 'tide',
             abilityId: 'custom_swords:repulse',
             cooldownTicks: 150,
             hudCategory: 'custom_swords_tidal',
@@ -35,18 +37,19 @@ export const tidalSword = {
             allowedTargets: ['mob', 'player'],
             knockback: { horizontal: 2.6, vertical: 0.35, mode: 'forward' },
             effects: [{ effect: 'slowness', durationTicks: 60 }],
-            particles: [{ id: 'minecraft:water_splash_particle', count: 20, spread: 1.5, at: 'caster' }],
+            particles: [{ id: 'minecraft:water_splash_particle_manual', count: 20, spread: 1.5, at: 'caster' }],
             sounds: { cast: 'tidal_cast', impact: 'tidal_impact' },
-            params: { damage: 6, trailPoints: 5, trailParticle: 'minecraft:water_splash_particle' },
+            params: { damage: 6, trailPoints: 5, trailParticle: 'minecraft:water_splash_particle_manual' },
         },
         {
             // Passive: the sea keeps its own.
             activation: 'attack',
+            visual: 'tide',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 200,
             targeting: { type: 'self' },
             effects: [{ effect: 'water_breathing', durationTicks: 300 }],
-            particles: [{ id: 'minecraft:water_splash_particle', count: 4, spread: 0.4, at: 'caster' }],
+            particles: [{ id: 'minecraft:water_splash_particle_manual', count: 4, spread: 0.4, at: 'caster' }],
             params: { heal: 0, extinguish: false },
         },
     ],

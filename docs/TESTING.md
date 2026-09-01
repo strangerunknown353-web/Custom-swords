@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 322 unit + integration tests against a mocked @minecraft/server
+npm test            # 347 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -49,7 +49,11 @@ npm run all         # check + build
 - definitions and item JSON are in one-to-one correspondence;
 - every item carries both `minecraft:is_sword` and `custom_swords:is_custom_sword`;
 - every icon sits under `textures/items/custom_swords/swords/`;
-- every display-name key follows `item.<id>.name`;
+- every display-name key is `item.<id>` — the key the engine generates for a
+  namespaced custom item — and both it and `item.<id>.name` exist in the
+  resource pack `en_US.lang`;
+- every item's `menu_category` names the `equipment` category and the
+  **namespaced** `minecraft:itemGroup.name.sword` group;
 - every ability binding's envelope is well-formed — an unknown activation
   method, two bindings on the same activation, a ranged targeting type without a
   range, a cone without an angle, an effect without a duration, a misspelled
@@ -58,6 +62,14 @@ npm run all         # check + build
 - **every status effect names a real vanilla effect**, checked against the 37
   in `core/effect_catalogue.js`; a near-miss gets a "did you mean" suggestion
   rather than failing silently in-game;
+- **every particle identifier can actually be spawned**, checked against
+  `core/particle_catalogue.js` — which separates "does not exist" from "exists
+  but needs Molang context from a host entity" and names the usable sibling for
+  the second case;
+- **every sound name is a `SOUND_LIBRARY` preset**, and **every id in
+  `SOUND_LIBRARY` is a real vanilla sound event**, checked against the 1824
+  events in `tools/data/vanilla_sound_events.json`;
+- **every binding names a known visual profile**;
 - `SWORD_CATALOG.md` matches the definitions (`npm run catalog -- --check`);
 - **the texture standard**: every sword has an authored source, of the right
   dimensions, with no unused palette tones, an unbroken silhouette, a real dark
@@ -110,6 +122,18 @@ a registered ability, each has an authored texture that passes the linter, the
 catalogue matches the definitions, and — the test that matters most — Wind and
 Tidal, which share the `repulse` ability, produce measurably different knockback
 vectors from the same code.
+
+Bug-fix 2 adds the presentation layer: every visual profile references only
+catalogued particles and real sound presets, no two profiles share a caster
+particle or a cast sound, resolving a profile never mutates the frozen original,
+a binding's explicit values still win, and — the assertion that would have
+caught the original bug — **every shipped binding resolves to identifiers the
+catalogues vouch for**.
+
+The honest limit: a mocked engine accepts any string as a particle or sound id,
+so no test here can prove something renders. What these tests prove is that the
+identifiers reaching the engine are ones a *transcribed vanilla list* vouches
+for. That is a real guarantee and a strictly weaker one than "it looks right".
 
 Two tests deserve calling out:
 
@@ -170,8 +194,8 @@ Column meanings, so a ✅ is not read as more than it is:
 | Column | ✅ means |
 |---|---|
 | Texture | an authored `art/swords/*.json` source exists, compiles to a 16×16 PNG, and passes every rule in `docs/TEXTURE_STANDARD.md` with zero warnings |
-| Sound | the binding names a slot that exists in `SOUND_LIBRARY`, so the call will resolve at runtime |
-| FX | the binding declares particle emitters, and their ids and counts are within the per-emit budget |
+| Sound | the binding names a real `SOUND_LIBRARY` preset **and** that preset's id is a real vanilla sound event, verified against the vanilla `sound_definitions.json` |
+| FX | every particle identifier the binding resolves to — its own, or its visual profile's — is in the usable catalogue, and counts are within the per-emit budget. It does **not** mean the effect looks good |
 | Tested in-game | **nothing yet** — see "Recording results" |
 
 ---
@@ -431,6 +455,48 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.5.2 — presentation fix, not yet tested in Minecraft
+
+The user reported that the sword animations were not working. The audit found
+the abilities had been firing correctly all along — they were invisible and
+inaudible, because most of the identifiers they handed the engine were not real:
+fourteen sound presets that were never defined, and five particle identifiers
+that render nothing.
+
+| Check | Result |
+|---|---|
+| `npm run generate` | up to date, 8 definitions, item format_version 1.21.120 |
+| `npm run catalog -- --check` | up to date |
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **347 passed**, 0 failed |
+| Sound presets | 19 verified against 1824 real vanilla sound events |
+| Particle identifiers | 15 referenced, every one in the usable catalogue |
+| Texture linter | 8 sources, 0 warnings (Inferno rebuilt: spread 174 → 218) |
+| `.mcaddon` | rebuilt from source, verified as a well-formed archive |
+
+New guards, each negative-tested by seeding the defect:
+
+| Guard | Catches |
+|---|---|
+| validator: particle usability | a nonexistent identifier, or one needing Molang context — and names the sibling that works |
+| validator: sound presets | a `sounds.cast` / `sounds.impact` name not in `SOUND_LIBRARY` |
+| validator: `SOUND_LIBRARY` ids | a preset pointing at something that is not a vanilla sound event |
+| validator: visual profile names | an unknown `visual:` value |
+| `tests/unit/presentation.test.mjs` | any shipped binding resolving to a bad particle or sound; two profiles sharing a look |
+
+**Not tested in a client by me — I have no Minecraft environment.** Every
+in-client fact this project has came from the user. What remains genuinely
+unverified is now narrower, but real:
+
+- whether the icons and names are right after the v0.5.1 fix;
+- whether the replacement particles *look good*. The catalogue proves an
+  identifier is spawnable, not that it is attractive;
+- whether the chosen vanilla sound events suit their swords;
+- whether `swing_duration` feels right per sword;
+- **whether raising the minimum client to 1.21.120 is acceptable on the user's
+  device.** This is the one change that could make the add-on stop loading
+  entirely, on a client where v0.5.1 loaded.
 
 ### v0.5.1 — item-registration fix, not yet re-tested in Minecraft
 

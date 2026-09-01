@@ -123,6 +123,11 @@ function buildItemJson(sword) {
     if (stats.glint === true) {
         components['minecraft:glint'] = true;
     }
+    if (stats.swingDuration !== undefined) {
+        // Bedrock's only item-side handle on the swing animation. Visual only:
+        // it changes how long the arm takes to swing, not attack rate or damage.
+        components['minecraft:swing_duration'] = { value: stats.swingDuration };
+    }
 
     components['minecraft:tags'] = {
         // `minecraft:is_sword` makes vanilla systems treat it as a sword;

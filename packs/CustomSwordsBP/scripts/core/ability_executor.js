@@ -24,6 +24,8 @@
  *    every other sword in the world.
  */
 
+import { resolvePresentation } from './visual_profiles.js';
+
 /** @typedef {import('./types.js').AbilityBinding} AbilityBinding */
 /** @typedef {import('./types.js').AbilityContext} AbilityContext */
 /** @typedef {import('./types.js').AbilityDefinition} AbilityDefinition */
@@ -192,6 +194,8 @@ export class AbilityExecutor {
      */
     buildContext(request, ability) {
         const { player, sword, binding, activation, itemStack, target } = request;
+        const presentation = resolvePresentation(binding);
+
         return {
             player,
             playerId: player.id,
@@ -209,8 +213,12 @@ export class AbilityExecutor {
             // `ctx.binding.targeting?.range ?? something` — it reads `ctx`.
             targeting: binding.targeting ?? DEFAULT_TARGETING,
             effects: binding.effects ?? EMPTY_ARRAY,
-            particles: binding.particles ?? EMPTY_ARRAY,
-            sounds: binding.sounds ?? EMPTY_OBJECT,
+            // Presentation comes from the binding's visual profile, with
+            // anything the binding stated explicitly taking precedence. Resolved
+            // once per activation, not per target.
+            particles: presentation.particles,
+            sounds: presentation.sounds,
+            visual: presentation.profile,
             allowedTargets: binding.allowedTargets ?? DEFAULT_TARGETS,
             knockback: binding.knockback,
             params: { ...(ability.defaults ?? {}), ...(binding.params ?? {}) },

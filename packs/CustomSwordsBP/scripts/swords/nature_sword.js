@@ -17,6 +17,7 @@ export const natureSword = {
     item: {
         attackDamage: 6,
         durability: 1000,
+        swingDuration: 0.3,
         enchantValue: 17,
         repairItems: ['minecraft:moss_block'],
     },
@@ -26,6 +27,7 @@ export const natureSword = {
             // NATURE'S WRATH — a committed strike that finishes wounded prey,
             // and leaves poison in anything that survives.
             activation: 'use',
+            visual: 'grove',
             abilityId: 'custom_swords:strike',
             cooldownTicks: 110,
             hudCategory: 'custom_swords_nature',
@@ -46,6 +48,7 @@ export const natureSword = {
         {
             // Passive: the blade feeds its wielder a little of what it takes.
             activation: 'attack',
+            visual: 'grove',
             abilityId: 'custom_swords:bolster',
             cooldownTicks: 140,
             targeting: { type: 'self' },

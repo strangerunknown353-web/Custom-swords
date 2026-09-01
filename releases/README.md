@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.5.1.mcaddon` | The Elemental Collection — seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade — with the v0.5.0 item-registration bugs fixed: correct creative category and a display name that resolves. |
+| `CustomSwords-v0.5.2.mcaddon` | The Elemental Collection — seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade. Fixes both rounds of client bugs: item registration (creative category, display name) in v0.5.1, and ability presentation (all audio silent, five particle identifiers rendering nothing) in v0.5.2. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -16,7 +16,7 @@ disagrees with a fresh build, the fresh build wins.
 
 ## Installing
 
-Requires Minecraft Bedrock Edition **1.21.90 or newer**. No experimental
+Requires Minecraft Bedrock Edition **1.21.120 or newer** — raised in v0.5.2 for the swing-animation component. No experimental
 toggles are needed.
 
 1. Download the `.mcaddon` onto a device with Minecraft installed.

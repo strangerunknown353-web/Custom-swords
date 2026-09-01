@@ -22,7 +22,8 @@ export const surge = {
         igniteSeconds: 0,
         cause: 'entityAttack',
         /** Particles at the impact point. */
-        impactParticle: 'minecraft:basic_smoke_particle',
+        /** Falls back to the binding's visual profile trail; see visual_profiles.js. */
+        impactParticle: undefined,
         impactCount: 14,
         ringPoints: 16,
     },
@@ -58,13 +59,13 @@ export const surge = {
         services.combat.playCast(ctx, impact);
         services.particles.emit(
             ctx.dimension,
-            { id: params.impactParticle, count: params.impactCount, spread: 1 },
+            { id: params.impactParticle ?? ctx.visual?.trail ?? 'minecraft:critical_hit_emitter', count: params.impactCount, spread: 1 },
             impact,
         );
         if (params.ringPoints > 0) {
             services.particles.ring(
                 ctx.dimension,
-                { id: params.impactParticle },
+                { id: params.impactParticle ?? ctx.visual?.trail ?? 'minecraft:critical_hit_emitter' },
                 impact,
                 params.blastRadius,
                 params.ringPoints,

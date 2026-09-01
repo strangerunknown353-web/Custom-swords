@@ -6,8 +6,24 @@
  * swords can share a consistent audio vocabulary and so a later milestone can
  * swap a preset for a custom `.ogg` in exactly one place.
  *
- * Every id below is a vanilla Bedrock sound event; the foundation build ships
- * no custom audio.
+ * Every id below is a vanilla Bedrock sound event, **verified against the
+ * vanilla resource pack's `sound_definitions.json`** by `tools/validate.mjs` on
+ * every build (`tools/data/vanilla_sound_events.json`, 1824 events). The build
+ * ships no custom audio.
+ *
+ * ## The v0.5.1 silent-audio bug
+ *
+ * The seven elemental swords referenced presets — `inferno_cast`,
+ * `thunder_impact`, and twelve more — that were never added to the library.
+ * `resolve()` treated an unknown name as a raw sound id and handed
+ * `playSound('inferno_cast')` to the engine, which is not a sound event, so
+ * every ability was silent. Nothing failed: not the tests, not the validator,
+ * not the game.
+ *
+ * That fallback is gone. An unknown name now resolves to `undefined` and is
+ * logged, and the validator rejects it at build time. A sound reference is
+ * either a library preset or an explicit `{ id }` spec — guessing on the
+ * player's behalf is what made the failure invisible.
  */
 
 /** @typedef {import('@minecraft/server').Dimension} Dimension */
@@ -27,12 +43,41 @@
  * @type {Readonly<Record<string, SoundSpec>>}
  */
 export const SOUND_LIBRARY = Object.freeze({
+    // --- Framework cues -----------------------------------------------------
     ability_cast: { id: 'random.orb', volume: 0.8, pitch: 1.2 },
     ability_deny: { id: 'note.bass', volume: 0.5, pitch: 0.6 },
     ability_ready: { id: 'random.levelup', volume: 0.4, pitch: 1.6 },
     impact_heavy: { id: 'random.explode', volume: 0.6, pitch: 1.4 },
     impact_light: { id: 'random.anvil_land', volume: 0.4, pitch: 1.8 },
+
+    // --- Elemental themes ---------------------------------------------------
+    // Each pair is a cast (at the wielder) and an impact (per target). Pitch and
+    // volume carry most of the character: the same blaze shot at 0.8 pitch reads
+    // as a much heavier weapon than at 1.4.
+    inferno_cast: { id: 'mob.blaze.shoot', volume: 0.9, pitch: 0.8 },
+    inferno_impact: { id: 'fire.ignite', volume: 0.7, pitch: 1.1 },
+
+    thunder_cast: { id: 'item.trident.thunder', volume: 0.9, pitch: 1.2 },
+    thunder_impact: { id: 'ambient.weather.lightning.impact', volume: 0.7, pitch: 1.3 },
+
+    frost_cast: { id: 'dig.powder_snow', volume: 0.9, pitch: 0.7 },
+    frost_impact: { id: 'random.glass', volume: 0.5, pitch: 1.6 },
+
+    wind_cast: { id: 'mob.breeze.shoot', volume: 0.9, pitch: 1.1 },
+    wind_impact: { id: 'breeze_wind_charge.burst', volume: 0.7, pitch: 1.2 },
+
+    earth_cast: { id: 'dig.deepslate', volume: 1, pitch: 0.6 },
+    earth_impact: { id: 'block.stonecutter.use', volume: 0.6, pitch: 0.8 },
+
+    tidal_cast: { id: 'bucket.empty_water', volume: 0.9, pitch: 0.8 },
+    tidal_impact: { id: 'ambient.underwater.exit', volume: 0.6, pitch: 1.2 },
+
+    nature_cast: { id: 'block.cave_vines.place', volume: 0.9, pitch: 0.9 },
+    nature_impact: { id: 'break.amethyst_cluster', volume: 0.6, pitch: 1.3 },
 });
+
+/** Preset names, for the validator and for diagnostics. */
+export const SOUND_PRESETS = Object.freeze(Object.keys(SOUND_LIBRARY));
 
 export class SoundService {
     /**
@@ -52,8 +97,20 @@ export class SoundService {
      */
     resolve(sound) {
         if (typeof sound === 'string') {
-            // A library name, or — if it is not in the library — a raw sound id.
-            return SOUND_LIBRARY[sound] ?? { id: sound, volume: 1, pitch: 1 };
+            // A library preset — and *only* a library preset. Falling back to
+            // treating an unknown name as a raw sound id is what made fourteen
+            // missing presets play as silence instead of failing. If you need a
+            // vanilla id the library does not cover, pass `{ id: '...' }`
+            // explicitly, which says you meant it.
+            const preset = SOUND_LIBRARY[sound];
+            if (preset === undefined) {
+                this.log.warn(
+                    `sounds.resolve: '${sound}' is not a preset in SOUND_LIBRARY. ` +
+                        'Add it there, or pass an explicit { id } spec.',
+                );
+                return undefined;
+            }
+            return preset;
         }
         if (sound !== null && typeof sound === 'object' && typeof sound.id === 'string') {
             return sound;

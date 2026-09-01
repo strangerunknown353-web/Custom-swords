@@ -30,6 +30,35 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in bug-fix 2 (v0.5.2)
+
+- [x] All fourteen elemental sound presets defined and mapped to real vanilla
+      sound events. Ability audio was completely silent before this.
+- [x] All five unusable particle identifiers replaced. Wind's ability had no
+      visual at all; Thunder's and Tidal's had none that rendered.
+- [x] `SoundService.resolve()` no longer guesses that an unknown preset name is
+      a raw sound id — the fallback that made the failure invisible.
+- [x] `core/particle_catalogue.js`: usable particles, plus Molang-dependent ones
+      mapped to the sibling that works.
+- [x] `core/visual_profiles.js`: eight named presentation bundles, so a theme is
+      defined once rather than restated per binding.
+- [x] `tools/data/vanilla_sound_events.json` and a validator gate proving every
+      `SOUND_LIBRARY` id is a real sound event.
+- [x] `minecraft:swing_duration` per sword (item format_version 1.21.120).
+- [x] Inferno's texture regenerated — it was the weakest of the eight.
+- [x] Validator gates for particles, sound presets and visual profiles, each
+      negative-tested by seeding the defect.
+
+## Completed in bug-fix 1 (v0.5.1)
+
+- [x] Creative category: `menu_category.group` namespaced to
+      `minecraft:itemGroup.name.sword`, so the swords sit with the vanilla ones.
+- [x] Display name: the lang key is `item.<id>`, the key the engine actually
+      generates for a namespaced custom item. `item.<id>.name` is emitted too,
+      as a hedge.
+- [x] `tests/unit/pack_output.test.mjs` asserts the contract against the real
+      generated pack files, not just against `identifiers.js`.
+
 ## Completed in milestone 5 (v0.5.0)
 
 - [x] Seven final swords — Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature —

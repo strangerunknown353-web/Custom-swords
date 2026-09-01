@@ -51,12 +51,16 @@ export const MODULES = Object.freeze({
 /**
  * The behaviour-pack item `format_version` the generator emits.
  *
- * 1.21.90 is the release in which Custom Components V2 (namespaced components
- * flattened into `components`) became stable alongside `@minecraft/server`
- * 2.0.0. Raising this is a deliberate compatibility decision — see
- * docs/API_NOTES.md.
+ * Custom Components V2 (namespaced components flattened into `components`)
+ * became stable at 1.21.90 alongside `@minecraft/server` 2.0.0, which was this
+ * project's target through v0.5.1.
+ *
+ * Raised to **1.21.120** to use `minecraft:swing_duration`, the only item-side
+ * control Bedrock offers over the swing animation. This raises the minimum
+ * client to 1.21.120 — a deliberate compatibility decision, recorded in
+ * docs/API_NOTES.md, and `min_engine_version` in both manifests moves with it.
  */
-export const ITEM_FORMAT_VERSION = '1.21.90';
+export const ITEM_FORMAT_VERSION = '1.21.120';
 
 /**
  * Absolute path of a sword's texture source.

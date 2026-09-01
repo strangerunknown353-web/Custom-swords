@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.90",
+  "format_version": "1.21.120",
   "minecraft:item": {
     "description": {
       "identifier": "custom_swords:nature_sword",
@@ -38,6 +38,9 @@
             "repair_amount": 250
           }
         ]
+      },
+      "minecraft:swing_duration": {
+        "value": 0.3
       },
       "minecraft:tags": {
         "tags": [

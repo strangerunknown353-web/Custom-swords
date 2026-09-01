@@ -201,12 +201,30 @@ describe('ParticleService', () => {
 });
 
 describe('SoundService', () => {
-    it('resolves library names and raw ids alike', () => {
+    it('resolves a library preset', () => {
         const service = new SoundService(log);
         assert.deepEqual(service.resolve('ability_cast'), SOUND_LIBRARY.ability_cast);
-        assert.deepEqual(service.resolve('random.pop'), { id: 'random.pop', volume: 1, pitch: 1 });
         assert.deepEqual(service.resolve({ id: 'x', volume: 0.5 }), { id: 'x', volume: 0.5 });
         assert.equal(service.resolve(undefined), undefined);
+    });
+
+    // Regression, and a correction of this very test. It previously asserted
+    // that an unknown name resolved to `{ id: <the name> }` — "library names and
+    // raw ids alike" — which encoded the bug as intended behaviour. That
+    // fallback is why the seven elemental swords referenced fourteen presets
+    // that did not exist and played as silence: every layer, this test
+    // included, treated the typo as a deliberate raw sound id.
+    it('refuses an unknown preset name instead of guessing it is a raw sound id', () => {
+        const service = new SoundService(log);
+        assert.equal(service.resolve('inferno_cast_typo'), undefined);
+        assert.equal(service.resolve('not_a_preset'), undefined);
+    });
+
+    it('defines a cast and an impact preset for every elemental theme', () => {
+        for (const theme of ['inferno', 'thunder', 'frost', 'wind', 'earth', 'tidal', 'nature']) {
+            assert.ok(SOUND_LIBRARY[`${theme}_cast`], `${theme}_cast missing from SOUND_LIBRARY`);
+            assert.ok(SOUND_LIBRARY[`${theme}_impact`], `${theme}_impact missing from SOUND_LIBRARY`);
+        }
     });
 
     it('sends personal feedback only to the one player', () => {

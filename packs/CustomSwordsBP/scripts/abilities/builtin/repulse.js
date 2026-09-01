@@ -18,7 +18,8 @@ export const repulse = {
         cause: 'entityAttack',
         /** Particle trail drawn between the caster and each target. 0 disables. */
         trailPoints: 4,
-        trailParticle: 'minecraft:basic_smoke_particle',
+        /** Falls back to the binding's visual profile trail; see visual_profiles.js. */
+        trailParticle: undefined,
     },
 
     /**
@@ -87,7 +88,7 @@ function drawTrail(ctx, origin, target, params) {
             const t = step / (params.trailPoints + 1);
             ctx.services.particles.emit(
                 ctx.dimension,
-                { id: params.trailParticle, count: 1 },
+                { id: params.trailParticle ?? ctx.visual?.trail ?? 'minecraft:critical_hit_emitter', count: 1 },
                 {
                     x: origin.x + (to.x - origin.x) * t,
                     y: origin.y + 1 + (to.y - origin.y) * t,

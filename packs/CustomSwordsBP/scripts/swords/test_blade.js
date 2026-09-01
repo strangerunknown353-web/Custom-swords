@@ -29,6 +29,7 @@ export const testBlade = {
         {
             // Test B — area damage with falloff.
             activation: 'use',
+            visual: 'arcane',
             abilityId: 'custom_swords:burst',
             cooldownTicks: 60,
             hudCategory: 'custom_swords_test_blade',
@@ -43,13 +44,14 @@ export const testBlade = {
         {
             // Test A — single-target damage with an execute bonus.
             activation: 'sneak_use',
+            visual: 'arcane',
             abilityId: 'custom_swords:strike',
             cooldownTicks: 100,
             hudCategory: 'custom_swords_test_blade',
             targeting: { type: 'single', range: 7 },
             knockback: { horizontal: 1.2, vertical: 0.15 },
             effects: [{ effect: 'weakness', durationTicks: 60 }],
-            particles: [{ id: 'minecraft:basic_crit_particle', count: 8, spread: 0.3, at: 'target' }],
+            particles: [{ id: 'minecraft:critical_hit_emitter', count: 8, spread: 0.3, at: 'target' }],
             sounds: { cast: 'ability_ready', impact: 'impact_heavy' },
             restrictions: { requireGrounded: true },
             params: { damage: 9, executeMultiplier: 1.5 },
@@ -57,6 +59,7 @@ export const testBlade = {
         {
             // Test D — status effects applied on a melee hit.
             activation: 'attack',
+            visual: 'arcane',
             abilityId: 'custom_swords:brand',
             cooldownTicks: 40,
             targeting: { type: 'single', range: 4 },
@@ -68,6 +71,7 @@ export const testBlade = {
         {
             // Test C + E — a directional sweep that throws targets back.
             activation: 'sneak_attack',
+            visual: 'arcane',
             abilityId: 'custom_swords:cleave',
             cooldownTicks: 80,
             targeting: { type: 'cone', range: 5, angleDegrees: 100, maxTargets: 6 },

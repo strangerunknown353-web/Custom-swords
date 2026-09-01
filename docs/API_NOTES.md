@@ -13,14 +13,19 @@ Verified on **2026-09-01** (milestone 1), extended for milestones 2 and 3.
 | Thing | Value | Why |
 |---|---|---|
 | `@minecraft/server` module | **2.0.0** | First stable Scripting V2 release. Declared in the behaviour pack manifest. |
-| `min_engine_version` | **1.21.90** | The Minecraft release that shipped `@minecraft/server` 2.0.0 as stable. |
-| Item `format_version` | **1.21.90** | Same release; the item schema is documented separately as `minecraft:item v1.21.90`. |
+| `min_engine_version` | **1.21.120** | Raised from 1.21.90 in v0.5.2 to adopt `minecraft:swing_duration`. Both manifests carry it. |
+| item `format_version` | **1.21.120** | Custom Components V2 needs 1.21.90; `swing_duration` needs 1.21.120. |
 
-**Why 2.0.0 and not the newest (2.9.0 at time of writing):** the framework uses
-nothing added after 2.0.0. Pinning to 2.0.0 means the add-on runs on every
-Minecraft build from 1.21.90 onward instead of only the newest one. Raising it
-is a deliberate decision, taken only when a specific API justifies it, and
-recorded here.
+**Why `@minecraft/server` 2.0.0 and not the newest (2.9.0 at time of writing):**
+the framework uses nothing added after 2.0.0, so pinning there costs nothing and
+keeps the script module compatible with more builds.
+
+**Why the engine minimum is nevertheless 1.21.120.** The script module and the
+item schema are versioned separately, and the item schema is the binding
+constraint: `minecraft:swing_duration` requires item `format_version` 1.21.120,
+so a client below that cannot parse the item at all. Raising the minimum is
+always a deliberate trade — it buys the swing animation and costs compatibility
+with 1.21.90–1.21.110 — and it is recorded here rather than made silently.
 
 `@minecraft/server` release history relevant to this project (from the npm
 registry): 2.0.0 → 2026-06-17 (MC 1.21.90) … 2.9.0 → 2026-08-04 (MC 26.40).
@@ -204,8 +209,11 @@ Two consequences worth keeping:
   reference documentation, "no longer in use in the latest versions". Custom
   Components V2 flattens namespaced components directly into `components`.
   `tools/validate.mjs` fails the build if the deprecated form reappears.
-- **`minecraft:swing_duration`** — requires item `format_version` 1.21.120,
-  above our 1.21.90 target. Tracked in `TODO.md`.
+- ~~**`minecraft:swing_duration`**~~ — **now used.** It was deferred while the
+  item `format_version` was 1.21.90; v0.5.2 raised the target to **1.21.120**
+  specifically to adopt it, because it is the only item-side control Bedrock
+  offers over the swing animation. It is documented as *visual only*: it changes
+  how long the swing takes, not attack rate, cooldown or damage. See §3b.
 - **`minecraft:rarity`** — *verified, then rejected.* Two blocking properties:
   it accepts only `common`, `uncommon`, `rare` and `epic`, so it cannot express
   a six-tier scheme; and the documented behaviour is that rarity
@@ -247,6 +255,75 @@ message; an accepted typo is a silent no-op in someone's world.
 
 ---
 
+## 3b. Presentation: particles, sounds and animation
+
+### There is no per-item attack animation
+
+Worth stating because it is the first thing people go looking for. In Bedrock
+the attack swing belongs to the **player entity's** animation, not to the item,
+and it applies to every item held. A custom item cannot replace it and does not
+need to — it already swings.
+
+The only item-side handle is `minecraft:swing_duration`, which sets the swing
+length in seconds and requires item `format_version` **1.21.120**. Microsoft's
+reference is explicit that it "affects visuals only and does not impact attack
+frequency or other gameplay mechanics".
+
+Attachables, geometry and animation controllers exist for items that render as
+a 3D model instead of a sprite. A sprite sword with `minecraft:hand_equipped:
+true` — which the reference defines as "rendered like a tool while it is in a
+player's hand" — needs none of them, and this project ships none.
+
+### `spawnParticle` and `playSound` fail silently
+
+Both are fire-and-forget. Neither throws on an unknown identifier:
+
+| Call | Bad identifier does this |
+|---|---|
+| `Dimension.spawnParticle` | renders nothing, or spams the content log every call |
+| `Dimension.playSound` / `Player.playSound` | plays nothing at all |
+
+A mocked engine accepts any string for both, so a full green test suite proves
+nothing about either. This is why the framework validates identifiers against
+transcribed vanilla lists at build time rather than trusting them at call time.
+
+### Two distinct particle failure modes
+
+Vanilla particles fall into groups that behave very differently from script:
+
+| Group | Behaviour when spawned standalone |
+|---|---|
+| Usable | renders correctly, no host entity needed |
+| Needs Molang context | authored for a host entity, reads variables the spawner cannot set; logs errors instead of rendering |
+| Does not exist | silent no-op |
+
+`core/particle_catalogue.js` encodes the first two and maps each
+Molang-dependent identifier to the sibling that works:
+
+| Wanted | Actually usable |
+|---|---|
+| `minecraft:electric_spark_particle` | `minecraft:endrod` |
+| `minecraft:water_splash_particle` | `minecraft:water_splash_particle_manual` |
+| `minecraft:basic_crit_particle` | `minecraft:critical_hit_emitter` |
+| `minecraft:soul_particle` | `minecraft:basic_portal_particle` |
+
+Identifiers that simply do not exist are the more dangerous group precisely
+because they read plausibly — `minecraft:wind_explosion_emitter` and
+`minecraft:sculk_soul_particle` both shipped in v0.5.1.
+
+### Sound events
+
+`tools/data/vanilla_sound_events.json` holds the 1824 event names from the
+vanilla resource pack's own `sound_definitions.json` (format_version 1.20.20).
+Build-time reference only — it is not shipped in the add-on — and it exists so
+`tools/validate.mjs` can prove every id in `SOUND_LIBRARY` is real.
+
+Sound events are *not* namespaced the way particles are: `mob.blaze.shoot`,
+`random.orb`, `ambient.weather.lightning.impact`. A `minecraft:` prefix on a
+sound id is wrong.
+
+---
+
 ## 4. Experiment requirements
 
 **None.** Custom Components V2 requires no experimental toggle when the
@@ -274,6 +351,12 @@ from experimental in Minecraft 1.21.90 for both blocks and items.
 - `@minecraft/server` 2.0.0 TypeScript definitions, npm registry.
 - `@minecraft/vanilla-data` 1.26.44, npm registry — source of the effect
   catalogue and the vanilla type-family names.
+- Bedrock Wiki, vanilla particle list — source of the particle catalogue and of
+  the usable / needs-Molang-context distinction.
+- Vanilla resource pack `sounds/sound_definitions.json` — source of the sound
+  event snapshot.
+- Microsoft Learn item component reference: `minecraft:swing_duration`,
+  `minecraft:hand_equipped`, `minecraft:icon`, `minecraft:damage`.
 - Minecraft Creator documentation: Scripting V2 overview, Introducing Custom
   Components, Item Components reference, individual item component pages
   (`minecraft:display_name`, `minecraft:damage`, `minecraft:enchantable`,

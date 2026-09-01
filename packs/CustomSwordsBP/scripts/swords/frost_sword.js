@@ -17,6 +17,7 @@ export const frostSword = {
     item: {
         attackDamage: 6,
         durability: 900,
+        swingDuration: 0.32,
         enchantValue: 16,
         repairItems: ['minecraft:packed_ice'],
     },
@@ -25,6 +26,7 @@ export const frostSword = {
         {
             // FROZEN STRIKE — a chilling field. Effects are the payload.
             activation: 'use',
+            visual: 'frost',
             abilityId: 'custom_swords:brand',
             cooldownTicks: 120,
             hudCategory: 'custom_swords_frost',
@@ -44,6 +46,7 @@ export const frostSword = {
         {
             // Passive: contact chills, briefly.
             activation: 'attack',
+            visual: 'frost',
             abilityId: 'custom_swords:brand',
             cooldownTicks: 50,
             targeting: { type: 'single', range: 4 },

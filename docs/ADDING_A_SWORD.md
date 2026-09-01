@@ -16,40 +16,65 @@ Create `packs/CustomSwordsBP/scripts/swords/<name>.js`:
  * @type {import('../core/types.js').SwordDefinition}
  */
 export const emberfang = {
-    id: 'custom_swords:emberfang',
+    // --- Identity ---------------------------------------------------------
+    id: 'custom_swords:emberfang',        // namespace:local_name, always ours
     name: 'Emberfang',
-    rarity: 'rare',
+    rarity: 'rare',                       // one of the six tiers
     description: 'A blade that never cooled.',
-    texture: 'emberfang',            // optional; defaults to the id's local part
+    texture: 'emberfang',                 // optional; defaults to the id's local part
 
+    // --- Vanilla item statistics ------------------------------------------
     item: {
-        attackDamage: 8,             // -> minecraft:damage
-        durability: 900,             // -> minecraft:durability
-        enchantValue: 14,            // -> minecraft:enchantable (slot: sword)
+        attackDamage: 8,                  // -> minecraft:damage (9 effective melee)
+        durability: 900,
+        enchantValue: 14,                 // omit to make the sword unenchantable
         repairItems: ['minecraft:blaze_rod'],
     },
 
+    // --- Active ability: right-click / long-press --------------------------
     active: {
         abilityId: 'custom_swords:flame_nova',
-        cooldownTicks: 140,          // 7 seconds
+        cooldownTicks: 140,               // 7 seconds
         hudCategory: 'custom_swords_emberfang',   // optional vanilla HUD sweep
-        params: { radius: 5, damage: 6, igniteSeconds: 4 },
+
+        targeting: { type: 'area', range: 5, maxTargets: 10 },
+        effects: [{ effect: 'weakness', durationTicks: 80 }],
+        particles: [{ id: 'minecraft:basic_flame_particle', count: 16, at: 'caster' }],
+        sounds: { cast: 'ability_cast', impact: 'impact_heavy' },
+
+        params: { damage: 6, igniteSeconds: 4 },   // numbers only the ability understands
     },
 
+    // --- Passive ability: fired on melee hit -------------------------------
     passive: {
         abilityId: 'custom_swords:ignite_on_hit',
+        targeting: { type: 'self' },
         params: { chance: 0.35 },
     },
 };
 ```
 
-Register it in `packs/CustomSwordsBP/scripts/swords/index.js`:
+### The envelope is the point
+
+`targeting`, `effects`, `particles` and `sounds` are the *invocation envelope*.
+Binding the same ability twice with different envelopes gives you two swords
+that feel genuinely different, with no new code:
 
 ```js
-import { emberfang } from './emberfang.js';
+// A precise duellist's blade.
+active: { abilityId: 'custom_swords:flame_nova',
+          targeting: { type: 'single', range: 6 }, params: { damage: 10 } }
 
-export const SWORDS = Object.freeze([testBlade, emberfang]);
+// A crowd-clearing greatsword, same ability.
+active: { abilityId: 'custom_swords:flame_nova',
+          targeting: { type: 'cone', range: 9, angleDegrees: 120 }, params: { damage: 4 } }
 ```
+
+`params` is reserved for numbers only the ability itself understands. Anything
+the framework can interpret belongs in a typed field, where `npm run validate`
+checks it at build time — a targeting block missing its `range` fails the build,
+whereas the same mistake hidden in `params` would ship as an ability that
+silently does nothing.
 
 Sword definitions are **pure data**. They must not import `@minecraft/server` —
 `npm run validate` fails the build if they do.
@@ -69,13 +94,15 @@ When you genuinely need new behaviour, create
 export const flameNova = {
     id: 'custom_swords:flame_nova',
     name: 'Flame Nova',
-    description: 'A ring of fire that burns everything nearby.',
+    description: 'Burns everything the binding targets.',
 
-    defaults: { radius: 4, damage: 5, igniteSeconds: 3 },
+    defaults: { damage: 5, igniteSeconds: 3 },
 
     validateParams(params) {
         const problems = [];
-        if (params.radius <= 0) problems.push("'radius' must be positive.");
+        if (typeof params.damage !== 'number' || params.damage < 0) {
+            problems.push("'damage' must be a non-negative number.");
+        }
         return problems;
     },
 
@@ -83,14 +110,19 @@ export const flameNova = {
         const { params, services } = ctx;
         const origin = ctx.player.location;
 
-        services.particles.ring(ctx.dimension, { id: 'minecraft:basic_flame_particle' }, origin, params.radius, 24);
-        services.sounds.playAt(ctx.dimension, 'impact_heavy', origin);
+        // Presentation comes from the binding, not from here.
+        for (const particle of ctx.particles) {
+            if ((particle.at ?? 'caster') === 'caster') services.particles.emit(ctx.dimension, particle, origin);
+        }
+        if (ctx.sounds.cast) services.sounds.playAt(ctx.dimension, ctx.sounds.cast, origin);
 
-        const targets = services.targeting.sphere(ctx, { range: params.radius, origin });
+        // So does targeting — this ability never learns which shape it got.
+        const targets = services.targeting.resolve(ctx);
         if (targets.length === 0) return { ok: false, message: 'Nothing to burn.' };
 
         for (const target of targets) {
             services.damage.apply(ctx, target, params.damage, { cause: 'fire' });
+            services.effects.applyMany(target, ctx.effects);
         }
         return { ok: true, message: `${targets.length} scorched` };
     },
@@ -102,6 +134,8 @@ Add it to `abilities/index.js`.
 **Rules for abilities**, all enforced by `npm run validate` or by review:
 
 - no `@minecraft/server` import — use `ctx.services`;
+- read targeting, effects, particles and sounds from `ctx`, never hard-code
+  them — that is what keeps one ability reusable across many swords;
 - no module-level mutable state — use `ctx.services.state`, keyed by
   `ctx.playerId`;
 - no `system.runInterval` — the framework allows exactly one interval, and it
@@ -122,13 +156,25 @@ does not exist yet.
 
 ## 4. Add real art
 
-Replace the placeholder with a 16×16 RGBA PNG at the same path. The generator
-never overwrites an existing texture.
+Replace the placeholder with a 16×16 RGBA PNG at:
+
+```
+packs/CustomSwordsRP/textures/items/custom_swords/swords/<texture>.png
+```
+
+The generator never overwrites an existing texture, and the validator fails the
+build if an icon sits outside that directory.
 
 ## 5. Test in Minecraft
 
 Import `dist/CustomSwords-v<version>.mcaddon` and work through
-`docs/TESTING.md`. `/give @s custom_swords:emberfang`.
+`docs/TESTING.md`:
+
+```
+/give @s custom_swords:emberfang
+/scriptevent custom_swords:held        confirm the registry recognises it
+/scriptevent custom_swords:info emberfang
+```
 
 ---
 
@@ -147,7 +193,8 @@ per player, as always.
 
 ## Rarity
 
-Rarity currently drives the display-name colour in the generated `.lang`:
+Rarity drives the display-name colour, sorting in reports and the codex, and the
+vocabulary used in balance work. It grants no combat bonus.
 
 | Rarity | Colour |
 |---|---|
@@ -157,6 +204,10 @@ Rarity currently drives the display-name colour in the generated `.lang`:
 | `epic` | light purple |
 | `legendary` | gold |
 | `mythic` | red |
+
+The colour is applied as a section code on the generated display name rather
+than via `minecraft:rarity`, which only supports four tiers and escalates on
+enchant. See `docs/API_NOTES.md`.
 
 ## Checklist
 

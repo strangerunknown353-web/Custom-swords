@@ -23,11 +23,15 @@ import { system, world } from '@minecraft/server';
 import { CONFIG } from '../config.js';
 import { log } from './log.js';
 import { Registry } from './registry.js';
+import { SwordRegistry } from './sword_registry.js';
+import { ItemIdentifier } from './item_identifier.js';
+import { Diagnostics } from './diagnostics.js';
 import { CooldownManager } from './cooldown_manager.js';
 import { PlayerStateStore } from './player_state.js';
 import { AbilityExecutor } from './ability_executor.js';
 import { InputRouter } from './input_router.js';
 import { validateAbilityDefinition, validateSwordDefinition } from './definition_validator.js';
+import { NAMESPACE } from './identifiers.js';
 
 import { TargetingService } from '../systems/targeting.js';
 import { DamageService } from '../systems/damage.js';
@@ -53,7 +57,9 @@ import { SWORDS } from '../swords/index.js';
  * @param {() => number} [options.clock]
  * @returns {{
  *   abilities: Registry<AbilityDefinition>,
- *   swords: Registry<SwordDefinition>,
+ *   swords: SwordRegistry,
+ *   identifier: ItemIdentifier,
+ *   diagnostics: Diagnostics,
  *   services: import('./types.js').ServiceContainer,
  *   executor: AbilityExecutor,
  *   combat: CombatSystem,
@@ -85,8 +91,7 @@ export function createFramework(options = {}) {
     }
     abilities.seal();
 
-    /** @type {Registry<SwordDefinition>} */
-    const swords = new Registry('sword');
+    const swords = new SwordRegistry();
     for (const sword of swordDefinitions) {
         const issues = validateSwordDefinition(sword, (id) => abilities.has(id));
         if (issues.length > 0) {
@@ -95,12 +100,15 @@ export function createFramework(options = {}) {
         }
         problems.push(...validateBindingParams(sword, abilities));
         try {
-            swords.register(sword.id, sword);
+            swords.register(sword);
         } catch (error) {
             problems.push(String(error instanceof Error ? error.message : error));
         }
     }
     swords.seal();
+
+    const identifier = new ItemIdentifier({ swords });
+    const diagnostics = new Diagnostics({ swords, identifier, log });
 
     const cooldowns = new CooldownManager(clock);
     const state = new PlayerStateStore();
@@ -116,9 +124,9 @@ export function createFramework(options = {}) {
 
     const executor = new AbilityExecutor({ abilities, services, clock });
     const combat = new CombatSystem({ executor });
-    const router = new InputRouter({ swords, executor, combat, log });
+    const router = new InputRouter({ identifier, executor, combat, log });
 
-    return { abilities, swords, services, executor, combat, router, problems };
+    return { abilities, swords, identifier, diagnostics, services, executor, combat, router, problems };
 }
 
 /**
@@ -174,9 +182,21 @@ export function start() {
         log.debug(`Cleared runtime state for departed player ${playerId}.`);
     });
 
+    // Diagnostics are exposed as script events rather than a tick loop, so they
+    // cost one namespace-filtered subscription and nothing else.
+    system.afterEvents.scriptEventReceive.subscribe(
+        (event) => framework.diagnostics.handle(event),
+        { namespaces: [NAMESPACE] },
+    );
+
     world.afterEvents.worldLoad.subscribe(() => {
+        const shipped = framework.swords.shipped().length;
+        const diagnosticItems = framework.swords.testItems().length;
         log.info(
-            `v${CONFIG.version} ready - ${framework.swords.size} sword(s), ${framework.abilities.size} ability(ies).`,
+            `v${CONFIG.version} ready - ${framework.swords.size} sword(s) ` +
+                `(${shipped} shipped, ${diagnosticItems} diagnostic), ` +
+                `${framework.abilities.size} ability(ies). ` +
+                `Run '/scriptevent ${NAMESPACE}:list' in game to inspect the registry.`,
         );
         startMaintenance(framework);
     });

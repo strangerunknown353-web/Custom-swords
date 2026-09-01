@@ -6,32 +6,39 @@
  * matters:
  *
  *  - It is item-scoped. Handlers fire only for our swords, so there is no global
- *    `entityHitEntity` listener running for every zombie punch in the world.
+ *    `entityHitEntity` listener running for every zombie punch in the world, and
+ *    vanilla swords are never touched by this addon.
  *  - There is exactly one subscription for the whole addon regardless of how
  *    many swords exist, so no duplicated event handling and no per-sword
  *    listeners to leak.
- *  - There are no tick loops at all. Input is purely event-driven.
+ *  - There are no tick loops at all. Input is purely event-driven, so the addon
+ *    costs nothing while nobody is swinging a sword.
+ *
+ * The router deliberately contains no sword knowledge: it asks
+ * {@link ItemIdentifier} what it is holding and asks the executor to run
+ * whatever the definition declared. Adding sword #26 does not touch this file.
  *
  * Requires `@minecraft/server` 2.0.0+ (Custom Components V2). See
  * docs/API_NOTES.md for the version contract.
  */
 
+import { SWORD_COMPONENT_ID } from './identifiers.js';
+
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 
-/** Component id declared by every generated sword item JSON. */
-export const SWORD_COMPONENT_ID = 'custom_swords:sword';
+export { SWORD_COMPONENT_ID };
 
 export class InputRouter {
     /**
      * @param {object} deps
-     * @param {import('./registry.js').Registry<SwordDefinition>} deps.swords
+     * @param {import('./item_identifier.js').ItemIdentifier} deps.identifier
      * @param {import('./ability_executor.js').AbilityExecutor} deps.executor
      * @param {import('../systems/combat.js').CombatSystem} deps.combat
      * @param {typeof import('./log.js').log} deps.log
      */
-    constructor({ swords, executor, combat, log }) {
+    constructor({ identifier, executor, combat, log }) {
         /** @private @readonly */
-        this.swords = swords;
+        this.identifier = identifier;
         /** @private @readonly */
         this.executor = executor;
         /** @private @readonly */
@@ -59,9 +66,8 @@ export class InputRouter {
      * @param {import('@minecraft/server').ItemComponentUseEvent} event
      */
     handleUse(event) {
-        const sword = this.resolveSword(event.itemStack?.typeId);
-        if (sword === undefined) return;
-        if (sword.active === undefined) return;
+        const sword = this.identifier.fromItemStack(event.itemStack);
+        if (sword?.active === undefined) return;
 
         this.executor.invoke({
             player: event.source,
@@ -77,7 +83,7 @@ export class InputRouter {
      * @param {import('@minecraft/server').ItemComponentHitEntityEvent} event
      */
     handleHitEntity(event) {
-        const sword = this.resolveSword(event.itemStack?.typeId);
+        const sword = this.identifier.fromItemStack(event.itemStack);
         if (sword === undefined) return;
 
         // Only players drive sword abilities. A mob wielding a custom sword
@@ -91,23 +97,5 @@ export class InputRouter {
             sword,
             itemStack: event.itemStack,
         });
-    }
-
-    /**
-     * O(1) registry lookup — no scanning, no switch statement over sword ids.
-     *
-     * @private
-     * @param {string | undefined} typeId
-     * @returns {SwordDefinition | undefined}
-     */
-    resolveSword(typeId) {
-        if (typeId === undefined) return undefined;
-        const sword = this.swords.get(typeId);
-        if (sword === undefined) {
-            // The component is on an item we have no definition for. That means
-            // the item JSON and the script definitions have drifted apart.
-            this.log.warn(`Item '${typeId}' uses '${SWORD_COMPONENT_ID}' but has no sword definition.`);
-        }
-        return sword;
     }
 }

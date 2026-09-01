@@ -21,11 +21,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PATHS, SWORD_COMPONENT_ID, localName, namespaceOf } from './lib/project.mjs';
+import { PATHS, MODULES, resourceFile } from './lib/project.mjs';
 
-const SWORD_MODULE = `file://${PATHS.swordsIndex}`;
-const ABILITY_MODULE = `file://${PATHS.abilitiesIndex}`;
-const VALIDATOR_MODULE = `file://${path.join(PATHS.bpScripts, 'core', 'definition_validator.js')}`;
+const { NAMESPACE, SWORD_COMPONENT_ID, SWORD_ITEM_TAG, localNameOf, namespaceOf, nameKey, swordTexturePath } =
+    await import(MODULES.identifiers);
+const { RARITIES } = await import(MODULES.rarity);
+const { describeAll } = await import(MODULES.swordStats);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -293,12 +294,12 @@ function validateItemsAndResources(swords) {
         }
         declaredIdentifiers.add(identifier);
 
-        const expectedFile = `${localName(identifier)}.item.json`;
+        const expectedFile = `${localNameOf(identifier)}.item.json`;
         if (path.basename(file) !== expectedFile) {
             error(`${relative}: identifier '${identifier}' expects file name '${expectedFile}'.`);
         }
-        if (namespaceOf(identifier) !== 'custom_swords') {
-            error(`${relative}: identifier '${identifier}' must use the 'custom_swords' namespace.`);
+        if (namespaceOf(identifier) !== NAMESPACE) {
+            error(`${relative}: identifier '${identifier}' must use the '${NAMESPACE}' namespace.`);
         }
 
         const components = item.components ?? {};
@@ -308,6 +309,12 @@ function validateItemsAndResources(swords) {
         if (components['minecraft:custom_components'] !== undefined) {
             error(`${relative}: uses the deprecated 'minecraft:custom_components' array. Flatten the component instead.`);
         }
+        const tags = components['minecraft:tags']?.tags ?? [];
+        for (const requiredTag of ['minecraft:is_sword', SWORD_ITEM_TAG]) {
+            if (!tags.includes(requiredTag)) {
+                error(`${relative}: minecraft:tags must include '${requiredTag}'.`);
+            }
+        }
 
         const shortname = components['minecraft:icon']?.textures?.default;
         if (typeof shortname !== 'string') {
@@ -315,17 +322,27 @@ function validateItemsAndResources(swords) {
         } else if (textureData[shortname] === undefined) {
             error(`${relative}: icon shortname '${shortname}' is not defined in item_texture.json.`);
         } else {
-            const texturePath = path.join(PATHS.rp, `${textureData[shortname].textures}.png`);
-            if (!fs.existsSync(texturePath)) {
-                error(`${relative}: texture '${textureData[shortname].textures}.png' does not exist in the resource pack.`);
+            const declared = textureData[shortname].textures;
+            const expectedPath = swordTexturePath(shortname);
+            if (declared !== expectedPath) {
+                error(
+                    `${relative}: texture '${declared}' does not follow the convention. ` +
+                        `Sword icons live at '${expectedPath}'.`,
+                );
+            }
+            if (!fs.existsSync(resourceFile(declared))) {
+                error(`${relative}: texture '${declared}.png' does not exist in the resource pack.`);
             }
         }
 
-        const nameKey = components['minecraft:display_name']?.value;
-        if (typeof nameKey !== 'string') {
+        const declaredNameKey = components['minecraft:display_name']?.value;
+        const expectedNameKey = nameKey(identifier);
+        if (typeof declaredNameKey !== 'string') {
             error(`${relative}: missing minecraft:display_name.value.`);
-        } else if (!rpLangKeys.has(nameKey)) {
-            error(`${relative}: display name key '${nameKey}' is not defined in the resource pack en_US.lang.`);
+        } else if (declaredNameKey !== expectedNameKey) {
+            error(`${relative}: display name key '${declaredNameKey}' should be '${expectedNameKey}'.`);
+        } else if (!rpLangKeys.has(declaredNameKey)) {
+            error(`${relative}: display name key '${declaredNameKey}' is not defined in the resource pack en_US.lang.`);
         }
     }
 
@@ -343,7 +360,7 @@ function validateItemsAndResources(swords) {
 
     // Every texture entry should be referenced by something.
     for (const shortname of Object.keys(textureData)) {
-        if (!swords.some((/** @type {any} */ s) => (s.texture ?? localName(s.id)) === shortname)) {
+        if (!swords.some((/** @type {any} */ s) => (s.texture ?? localNameOf(s.id)) === shortname)) {
             warn(`item_texture.json defines unused texture '${shortname}'.`);
         }
     }
@@ -357,9 +374,9 @@ function validateItemsAndResources(swords) {
  * @returns {Promise<readonly any[]>}
  */
 async function validateDefinitions() {
-    const { SWORDS } = await import(SWORD_MODULE);
-    const { ABILITIES } = await import(ABILITY_MODULE);
-    const { validateSwordDefinition, validateAbilityDefinition } = await import(VALIDATOR_MODULE);
+    const { SWORDS } = await import(MODULES.swords);
+    const { ABILITIES } = await import(MODULES.abilities);
+    const { validateSwordDefinition, validateAbilityDefinition } = await import(MODULES.definitionValidator);
 
     /** @type {Set<string>} */
     const abilityIds = new Set();
@@ -400,6 +417,22 @@ async function validateDefinitions() {
             `${testItems.length} diagnostic (${testItems.map((/** @type {any} */ s) => s.id).join(', ') || 'none'}).`,
     );
     note(`${ABILITIES.length} ability definition(s): ${[...abilityIds].join(', ')}.`);
+
+    // A compact roster, so balance outliers are visible on every build rather
+    // than only when someone goes looking. Uses the same resolver the runtime
+    // and the in-game `/scriptevent custom_swords:list` use.
+    for (const description of describeAll(SWORDS)) {
+        const abilities =
+            description.abilities
+                .map((a) => `${a.trigger}:${a.targetingType}${a.range === undefined ? '' : `/${a.range}`}@${a.cooldownSeconds}s`)
+                .join(' ') || 'none';
+        note(
+            `  ${description.rarityLabel.padEnd(9)} ${description.id.padEnd(32)} ` +
+                `dmg ${String(description.stats.meleeDamage).padStart(3)} ` +
+                `dur ${String(description.stats.durability).padStart(5)}  ${abilities}` +
+                `${description.isTestItem ? '  [diagnostic]' : ''}`,
+        );
+    }
 
     return SWORDS;
 }

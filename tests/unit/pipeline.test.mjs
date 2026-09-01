@@ -114,13 +114,33 @@ describe('framework bootstrap', () => {
                     id: 'custom_swords:bad_params',
                     name: 'Bad Params',
                     rarity: 'common',
-                    description: 'negative radius',
+                    description: 'negative damage',
                     item: { attackDamage: 1, durability: 10 },
-                    active: { abilityId: 'custom_swords:diagnostic_pulse', params: { radius: -3 } },
+                    active: { abilityId: 'custom_swords:diagnostic_pulse', params: { damage: -3 } },
                 },
             ],
         });
-        assert.ok(framework.problems.some((p) => p.includes("'radius'")));
+        assert.ok(framework.problems.some((p) => p.includes("'damage'")));
+    });
+
+    it('rejects a ranged targeting spec with no range', () => {
+        // The nastiest possible failure mode: the ability silently finds
+        // nothing and looks broken. Validation must catch it at load.
+        const framework = createFramework({
+            clock,
+            swords: [
+                {
+                    id: 'custom_swords:no_range',
+                    name: 'No Range',
+                    rarity: 'common',
+                    description: 'area targeting without a range',
+                    item: { attackDamage: 1, durability: 10 },
+                    active: { abilityId: 'custom_swords:diagnostic_pulse', targeting: { type: 'area' } },
+                },
+            ],
+        });
+        assert.equal(framework.swords.size, 0);
+        assert.ok(framework.problems.some((p) => p.includes("requires a positive 'range'")));
     });
 });
 
@@ -167,6 +187,49 @@ describe('input router', () => {
         assert.ok(dimension.particles.length > 0, 'expected particles to be emitted');
         assert.ok(dimension.sounds.length > 0, 'expected a sound to be played');
         assert.match(player.actionBarMessages.at(-1), /Diagnostic Pulse/);
+    });
+
+    it('drives targeting, effects, particles and sounds from the binding, not from code', () => {
+        // The same ability, bound twice with different envelopes, must behave
+        // differently. This is the property the whole framework rests on.
+        const wide = {
+            id: 'custom_swords:wide',
+            name: 'Wide',
+            rarity: 'rare',
+            description: 'Wide area burst.',
+            item: { attackDamage: 5, durability: 100 },
+            active: {
+                abilityId: 'custom_swords:diagnostic_pulse',
+                targeting: { type: 'area', range: 10 },
+                effects: [{ effect: 'weakness', durationTicks: 60 }],
+                sounds: { cast: 'ability_cast' },
+                params: { damage: 1 },
+            },
+        };
+        const narrow = {
+            ...wide,
+            id: 'custom_swords:narrow',
+            name: 'Narrow',
+            active: { ...wide.active, targeting: { type: 'area', range: 1 }, effects: [] },
+        };
+
+        const framework = createFramework({ clock, swords: [wide, narrow] });
+        const registry = new MockItemComponentRegistry();
+        framework.router.register(registry);
+
+        const dimension = new MockDimension();
+        const player = new MockPlayer({ id: 'player-a', location: { x: 0, y: 64, z: 0 }, dimension });
+        const near = new MockEntity({ id: 'near', location: { x: 0, y: 64, z: 1 }, dimension });
+        const distant = new MockEntity({ id: 'distant', location: { x: 0, y: 64, z: 6 }, dimension });
+        dimension.entities.push(player, near, distant);
+
+        registry.components.get(SWORD_COMPONENT_ID).onUse({ source: player, itemStack: { typeId: wide.id } });
+        assert.equal(distant.damageTaken.length, 1, 'range 10 must reach the distant mob');
+        assert.equal(near.effects[0].effect, 'weakness', 'the effect comes from the binding');
+
+        registry.components.get(SWORD_COMPONENT_ID).onUse({ source: player, itemStack: { typeId: narrow.id } });
+        assert.equal(distant.damageTaken.length, 1, 'range 1 must not reach the distant mob');
+        assert.equal(near.effects.length, 1, 'an empty effects list must apply nothing');
     });
 
     it('never damages the caster', () => {

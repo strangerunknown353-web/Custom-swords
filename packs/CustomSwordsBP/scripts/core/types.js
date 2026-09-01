@@ -8,8 +8,8 @@
  */
 
 /**
- * Rarity tiers. Rarity drives the display-name colour and is surfaced in
- * documentation; it has no mechanical effect on its own.
+ * Rarity tier id. The tiers themselves — order, label, colour — are defined
+ * once in `core/rarity.js`; this alias exists so definitions read clearly.
  *
  * @typedef {'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic'} SwordRarity
  */
@@ -28,15 +28,83 @@
  */
 
 /**
- * Binds one registered ability to one sword, with the cooldown and parameters
- * that this particular sword uses. The same ability can be bound by many swords
- * with different parameters — that is the core of the reuse strategy.
+ * How an ability picks what it acts on.
+ *
+ * Targeting is declared as data on the binding rather than hard-coded inside
+ * each ability, so the same ability can be a tight single-target strike on one
+ * sword and a wide area burst on another. `TargetingService.resolve` turns this
+ * into a concrete entity list.
+ *
+ * @typedef {Object} TargetingSpec
+ * @property {'self' | 'single' | 'area' | 'cone' | 'ray'} type
+ *   `self` acts on the caster only and finds no entities;
+ *   `single` takes the first entity along the view vector;
+ *   `area` takes everything within `range` of the caster;
+ *   `cone` narrows `area` to `angleDegrees` around the view vector;
+ *   `ray` behaves like `single` but is documented separately so future
+ *   piercing/multi-hit rays can extend it without changing existing swords.
+ * @property {number} [range] Blocks. Ignored for `self`. Clamped to `config.targeting.maxRange`.
+ * @property {number} [maxTargets] Clamped to `config.targeting.maxTargets`.
+ * @property {number} [angleDegrees] Full cone width; required in practice for `cone`.
+ * @property {boolean} [includeCaster] Defaults to false — abilities do not hit their own user.
+ * @property {boolean} [includePlayers] Defaults to `config.combat.allowPlayerVersusPlayer`.
+ */
+
+/**
+ * A status effect an ability applies. Declared on the binding so a sword can
+ * change what its ability inflicts without touching ability code.
+ *
+ * @typedef {Object} EffectSpec
+ * @property {string} effect Effect type id, e.g. `slowness`.
+ * @property {number} durationTicks
+ * @property {number} [amplifier] 0-based, matching the engine. Defaults to 0.
+ * @property {boolean} [showParticles] Defaults to true.
+ */
+
+/**
+ * A particle burst. `id` must be a valid particle identifier; the foundation
+ * uses vanilla ids only.
+ *
+ * @typedef {Object} ParticleSpec
+ * @property {string} id
+ * @property {number} [count] Clamped to `config.particles.maxPerEmit`.
+ * @property {number} [spread] Random offset radius, in blocks.
+ * @property {'caster' | 'target'} [at] Where to emit. Defaults to `caster`.
+ * @property {{ r: number, g: number, b: number, a?: number }} [color] Sets the `variable.color` Molang variable.
+ */
+
+/**
+ * The two sound slots an ability invocation can fill. Each is either a preset
+ * name from `SOUND_LIBRARY` or a raw vanilla sound id.
+ *
+ * @typedef {Object} SoundSlots
+ * @property {string} [cast] Played at the caster when the ability fires.
+ * @property {string} [impact] Played at each target that was affected.
+ */
+
+/**
+ * Binds one registered ability to one sword.
+ *
+ * A binding is the complete *invocation envelope*: which ability, how it is
+ * aimed, what it costs, and how it looks and sounds. The same ability bound
+ * twice with different envelopes yields two swords that feel genuinely
+ * different — that is the core of the reuse strategy, and the reason there is
+ * no per-sword ability code.
+ *
+ * `params` is reserved for numbers only the ability itself understands (a
+ * damage figure, a chance roll). Anything the framework can interpret —
+ * targeting, effects, particles, sounds — is a typed field instead, so it can
+ * be validated at build time rather than discovered at runtime.
  *
  * @typedef {Object} AbilityBinding
- * @property {string} abilityId Id of an ability in the {@link AbilityRegistry}.
+ * @property {string} abilityId Id of an ability in the ability registry.
  * @property {number} [cooldownTicks] Defaults to 0 (no cooldown).
- * @property {string} [cooldownKey] Share a cooldown across several bindings. Defaults to the sword id.
+ * @property {string} [cooldownKey] Share a cooldown across several bindings. Defaults to `<swordId>#<trigger>`.
  * @property {string} [hudCategory] Vanilla item-cooldown category to mirror onto the HUD.
+ * @property {TargetingSpec} [targeting] Defaults to `{ type: 'self' }`.
+ * @property {EffectSpec[]} [effects] Applied to each affected target.
+ * @property {ParticleSpec[]} [particles]
+ * @property {SoundSlots} [sounds]
  * @property {Record<string, unknown>} [params] Merged over the ability's `defaults`.
  */
 
@@ -90,6 +158,10 @@
  * @property {number} currentTick
  * @property {AbilityTrigger} trigger
  * @property {import('@minecraft/server').Entity} [target] Present when `trigger` is `hit`.
+ * @property {TargetingSpec} targeting Resolved from the binding; always present, defaulting to `{ type: 'self' }`.
+ * @property {readonly EffectSpec[]} effects From the binding; empty when none are declared.
+ * @property {readonly ParticleSpec[]} particles From the binding; empty when none are declared.
+ * @property {SoundSlots} sounds From the binding; empty object when none are declared.
  * @property {Record<string, any>} params Ability defaults merged with binding params.
  * @property {ServiceContainer} services
  */

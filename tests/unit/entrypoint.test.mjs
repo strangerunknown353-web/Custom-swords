@@ -33,6 +33,13 @@ describe('scripts/main.js', () => {
         assert.equal(world.afterEvents.worldLoad.handlers.length, 1);
     });
 
+    it('subscribes diagnostics to script events, filtered to our namespace', () => {
+        assert.equal(system.afterEvents.scriptEventReceive.handlers.length, 1);
+        // A namespace filter is what keeps this from running on every
+        // /scriptevent any other add-on fires.
+        assert.deepEqual(system.afterEvents.scriptEventReceive.options?.namespaces, ['custom_swords']);
+    });
+
     it('starts no timers during early execution', () => {
         // Registering an interval before the world exists would throw in game.
         assert.equal(system.intervals.length, 0);
@@ -61,7 +68,7 @@ describe('scripts/main.js', () => {
         world.afterEvents.worldLoad.emit({});
 
         assert.ok(
-            logged.some((line) => /ready - 1 sword\(s\), 1 ability\(ies\)/.test(line)),
+            logged.some((line) => /ready - 1 sword\(s\) \(0 shipped, 1 diagnostic\), 1 ability\(ies\)/.test(line)),
             `expected a readiness banner, got: ${logged.join(' | ')}`,
         );
         assert.equal(system.intervals.length, 1);

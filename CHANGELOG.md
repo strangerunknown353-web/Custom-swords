@@ -13,6 +13,71 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.2.0] — 2026-09-01
+
+Core Sword Framework (roadmap step 2). The reusable foundation the 20–25 sword
+collection will be built on. Still **no shipped swords** — the collection begins
+in a later milestone.
+
+### Added
+
+- **Sword Registry** (`core/sword_registry.js`) — the central source of truth
+  for sword metadata: lookup by id, `isCustomSword`, stats, ability bindings and
+  a consistent display record. Definitions are deep-frozen at registration and
+  the registry is sealed after bootstrap.
+- **Item identification** (`core/item_identifier.js`) — resolves an item stack
+  or a player's main hand to a sword definition. Never throws, never claims a
+  vanilla item, and classifies anything as custom sword / vanilla sword /
+  other item / empty.
+- **Identifier convention** (`core/identifiers.js`) — one module deriving every
+  namespaced string: item ids, ability ids, the custom component, the item tag,
+  localisation keys, texture paths and diagnostic commands.
+- **Rarity tiers** (`core/rarity.js`) — six tiers with order, label, colour code
+  and colour name, defined once.
+- **Sword stats** (`core/sword_stats.js`) — resolves authored values into
+  effective ones (melee damage, repair amount) and builds the display record
+  shared by the in-game diagnostics, the validator roster and future UI.
+- **Declarative ability envelope** — `targeting`, `effects`, `particles` and
+  `sounds` are now typed, validated fields on an ability binding rather than
+  untyped `params`. The same ability bound with different envelopes produces
+  different-feeling swords with no new code.
+- **`TargetingService.resolve`** — dispatches the declared targeting shape
+  (`self`, `single`, `ray`, `area`, `cone`) to a concrete entity list.
+- **In-game diagnostics** (`core/diagnostics.js`) — `/scriptevent
+  custom_swords:list`, `:held` and `:info <id>` make the registry's own view
+  observable in a real world. One namespace-filtered subscription, no polling.
+- Validator checks for the required item tags, the display-name key convention,
+  the texture-path convention, and the full binding envelope.
+- A sword roster in the validator output, so balance outliers are visible on
+  every build.
+- 88 further tests (173 total).
+
+### Changed
+
+- Sword icons moved to `textures/items/custom_swords/swords/`, namespaced and
+  categorised, ready for the full collection.
+- `tools/lib/project.mjs`, `tools/generate.mjs` and `tools/validate.mjs` now
+  import the framework's own identifier, rarity and stats modules instead of
+  keeping private copies of the same rules.
+- `InputRouter` delegates identification to `ItemIdentifier`; it now contains no
+  sword knowledge at all.
+- The Test Blade was converted to the new model and promoted to `uncommon` so
+  the rarity colouring is visibly exercised.
+- The world-load banner reports shipped and diagnostic counts separately and
+  points at the diagnostics command.
+
+### Fixed
+
+- Rarity was defined in three places (a union type, a validation array and a
+  colour map in the build tools) and the custom component id in two. Both are
+  now single-sourced.
+
+### Verified, not adopted
+
+- `minecraft:rarity` supports only four tiers and auto-escalates on enchant, so
+  it cannot express a six-tier scheme; rarity stays a section colour code on the
+  generated display name. Recorded in `docs/API_NOTES.md`.
+
 ## [0.1.0] — 2026-09-01
 
 Foundation milestone (roadmap step 1). Framework and toolchain only — **no
@@ -52,5 +117,6 @@ See "Current limitations" in `README.md` and the open items in `TODO.md`. In
 particular: this release has **not** been run inside a Minecraft client — it has
 been validated statically and against a mocked engine only.
 
-[Unreleased]: https://github.com/strangerunknown353-web/Custom-swords/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/strangerunknown353-web/Custom-swords/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/strangerunknown353-web/Custom-swords/releases/tag/v0.2.0
 [0.1.0]: https://github.com/strangerunknown353-web/Custom-swords/releases/tag/v0.1.0

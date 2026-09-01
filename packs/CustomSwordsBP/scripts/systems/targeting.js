@@ -63,6 +63,50 @@ export class TargetingService {
     }
 
     /**
+     * Resolves a declarative {@link TargetingSpec} into a concrete entity list.
+     *
+     * This is what lets targeting be data. An ability calls
+     * `services.targeting.resolve(ctx)` and gets whatever the sword's binding
+     * declared — a cone on one sword, a wide area on another — without knowing
+     * or caring which.
+     *
+     * @param {import('../core/types.js').AbilityContext} ctx
+     * @param {import('../core/types.js').TargetingSpec} [spec] Defaults to `ctx.targeting`.
+     * @returns {Entity[]} Empty for `self`, which acts on the caster only.
+     */
+    resolve(ctx, spec = ctx.targeting) {
+        const range = spec.range ?? 0;
+        /** @type {TargetQuery} */
+        const query = {
+            range,
+            maxTargets: spec.maxTargets,
+            includeCaster: spec.includeCaster,
+            includePlayers: spec.includePlayers,
+        };
+
+        switch (spec.type) {
+            case 'self':
+                return [];
+            case 'area':
+                // Area abilities originate at the caster's feet, not their head,
+                // so a burst does not clip through the floor or ceiling.
+                return this.sphere(ctx, { ...query, origin: ctx.player.location });
+            case 'cone':
+                return this.cone(ctx, { ...query, coneAngleDegrees: spec.angleDegrees ?? 60 });
+            case 'single':
+            case 'ray': {
+                const hit = this.raycast(ctx, { range, includePlayers: spec.includePlayers });
+                return hit === undefined ? [] : [hit];
+            }
+            default:
+                // An unknown type is a definition bug that validation should
+                // have caught. Fail closed rather than guessing.
+                this.log.warn(`targeting.resolve: unknown targeting type '${String(spec.type)}'.`);
+                return [];
+        }
+    }
+
+    /**
      * Entities in a sphere around a point.
      *
      * Uses the engine's own `getEntities` spatial query with `location` +

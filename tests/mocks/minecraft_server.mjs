@@ -55,10 +55,13 @@ class Signal {
     constructor() {
         /** @type {Function[]} */
         this.handlers = [];
+        /** Options passed to the most recent subscribe, so tests can assert filters. */
+        this.options = undefined;
     }
-    /** @param {Function} handler */
-    subscribe(handler) {
+    /** @param {Function} handler @param {any} [options] */
+    subscribe(handler, options) {
         this.handlers.push(handler);
+        this.options = options;
         return handler;
     }
     /** @param {Function} handler */
@@ -130,6 +133,8 @@ export class MockEntity {
         this.location = location;
         this.dimension = dimension ?? new MockDimension();
         this.isValid = true;
+        /** @type {Record<string, any>} */
+        this.components = {};
         /** @type {{ amount: number, options: any }[]} */
         this.damageTaken = [];
         /** @type {{ horizontal: any, vertical: number }[]} */
@@ -162,6 +167,17 @@ export class MockEntity {
         return { x: this.location.x, y: this.location.y + 1.62, z: this.location.z };
     }
 
+    /**
+     * Only the components the framework actually asks for are modelled.
+     *
+     * @param {string} componentId
+     * @returns {any}
+     */
+    getComponent(componentId) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        return this.components[componentId];
+    }
+
     getViewDirection() {
         return { x: 0, y: 0, z: 1 };
     }
@@ -183,6 +199,33 @@ export class MockPlayer extends MockEntity {
                 this.actionBarMessages.push(text);
             },
         };
+        /** @type {string[]} */
+        this.chatMessages = [];
+        /** @type {Record<string, MockItemStack | undefined>} */
+        this.equipment = {};
+        this.components['minecraft:equippable'] = {
+            /** @param {string} slot */
+            getEquipment: (slot) => this.equipment[slot],
+            /** @param {string} slot @param {MockItemStack | undefined} item */
+            setEquipment: (slot, item) => {
+                this.equipment[slot] = item;
+                return true;
+            },
+        };
+    }
+
+    /**
+     * Convenience for tests: put an item in the main hand.
+     *
+     * @param {MockItemStack | undefined} itemStack
+     */
+    setMainhand(itemStack) {
+        this.equipment[EquipmentSlot.Mainhand] = itemStack;
+    }
+
+    /** @param {string} message */
+    sendMessage(message) {
+        this.chatMessages.push(message);
     }
 
     /** @param {string} id @param {any} options */
@@ -201,11 +244,42 @@ export class MockPlayer extends MockEntity {
     }
 }
 
+/**
+ * Stand-in for `ItemStack`. Only `typeId` and `hasTag` are modelled, which is
+ * the entire surface the identification system touches.
+ */
+export class MockItemStack {
+    /**
+     * @param {string} typeId
+     * @param {string[]} [tags]
+     */
+    constructor(typeId, tags = []) {
+        this.typeId = typeId;
+        /** @private */
+        this.tags = new Set(tags);
+    }
+
+    /** @param {string} tag */
+    hasTag(tag) {
+        return this.tags.has(tag);
+    }
+}
+
+/** An ItemStack handle that has already been invalidated by the engine. */
+export class InvalidMockItemStack {
+    get typeId() {
+        throw new Error('ItemStack handle is no longer valid.');
+    }
+    hasTag() {
+        throw new Error('ItemStack handle is no longer valid.');
+    }
+}
+
 /** Controllable stand-in for the `system` global. */
 export const system = {
     currentTick: 0,
     beforeEvents: { startup: new Signal(), shutdown: new Signal() },
-    afterEvents: {},
+    afterEvents: { scriptEventReceive: new Signal() },
     /** @type {{ callback: Function, interval: number, id: number }[]} */
     intervals: [],
     _nextRunId: 1,
@@ -258,6 +332,7 @@ export function resetMocks() {
     system.intervals = [];
     system._nextRunId = 1;
     system.beforeEvents.startup = new Signal();
+    system.afterEvents.scriptEventReceive = new Signal();
     world.afterEvents.playerLeave = new Signal();
     world.afterEvents.worldLoad = new Signal();
     world.players = [];

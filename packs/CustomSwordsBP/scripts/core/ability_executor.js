@@ -38,6 +38,15 @@
  * @property {import('@minecraft/server').Entity} [target]
  */
 
+/**
+ * Shared, frozen defaults for a binding's optional declarative fields.
+ * Allocated once rather than per invocation, and frozen so an ability cannot
+ * accidentally mutate the default that every other invocation also sees.
+ */
+const DEFAULT_TARGETING = Object.freeze(/** @type {import('./types.js').TargetingSpec} */ ({ type: 'self' }));
+const EMPTY_ARRAY = Object.freeze([]);
+const EMPTY_OBJECT = Object.freeze({});
+
 export class AbilityExecutor {
     /**
      * @param {object} deps
@@ -168,6 +177,13 @@ export class AbilityExecutor {
             currentTick: this.clock(),
             trigger,
             target,
+            // The binding's declarative fields are surfaced directly on the
+            // context with safe defaults, so an ability never has to write
+            // `ctx.binding.targeting?.range ?? something` — it reads `ctx`.
+            targeting: binding.targeting ?? DEFAULT_TARGETING,
+            effects: binding.effects ?? EMPTY_ARRAY,
+            particles: binding.particles ?? EMPTY_ARRAY,
+            sounds: binding.sounds ?? EMPTY_OBJECT,
             params: { ...(ability.defaults ?? {}), ...(binding.params ?? {}) },
             services: this.services,
         };

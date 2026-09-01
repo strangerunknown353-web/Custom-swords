@@ -4,7 +4,7 @@ This project's rule is: **never invent an API.** Everything below was verified
 against a primary source before it was used. This file records what was
 verified, where, and what a version change would cost.
 
-Verified on **2026-09-01**.
+Verified on **2026-09-01** (milestone 1), extended for milestone 2.
 
 ---
 
@@ -80,12 +80,22 @@ declaration (`"custom_swords:sword": {}`) serves every sword.
 | `Dimension.getEntities` | `(options?: EntityQueryOptions) => Entity[]`; `location` + `maxDistance` + `excludeTypes` are all supported |
 | `Dimension.getEntitiesFromRay` | `(location, direction, options?) => EntityRaycastHit[]` |
 
+### Diagnostics
+
+| API | Signature |
+|---|---|
+| `system.afterEvents.scriptEventReceive` | `subscribe(callback, options?: ScriptEventMessageFilterOptions)` — the options object takes `namespaces: string[]`, which is what keeps our handler off other add-ons' script events |
+| `ScriptEventCommandMessageAfterEvent` | `id`, `message`, `sourceEntity?`, `sourceBlock?`, `sourceType`, `initiator?` |
+| `Player.sendMessage` | `(message: RawMessage \| string \| (…)[]) => void` |
+
 ### Player, feedback and audio
 
 | API | Signature |
 |---|---|
 | `Player.getHeadLocation` | `() => Vector3` |
 | `Player.getViewDirection` | `() => Vector3` |
+| `Player.getComponent('minecraft:equippable')` | returns `EntityEquippableComponent`; `getEquipment(EquipmentSlot.Mainhand)` reads the held stack |
+| `ItemStack.hasTag` | `(tag: string) => boolean`; used to recognise vanilla swords via `minecraft:is_sword` |
 | `Player.onScreenDisplay.setActionBar` | `(text: RawMessage \| string \| (…)[]) => void` |
 | `Player.playSound` | `(soundId, options?: PlayerSoundOptions { location?, pitch?, volume? })` |
 | `Dimension.playSound` | `(soundId, location, options?: WorldSoundOptions { pitch?, volume? })` |
@@ -118,9 +128,23 @@ declaration (`"custom_swords:sword": {}`) serves every sword.
   `tools/validate.mjs` fails the build if the deprecated form reappears.
 - **`minecraft:swing_duration`** — requires item `format_version` 1.21.120,
   above our 1.21.90 target. Tracked in `TODO.md`.
-- **`minecraft:rarity`** — its schema has not been verified yet, so rarity is
-  currently expressed as a section colour code on the generated display name.
-  Tracked in `TODO.md`.
+- **`minecraft:rarity`** — *verified, then rejected.* Two blocking properties:
+  it accepts only `common`, `uncommon`, `rare` and `epic`, so it cannot express
+  a six-tier scheme; and the documented behaviour is that rarity
+  **automatically increases when the item is enchanted** (common/uncommon → rare,
+  rare → epic), so an enchanted sword would silently change tier colour. Rarity
+  is therefore applied as a section colour code on the generated display name,
+  which is exact, six-tier capable, stable under enchanting, and colours the
+  name in the hotbar and inventory as well as the hover tooltip.
+- **`minecraft:hover_text_color`** — exists since format_version 1.20.10 and
+  takes a colour string, but the reference does not enumerate the accepted
+  values. It would also only colour the *hover* text, which the section code
+  already does alongside the hotbar and inventory. Not adopted.
+- **Item lore / tooltip flavour text** — Bedrock has **no item-JSON lore
+  component**. A sword's `description` is generated into `.lang` under
+  `item.<id>.description` and surfaced by the diagnostics command, but it cannot
+  reach the vanilla tooltip without either a UI codex or a runtime
+  `ItemStack.setLore` hook. Tracked in `TODO.md`.
 
 ---
 

@@ -5,10 +5,10 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.1.0 — foundation only.**
-> This release contains the framework, the toolchain and **one diagnostic
-> sword** used to verify that the packs load. It contains **none** of the final
-> 20–25 swords. See `ROADMAP.md`.
+> **Status: v0.2.0 — core sword framework.**
+> This release contains the reusable framework, the toolchain and **one
+> diagnostic sword** used to verify it. It contains **none** of the final 20–25
+> swords. See `ROADMAP.md`.
 
 ---
 
@@ -27,15 +27,22 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.1.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.1.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.1.0.mcpack` | resource pack alone |
+| `CustomSwords-v0.2.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.2.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.2.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.1.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.2.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
 both packs enabled, then `/give @s custom_swords:test_blade` and right-click.
+
+To confirm the framework recognises it, run in game:
+
+```
+/scriptevent custom_swords:list     every registered sword and its stats
+/scriptevent custom_swords:held     identify whatever is in your main hand
+```
 
 Requires **Minecraft Bedrock 1.21.90 or newer**. No experimental toggles.
 
@@ -53,7 +60,8 @@ Custom-swords/
 │   │   └── scripts/
 │   │       ├── main.js            Entry point named by the manifest
 │   │       ├── config.js          Every global tunable, in one place
-│   │       ├── core/              Registries, cooldowns, executor, router, bootstrap
+│   │       ├── core/              Identifiers, rarity, registry, identification, stats,
+│   │       │                       cooldowns, executor, router, diagnostics, bootstrap
 │   │       ├── systems/           Targeting, damage, effects, particles, sounds, feedback, combat
 │   │       ├── abilities/         Reusable, parameterised powers
 │   │       ├── swords/            Sword definitions — pure data, the source of truth
@@ -83,7 +91,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, `.lang` and placeholder art from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 84 unit and integration tests against a mocked engine |
+| `npm test` | 173 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run check` | generate + validate + test |
 | `npm run all` | check + build |
@@ -107,9 +115,10 @@ Stated plainly, because this is a foundation release:
   `docs/TESTING.md` is unchecked. The code passes static validation and a full
   test suite against a *mocked* engine — that is not the same as running.
 - **No shipped swords.** `custom_swords:test_blade` is a diagnostic item marked
-  `isTestItem: true` and will be removed or debug-gated in milestone 2.
+  `isTestItem: true`. It stays as the framework's own test fixture and will be
+  debug-gated before release.
 - **One ability.** `diagnostic_pulse` exists to exercise the pipeline, not to be
-  played.
+  played. The reusable Ability Engine is milestone 3.
 - **Placeholder art only.** Icons are generated 16×16 stencils.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
@@ -117,7 +126,10 @@ Stated plainly, because this is a foundation release:
 - **`en_US` only.** The localisation plumbing exists; other languages do not.
 - **In-memory state only.** Cooldowns and player state reset on world reload, by
   design; persistence is tracked in `TODO.md`.
-- **Single active trigger.** Sneak-use and dual abilities are milestone 2.
+- **Single active trigger.** Sneak-use and dual abilities are milestone 3.
+- **No tooltip flavour text.** Bedrock has no item-JSON lore component; a
+  sword's description is reachable through `/scriptevent custom_swords:info` but
+  not the vanilla tooltip. See `TODO.md`.
 
 ---
 

@@ -3,6 +3,6 @@
 pack.name=Custom Swords
 pack.description=Custom Swords - resources (textures and text).
 
-## custom_swords:test_blade (common)
-item.custom_swords:test_blade.name=§fTest Blade§r
-item.custom_swords:test_blade.description=Foundation diagnostic sword. Use it to confirm the framework is wired up.
+## custom_swords:test_blade - Uncommon
+item.custom_swords:test_blade.name=§aTest Blade§r
+item.custom_swords:test_blade.description=Framework diagnostic sword. Use it to confirm every subsystem is wired up.

@@ -5,16 +5,19 @@
  * `packs/CustomSwordsBP/scripts/swords/*.js` is the single source of truth for
  * every sword. This script derives from it:
  *
- *   - packs/CustomSwordsBP/items/<name>.item.json   (item definition)
+ *   - packs/CustomSwordsBP/items/<name>.item.json     (item definition)
  *   - packs/CustomSwordsRP/textures/item_texture.json (texture atlas entries)
- *   - packs/CustomSwordsRP/texts/en_US.lang          (display names + tooltips)
- *   - packs/CustomSwordsBP/texts/en_US.lang          (pack name/description)
- *   - placeholder textures for any sword that has no art yet
+ *   - packs/CustomSwordsRP/texts/en_US.lang           (display names + descriptions)
+ *   - packs/CustomSwordsBP/texts/en_US.lang           (pack name/description)
+ *   - placeholder icons for any sword that has no art yet
  *
  * Why generate rather than hand-write: with 20-25 swords, hand-maintained item
  * JSON drifts from the script definitions, and drift shows up as a sword whose
  * tooltip promises 9 damage while the game deals 6. Generating removes that
  * failure mode entirely, and makes adding sword #26 a one-file change.
+ *
+ * Identifier, rarity, texture-path and repair-amount rules are imported from
+ * the framework itself, so the generator cannot disagree with the runtime.
  *
  * The generator is idempotent and prunes item JSON for swords that no longer
  * exist, tracked via `items/.generated.json`.
@@ -26,17 +29,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import {
-    PATHS,
-    ITEM_FORMAT_VERSION,
-    SWORD_COMPONENT_ID,
-    RARITY_COLORS,
-    localName,
-    toJson,
-} from './lib/project.mjs';
+import { PATHS, MODULES, ITEM_FORMAT_VERSION, resourceFile, toJson } from './lib/project.mjs';
 import { placeholderSwordIcon, placeholderPackIcon } from './lib/png.mjs';
 
 const CHECK_ONLY = process.argv.includes('--check');
+
+const { SWORD_COMPONENT_ID, SWORD_ITEM_TAG, localNameOf, nameKey, descriptionKey, swordTexturePath } = await import(
+    MODULES.identifiers
+);
+const { colorize, requireRarity } = await import(MODULES.rarity);
+const { repairAmountFor } = await import(MODULES.swordStats);
 
 /** @type {{ path: string, reason: string }[]} */
 const changes = [];
@@ -70,19 +72,29 @@ function removeIfPresent(filePath) {
 }
 
 /**
+ * @param {any} sword
+ * @returns {string} The resource-pack texture shortname for a sword.
+ */
+function textureNameOf(sword) {
+    return sword.texture ?? localNameOf(sword.id);
+}
+
+/**
  * Builds the behaviour-pack item definition for one sword.
  *
- * @param {import('../packs/CustomSwordsBP/scripts/core/types.js').SwordDefinition} sword
+ * Every component emitted here was verified against the Creator reference for
+ * item format_version 1.21.90 — see docs/API_NOTES.md.
+ *
+ * @param {any} sword
  * @returns {object}
  */
 function buildItemJson(sword) {
-    const texture = sword.texture ?? localName(sword.id);
     const stats = sword.item;
 
     /** @type {Record<string, unknown>} */
     const components = {
         'minecraft:max_stack_size': 1,
-        'minecraft:icon': { textures: { default: texture } },
+        'minecraft:icon': { textures: { default: textureNameOf(sword) } },
         'minecraft:display_name': { value: nameKey(sword.id) },
         'minecraft:hand_equipped': true,
         'minecraft:damage': { value: stats.attackDamage },
@@ -94,13 +106,7 @@ function buildItemJson(sword) {
     }
     if (stats.repairItems !== undefined && stats.repairItems.length > 0) {
         components['minecraft:repairable'] = {
-            repair_items: [
-                {
-                    items: stats.repairItems,
-                    // A quarter of the bar per ingot, matching vanilla tool feel.
-                    repair_amount: Math.max(1, Math.round(stats.durability / 4)),
-                },
-            ],
+            repair_items: [{ items: stats.repairItems, repair_amount: repairAmountFor(stats.durability) }],
         };
     }
     if (stats.glint === true) {
@@ -108,7 +114,9 @@ function buildItemJson(sword) {
     }
 
     components['minecraft:tags'] = {
-        tags: ['minecraft:is_sword', 'custom_swords:is_custom_sword', ...(sword.tags ?? [])],
+        // `minecraft:is_sword` makes vanilla systems treat it as a sword;
+        // our own tag lets future recipes and filters select the collection.
+        tags: ['minecraft:is_sword', SWORD_ITEM_TAG, ...(sword.tags ?? [])],
     };
 
     // The framework's single input hook. Flattened namespaced component
@@ -128,23 +136,15 @@ function buildItemJson(sword) {
 }
 
 /**
- * @param {string} swordId
- * @returns {string}
- */
-function nameKey(swordId) {
-    return `item.${swordId}.name`;
-}
-
-/**
- * @param {readonly import('../packs/CustomSwordsBP/scripts/core/types.js').SwordDefinition[]} swords
+ * @param {readonly any[]} swords
  * @returns {object}
  */
 function buildItemTextureJson(swords) {
     /** @type {Record<string, { textures: string }>} */
     const textureData = {};
     for (const sword of swords) {
-        const texture = sword.texture ?? localName(sword.id);
-        textureData[texture] = { textures: `textures/items/custom_swords/${texture}` };
+        const shortname = textureNameOf(sword);
+        textureData[shortname] = { textures: swordTexturePath(shortname) };
     }
     return {
         resource_pack_name: 'custom_swords',
@@ -154,7 +154,7 @@ function buildItemTextureJson(swords) {
 }
 
 /**
- * @param {readonly import('../packs/CustomSwordsBP/scripts/core/types.js').SwordDefinition[]} swords
+ * @param {readonly any[]} swords
  * @returns {string}
  */
 function buildResourceLang(swords) {
@@ -166,13 +166,15 @@ function buildResourceLang(swords) {
         '',
     ];
     for (const sword of swords) {
-        const colour = RARITY_COLORS[sword.rarity] ?? '§f';
-        lines.push(`## ${sword.id} (${sword.rarity})`);
-        lines.push(`${nameKey(sword.id)}=${colour}${sword.name}§r`);
-        lines.push(`item.${sword.id}.description=${sword.description}`);
+        const tier = requireRarity(sword.rarity);
+        lines.push(`## ${sword.id} - ${tier.label}`);
+        // Rarity is expressed as a section colour code on the name itself, which
+        // colours it in the hotbar, the inventory and the hover tooltip alike.
+        lines.push(`${nameKey(sword.id)}=${colorize(sword.rarity, sword.name)}`);
+        lines.push(`${descriptionKey(sword.id)}=${sword.description}`);
         lines.push('');
     }
-    return `${lines.join('\n')}`;
+    return lines.join('\n');
 }
 
 /** @returns {string} */
@@ -187,21 +189,20 @@ function buildBehaviourLang() {
 }
 
 async function main() {
-    /** @type {{ SWORDS: readonly import('../packs/CustomSwordsBP/scripts/core/types.js').SwordDefinition[] }} */
-    const { SWORDS } = await import(`file://${PATHS.swordsIndex}`);
+    const { SWORDS } = await import(MODULES.swords);
 
     // --- Behaviour pack item definitions -------------------------------------
     /** @type {string[]} */
     const generatedItemFiles = [];
     for (const sword of SWORDS) {
-        const fileName = `${localName(sword.id)}.item.json`;
+        const fileName = `${localNameOf(sword.id)}.item.json`;
         generatedItemFiles.push(fileName);
         writeIfChanged(path.join(PATHS.bpItems, fileName), toJson(buildItemJson(sword)));
     }
 
     // Prune item JSON left behind by swords that were renamed or removed.
     const previous = fs.existsSync(PATHS.generatedManifest)
-        ? JSON.parse(fs.readFileSync(PATHS.generatedManifest, 'utf8')).items ?? []
+        ? (JSON.parse(fs.readFileSync(PATHS.generatedManifest, 'utf8')).items ?? [])
         : [];
     for (const stale of previous) {
         if (!generatedItemFiles.includes(stale)) {
@@ -226,8 +227,7 @@ async function main() {
     // --- Placeholder art ------------------------------------------------------
     // Only created when absent: real artwork committed later is never clobbered.
     for (const sword of SWORDS) {
-        const texture = sword.texture ?? localName(sword.id);
-        const target = path.join(PATHS.rpItemTextures, `${texture}.png`);
+        const target = resourceFile(swordTexturePath(textureNameOf(sword)));
         if (!fs.existsSync(target)) {
             writeIfChanged(target, placeholderSwordIcon({ seed: sword.id }));
         }
@@ -244,7 +244,9 @@ async function main() {
 
     // --- Report ---------------------------------------------------------------
     if (changes.length === 0) {
-        console.log(`generate: up to date (${SWORDS.length} sword definition(s), format_version ${ITEM_FORMAT_VERSION}).`);
+        console.log(
+            `generate: up to date (${SWORDS.length} sword definition(s), format_version ${ITEM_FORMAT_VERSION}).`,
+        );
         return;
     }
     for (const change of changes) {

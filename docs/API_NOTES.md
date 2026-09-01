@@ -167,6 +167,37 @@ is engine behaviour, not a bug to work around.
 | `minecraft:tags` | `{ "tags": [...] }` | — |
 | `custom_swords:sword` | `{}` — flattened custom component | 1.21.90 + `@minecraft/server` ≥ 2.0.0 |
 
+### Verified the hard way — the v0.5.0 item-registration bugs
+
+Both of these were found by an actual in-game test, not by any check in this
+repository. They are recorded here because both are cases where the *obvious*
+form is the wrong one.
+
+| Thing | Wrong (shipped in v0.5.0) | Correct | Why the wrong one is tempting |
+|---|---|---|---|
+| Creative group | `"itemGroup.name.sword"` | `"minecraft:itemGroup.name.sword"` | Microsoft's own custom-item tutorial uses the unnamespaced form (at format_version 1.20.60 / 1.21.30). The current Bedrock Wiki group list, up to date as of Preview 1.26.30, namespaces every entry, and 1.26.20 tightened validation of the description block. |
+| Item name key | `item.<ns>:<id>.name` | `item.<ns>:<id>` | Every *vanilla* item uses `item.<name>.name` — `item.apple.name`, `item.breeze_rod.name` — and Microsoft's `minecraft:display_name` reference lists only vanilla examples. Vanilla items are not namespaced; a namespaced custom item's generated key has no `.name` suffix. |
+
+Sources: Microsoft Learn *How to Add Custom Items* and the `minecraft:display_name`
+/ `minecraft:icon` component references; Bedrock Wiki *Create a Custom Item*,
+*Custom Weapons* and *Vanilla Item Groups*.
+
+Two consequences worth keeping:
+
+- **A missing `menu_category` does not fail.** It silently defaults to the Items
+  tab. Silence is the failure mode, so the validator treats it as an error.
+- **An unresolved translation key does not fail either.** Minecraft prints the
+  key. Any tooltip that looks like an identifier means a lang key that nothing
+  defines — and it will look exactly like a partially-registered item.
+
+### Confirmed correct, and re-verified during that investigation
+
+| Thing | Form used here | Note |
+|---|---|---|
+| `minecraft:icon` | `{ "textures": { "default": "<shortname>" } }` | Current. The singular `"texture"` form is documented as "Deprecated - no longer in use". Microsoft's custom-chestplate tutorial uses `textures.default` for an ordinary (non-bundle) item. |
+| `item_texture.json` path | `textures/items/.../<name>` | No `.png` extension. |
+| Custom component | `"custom_swords:sword": {}` flattened into `components` | Custom Components V2; the `minecraft:custom_components` array is deprecated. |
+
 ### Deliberately not used
 
 - **`minecraft:custom_components`** — the array form is deprecated and, per the

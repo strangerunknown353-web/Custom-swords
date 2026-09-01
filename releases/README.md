@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.5.0.mcaddon` | Roadmap step 5 — the Elemental Collection. The first seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) on top of the framework, the Ability Engine and the combat/safety layer. Plus the Test Blade, a diagnostic item. |
+| `CustomSwords-v0.5.1.mcaddon` | The Elemental Collection — seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade — with the v0.5.0 item-registration bugs fixed: correct creative category and a display name that resolves. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -45,6 +45,7 @@ toggles are needed.
    /scriptevent custom_swords:abilities
    ```
 
-Then work through the checklist in `../docs/TESTING.md`. **Nobody has done this
-yet** — no build of this project has been loaded into a Minecraft client, so if
-you are reading this, you would be the first. Results are recorded in that file.
+Then work through the checklist in `../docs/TESTING.md`, starting with section
+**A2 (item registration)** — that is what failed in v0.5.0 and what this build
+is meant to fix. Results are recorded in that file, honestly, including the
+failure.

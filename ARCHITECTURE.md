@@ -771,7 +771,110 @@ affect another's.
 
 ---
 
-## 11. Build pipeline
+## 11. Item registration
+
+Everything above concerns the framework's *behaviour*. This section covers how
+a sword becomes a real Minecraft item, which is a separate problem with its own
+failure modes — and the one that broke in v0.5.0 despite every automated check
+passing.
+
+### The four things Minecraft needs, and where each comes from
+
+| What | Where it is declared | Consumed by |
+|---|---|---|
+| Identity | `description.identifier` in the item JSON (BP) | the engine's item registry, `/give`, `ItemStack.typeId` |
+| Creative placement | `description.menu_category` (BP) | the creative inventory |
+| Icon | `minecraft:icon` shortname (BP) → `item_texture.json` (RP) → PNG (RP) | the inventory, hotbar and hand |
+| Name | `minecraft:display_name` key (BP) → `en_US.lang` (RP) | every tooltip |
+
+Only the first lives entirely in the behaviour pack. The other three **cross the
+pack boundary**, and each is a separate chance for the two halves to disagree.
+All four are generated from one sword definition, so the halves cannot drift —
+but generating them consistently is worthless if the convention itself is wrong,
+which is exactly what happened.
+
+### Creative placement
+
+```json
+"menu_category": { "category": "equipment", "group": "minecraft:itemGroup.name.sword" }
+```
+
+**The group reference must carry the `minecraft:` namespace.** Minecraft's own
+older tutorials show the bare `itemGroup.name.sword`, and that is what this
+project shipped in v0.5.0; the result was seven swords in the generic Items
+tab. From 1.26.20 the description block is validated strictly and an
+unnamespaced group is not a valid reference.
+
+`category` is one of `construction`, `equipment`, `items`, `nature`. Omitting
+`menu_category` entirely does not fail — it silently defaults to Items, which
+is why the validator now treats a missing one as an error.
+
+### Display name — the key Minecraft actually generates
+
+For a **namespaced custom item** the engine's own translation key is:
+
+```
+item.<namespace>:<local_name>          →  item.custom_swords:inferno_sword
+```
+
+with **no `.name` suffix**. The familiar `item.<name>.name` form is the
+*vanilla* convention (`item.apple.name`), and following it for a custom item
+produces a key nothing ever looks up — so the raw identifier appears in the
+tooltip. That was the v0.5.0 name bug, and it is a genuinely easy one to make,
+because the vanilla form is what every vanilla item file shows.
+
+`en_US.lang` therefore emits **both** keys per sword:
+
+```
+item.custom_swords:inferno_sword=§dInferno Sword§r
+item.custom_swords:inferno_sword.name=§dInferno Sword§r
+```
+
+The first is the one that resolves. The second costs one line and hedges
+against a convention that is version-dependent and thinly documented.
+
+Rarity colour is a section code baked into the translated value, because
+`minecraft:rarity` offers only four tiers and escalates on enchant (see
+`docs/API_NOTES.md`).
+
+### Icon
+
+```
+minecraft:icon.textures.default   →  "inferno_sword"                       (BP)
+item_texture.json texture_data    →  "textures/items/custom_swords/swords/inferno_sword"  (RP)
+the file on disk                  →  .../inferno_sword.png                 (RP)
+```
+
+The atlas path carries **no `.png` extension**. `minecraft:icon.texture` (the
+singular form) is deprecated; `textures.default` is current.
+
+Because this project's PNG encoder is hand-written, the validator runs
+`verifyPng()` over every icon on every build: chunk CRCs, chunk ordering, 8-bit
+RGBA, non-interlaced, exact decompressed IDAT length, legal per-scanline filter
+bytes. Another decoder opening the file is not evidence that Minecraft will.
+
+### Why the v0.5.0 bugs got through
+
+Worth recording, because the lesson generalises:
+
+- The tests covered `identifiers.js`, the module that *builds* the keys. The
+  wrong creative group was a string literal hard-coded in `tools/generate.mjs`,
+  outside that module entirely — so the identifier tests were green and the
+  shipped item was wrong.
+- The validator checked that the item's declared name key matched
+  `nameKey(id)` and that the key existed in `en_US.lang`. Both were true. The
+  convention they agreed on was the wrong one, and a consistency check cannot
+  catch consistent-but-wrong.
+
+The fix is structural, not a patch: the creative group now lives in
+`core/identifiers.js` with every other namespaced string, and
+`tests/unit/pack_output.test.mjs` asserts against the **real generated files**
+rather than the helpers that produce them. Re-introducing either bug fails
+three of those tests.
+
+---
+
+## 12. Build pipeline
 
 ```
 scripts/swords/*.js  (behaviour + stats)      art/swords/*.json  (texture art)
@@ -819,7 +922,7 @@ Node installed.
 
 ---
 
-## 12. Version contract
+## 13. Version contract
 
 The framework targets `@minecraft/server` **2.0.0** and a minimum engine version
 of **1.21.90**. Both the Scripting V2 lifecycle and Custom Components V2 became

@@ -19,6 +19,9 @@ import {
     isValidLocalName,
     localNameOf,
     nameKey,
+    legacyNameKey,
+    CREATIVE_CATEGORY,
+    CREATIVE_GROUP,
     namespaceOf,
     swordId,
     swordTexturePath,
@@ -80,9 +83,30 @@ describe('identifier convention', () => {
     });
 
     it('builds localisation keys and texture paths consistently', () => {
-        assert.equal(nameKey('custom_swords:test_blade'), 'item.custom_swords:test_blade.name');
         assert.equal(descriptionKey('custom_swords:test_blade'), 'item.custom_swords:test_blade.description');
         assert.equal(SWORD_TEXTURE_DIR, 'textures/items/custom_swords/swords');
         assert.equal(swordTexturePath('test_blade'), 'textures/items/custom_swords/swords/test_blade');
+    });
+
+    // Regression: v0.5.0 shipped `item.<id>.name` as the only name key. That is
+    // the vanilla convention, but Minecraft generates `item.<id>` for a
+    // namespaced custom item, so nothing resolved and every tooltip showed the
+    // raw identifier.
+    it('uses the engine key for a custom item display name — no .name suffix', () => {
+        assert.equal(nameKey('custom_swords:inferno_sword'), 'item.custom_swords:inferno_sword');
+        assert.ok(!nameKey('custom_swords:inferno_sword').endsWith('.name'));
+    });
+
+    it('still exposes the vanilla-style key, which is emitted as a hedge', () => {
+        assert.equal(legacyNameKey('custom_swords:inferno_sword'), 'item.custom_swords:inferno_sword.name');
+        assert.notEqual(nameKey('custom_swords:inferno_sword'), legacyNameKey('custom_swords:inferno_sword'));
+    });
+
+    // Regression: v0.5.0 used the bare `itemGroup.name.sword`, which is not a
+    // valid group reference, so the swords landed in the generic Items tab.
+    it('namespaces the creative inventory group', () => {
+        assert.equal(CREATIVE_CATEGORY, 'equipment');
+        assert.equal(CREATIVE_GROUP, 'minecraft:itemGroup.name.sword');
+        assert.ok(CREATIVE_GROUP.startsWith('minecraft:'));
     });
 });

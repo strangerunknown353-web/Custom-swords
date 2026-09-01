@@ -8,7 +8,7 @@
  * Only what we need: 8-bit RGBA, non-interlaced, single IDAT.
  */
 
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 
 import { crc32 } from './crc32.mjs';
 
@@ -202,4 +202,89 @@ function hslToRgb(h, s, l) {
         else value = p;
         return Math.round(value * 255);
     }));
+}
+
+/**
+ * Strict conformance check on an encoded PNG.
+ *
+ * The encoder above is hand-written, so "Node wrote a file and Python opened
+ * it" is not evidence that Minecraft will accept it. This verifies the parts a
+ * lenient decoder will happily paper over: chunk CRCs, chunk ordering, the
+ * IHDR fields Minecraft requires (8-bit RGBA, non-interlaced), the exact
+ * decompressed IDAT length, and that every scanline carries a legal filter
+ * byte.
+ *
+ * Used by `tools/validate.mjs` on every build. Introduced while investigating
+ * the v0.5.0 icon report — it cleared the encoder rather than convicting it,
+ * which is exactly why it is worth keeping.
+ *
+ * @param {Buffer | Uint8Array} bytes
+ * @returns {string[]} Problems found; empty means conformant.
+ */
+export function verifyPng(bytes) {
+    const buf = Buffer.from(bytes);
+    /** @type {string[]} */
+    const problems = [];
+
+    if (buf.length < 8 || !buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+        return ['not a PNG: bad signature'];
+    }
+
+    /** @type {{ type: string, data: Buffer }[]} */
+    const chunks = [];
+    let offset = 8;
+    while (offset + 12 <= buf.length) {
+        const length = buf.readUInt32BE(offset);
+        const type = buf.subarray(offset + 4, offset + 8).toString('latin1');
+        const data = buf.subarray(offset + 8, offset + 8 + length);
+        const stored = buf.readUInt32BE(offset + 8 + length);
+        if (crc32(buf.subarray(offset + 4, offset + 8 + length)) !== stored) {
+            problems.push(`${type}: CRC mismatch`);
+        }
+        chunks.push({ type, data });
+        offset += 12 + length;
+    }
+
+    if (offset !== buf.length) problems.push('trailing bytes after the last chunk');
+    if (chunks.length === 0) return [...problems, 'no chunks'];
+    if (chunks[0].type !== 'IHDR') problems.push('first chunk is not IHDR');
+    if (chunks[chunks.length - 1].type !== 'IEND') problems.push('last chunk is not IEND');
+
+    const ihdr = chunks[0].data;
+    if (ihdr.length !== 13) return [...problems, 'IHDR is not 13 bytes'];
+    const width = ihdr.readUInt32BE(0);
+    const height = ihdr.readUInt32BE(4);
+    const [bitDepth, colourType, compression, filterMethod, interlace] = [
+        ihdr[8], ihdr[9], ihdr[10], ihdr[11], ihdr[12],
+    ];
+
+    if (width === 0 || height === 0) problems.push(`degenerate dimensions ${width}x${height}`);
+    if (bitDepth !== 8) problems.push(`bit depth ${bitDepth}, expected 8`);
+    if (colourType !== 6) problems.push(`colour type ${colourType}, expected 6 (RGBA)`);
+    if (compression !== 0) problems.push(`compression method ${compression}, expected 0`);
+    if (filterMethod !== 0) problems.push(`filter method ${filterMethod}, expected 0`);
+    if (interlace !== 0) problems.push('interlaced — Minecraft expects non-interlaced');
+
+    const idat = Buffer.concat(chunks.filter((c) => c.type === 'IDAT').map((c) => c.data));
+    if (idat.length === 0) return [...problems, 'no IDAT data'];
+
+    /** @type {Buffer} */
+    let raw;
+    try {
+        raw = inflateSync(idat);
+    } catch (error) {
+        return [...problems, `IDAT is not a valid zlib stream: ${error}`];
+    }
+
+    const stride = 1 + width * 4;
+    if (raw.length !== height * stride) {
+        problems.push(`decompressed IDAT is ${raw.length} bytes, expected ${height * stride}`);
+    } else {
+        for (let y = 0; y < height; y++) {
+            const filter = raw[y * stride];
+            if (filter > 4) problems.push(`scanline ${y} has illegal filter byte ${filter}`);
+        }
+    }
+
+    return problems;
 }

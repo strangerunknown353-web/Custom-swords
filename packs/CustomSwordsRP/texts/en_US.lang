@@ -4,33 +4,41 @@ pack.name=Custom Swords
 pack.description=Custom Swords - resources (textures and text).
 
 ## custom_swords:test_blade - Uncommon
+item.custom_swords:test_blade=§aTest Blade§r
 item.custom_swords:test_blade.name=§aTest Blade§r
 item.custom_swords:test_blade.description=Framework diagnostic sword. Every activation exercises a different subsystem.
 
 ## custom_swords:inferno_sword - Epic
+item.custom_swords:inferno_sword=§dInferno Sword§r
 item.custom_swords:inferno_sword.name=§dInferno Sword§r
 item.custom_swords:inferno_sword.description=Forged in a caldera. Its edge never cools, and neither does anything it touches.
 
 ## custom_swords:thunder_sword - Legendary
+item.custom_swords:thunder_sword=§6Thunder Sword§r
 item.custom_swords:thunder_sword.name=§6Thunder Sword§r
 item.custom_swords:thunder_sword.description=Storm-iron, quenched in a lightning strike. It still remembers the sky.
 
 ## custom_swords:frost_sword - Rare
+item.custom_swords:frost_sword=§9Frost Sword§r
 item.custom_swords:frost_sword.name=§9Frost Sword§r
 item.custom_swords:frost_sword.description=Grown, not forged. The air around the blade never quite thaws.
 
 ## custom_swords:wind_sword - Rare
+item.custom_swords:wind_sword=§9Wind Sword§r
 item.custom_swords:wind_sword.name=§9Wind Sword§r
 item.custom_swords:wind_sword.description=Light as a held breath. The air folds away from the edge before it arrives.
 
 ## custom_swords:earth_sword - Epic
+item.custom_swords:earth_sword=§dEarth Sword§r
 item.custom_swords:earth_sword.name=§dEarth Sword§r
 item.custom_swords:earth_sword.description=More monolith than blade. The ground answers when it lands.
 
 ## custom_swords:tidal_sword - Epic
+item.custom_swords:tidal_sword=§dTidal Sword§r
 item.custom_swords:tidal_sword.name=§dTidal Sword§r
 item.custom_swords:tidal_sword.description=Drawn from a trench that has never seen light. The pull comes with it.
 
 ## custom_swords:nature_sword - Rare
+item.custom_swords:nature_sword=§9Nature Sword§r
 item.custom_swords:nature_sword.name=§9Nature Sword§r
 item.custom_swords:nature_sword.description=Still growing. New shoots close over every notch the blade takes.

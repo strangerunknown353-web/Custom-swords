@@ -3,6 +3,33 @@
 Open work, grouped by when it matters. Milestone numbers refer to `ROADMAP.md`.
 Only items actually finished are ticked.
 
+## Completed in the v0.5.1 item-registration fix
+
+- [x] Creative category: `menu_category.group` now carries the `minecraft:`
+      namespace, so the swords sit with the vanilla swords.
+- [x] Display name: `en_US.lang` emits the key Minecraft actually generates for
+      a namespaced custom item (`item.<id>`, no `.name`), plus the vanilla-style
+      key as a hedge.
+- [x] `CREATIVE_CATEGORY` / `CREATIVE_GROUP` moved into `core/identifiers.js`,
+      so no namespaced string is hard-coded in the generator any more.
+- [x] Contract tests against the real generated pack files, not the helpers.
+- [x] Validator checks for creative category, both name keys, and PNG
+      conformance — each negative-tested.
+
+### Still open from that report
+
+- [ ] **Confirm the fixes in a client.** The two defects are fixed by reasoning
+      from the documented conventions; nobody has verified the result in-game.
+- [ ] **The icon report is unexplained.** Every link in the pipeline verifies
+      and the PNGs are byte-level conformant. Leading hypothesis: it was a
+      consequence of the rejected `menu_category`. Needs the content log to
+      settle.
+- [ ] Audit the remaining generated JSON against current Bedrock conventions
+      rather than assuming — `minecraft:damage` (object vs scalar form),
+      `minecraft:repairable.repair_amount`, and whether `minecraft:glint` is
+      still the right way to mark a sword. The two bugs found suggest others of
+      the same shape may be sitting in the same file.
+
 ## Completed in milestone 5 (v0.5.0)
 
 - [x] Seven final swords — Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature —
@@ -105,10 +132,12 @@ Only items actually finished are ticked.
 
 ## Testing
 
-- [ ] Record real in-Minecraft test results in `docs/TESTING.md` — the checklist
-      and the sword test matrix exist, but **no build of this project has ever
-      been run in a Minecraft client**. Every "tested" column is still empty on
-      purpose.
+- [x] Record real in-Minecraft test results in `docs/TESTING.md`. v0.5.0 was
+      tested and **failed** at item registration; the result is recorded there
+      in full.
+- [ ] Re-test v0.5.1 in a client. No sword *behaviour* has ever been observed —
+      v0.5.0 failed before any ability could be exercised, so every row of the
+      sword test matrix is still unverified.
 - [ ] Dedicated-server test with 2+ players on different swords simultaneously.
 - [ ] Low-end device performance check once particle-heavy abilities exist.
 

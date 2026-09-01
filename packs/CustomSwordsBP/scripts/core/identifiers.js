@@ -105,12 +105,49 @@ export function isOwnedIdentifier(identifier) {
 }
 
 /**
+ * Creative-inventory placement for every sword.
+ *
+ * `group` **must carry the `minecraft:` namespace**. Minecraft's own older
+ * tutorials show the bare `itemGroup.name.sword`, which is what this project
+ * shipped in v0.5.0 and why the swords landed in the generic Items tab instead
+ * of beside the vanilla swords: from 1.26.20 the description block is validated
+ * strictly, and an unnamespaced group is not a valid group reference.
+ *
+ * Kept here rather than inline in `tools/generate.mjs` because it is exactly
+ * the kind of magic string that gets fixed in one place and left wrong in
+ * another.
+ */
+export const CREATIVE_CATEGORY = 'equipment';
+export const CREATIVE_GROUP = 'minecraft:itemGroup.name.sword';
+
+/**
  * Localisation key for a sword's display name.
+ *
+ * This is the key **Minecraft itself generates** for a namespaced custom item:
+ * `item.<namespace>:<local_name>`, with **no `.name` suffix**. Vanilla items
+ * use `item.<name>.name`, and following that pattern for a custom item — as
+ * this project did through v0.5.0 — produces a key the engine never looks up,
+ * so the raw identifier shows in the tooltip instead of the sword's name.
  *
  * @param {string} id
  * @returns {string}
  */
 export function nameKey(id) {
+    return `item.${id}`;
+}
+
+/**
+ * The vanilla-style `item.<id>.name` key.
+ *
+ * Not what the engine looks up for a custom item, but emitted alongside the
+ * real key so that a client which does follow the vanilla convention still
+ * finds a name. Two lines of `.lang` per sword is a cheap hedge against a
+ * convention that is version-dependent and poorly documented.
+ *
+ * @param {string} id
+ * @returns {string}
+ */
+export function legacyNameKey(id) {
     return `item.${id}.name`;
 }
 

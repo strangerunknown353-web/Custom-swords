@@ -5,7 +5,7 @@
       "identifier": "custom_swords:earth_sword",
       "menu_category": {
         "category": "equipment",
-        "group": "itemGroup.name.sword"
+        "group": "minecraft:itemGroup.name.sword"
       }
     },
     "components": {
@@ -16,7 +16,7 @@
         }
       },
       "minecraft:display_name": {
-        "value": "item.custom_swords:earth_sword.name"
+        "value": "item.custom_swords:earth_sword"
       },
       "minecraft:hand_equipped": true,
       "minecraft:damage": {

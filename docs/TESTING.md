@@ -136,8 +136,10 @@ packs.
 
 ## Sword test matrix
 
-One row per shipped sword. **Every "Tested" cell is empty**, because no build of
-this project has been loaded into a Minecraft client yet. The other columns
+One row per shipped sword. **Every "Tested" cell is still empty.** v0.5.0 was
+loaded into a client and failed at the item-registration layer before any sword
+behaviour could be exercised (see "Recording results"), so nothing in the
+Active/Passive/FX columns has been observed working. The other columns
 record what has been verified *statically* — the definition validates, the
 texture passes the linter, the item JSON generates, the sound preset and
 particle ids exist in the definition — which is a different and much weaker
@@ -158,6 +160,10 @@ in-game checklist below.
 | Test Blade | `custom_swords:test_blade` | 7 | 4 diagnostic bindings across all activations | — | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
+
+The v0.5.0 failure is the reason the two columns are kept apart. Every ✅ below
+was ✅ for the build that did not work in-game. A ✅ means a static check passed
+and nothing more.
 
 Column meanings, so a ✅ is not read as more than it is:
 
@@ -184,7 +190,21 @@ Enable *Settings → Creator → Content Log GUI* to read it in-game.
 - [ ] No red error entries in the content log during world load
 - [ ] The content log shows `[CustomSwords] Registered item component 'custom_swords:sword'.`
 - [ ] The content log shows
-      `[CustomSwords] v0.5.0 ready - 8 sword(s) (7 shipped, 1 diagnostic), 7 ability(ies).`
+      `[CustomSwords] v0.5.1 ready - 8 sword(s) (7 shipped, 1 diagnostic), 7 ability(ies).`
+
+### A2. Item registration — run this first
+
+These four regressed in v0.5.0. Check them before anything else; if any fails,
+nothing below is worth testing.
+
+- [ ] `/give @s custom_swords:inferno_sword` succeeds
+- [ ] The sword appears in the creative **Equipment** tab, in the **sword**
+      group, alongside the vanilla swords — **not** in Items
+- [ ] Its tooltip reads **Inferno Sword** in purple — **not**
+      `item.custom_swords:inferno_sword` and not any other raw key
+- [ ] Its icon is the authored art — not the purple/black missing texture
+- [ ] The same four hold for all eight items
+- [ ] The content log contains no `menu_category`, texture or component errors
 
 ### B. Items, stats and textures
 
@@ -412,7 +432,54 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
 
-### v0.5.0 — not yet tested in Minecraft
+### v0.5.1 — item-registration fix, not yet re-tested in Minecraft
+
+Fixes the two defects the v0.5.0 test found (see below). All automated checks
+pass: generate up to date, catalogue up to date, validate OK with 0 errors and
+0 warnings, **331 tests**, `.mcaddon` verified as a well-formed archive.
+
+New guards, each negative-tested by seeding the defect and confirming the check
+fires:
+
+| Guard | Catches |
+|---|---|
+| `tests/unit/pack_output.test.mjs` | either v0.5.0 bug, asserted against the real generated files |
+| validator: creative category + group | an unnamespaced or missing `menu_category` |
+| validator: both name keys in `en_US.lang` | a name key the engine will not resolve |
+| validator: `verifyPng()` on every icon | a malformed PNG from the hand-written encoder |
+
+**Not re-tested in a client.** The fixes are reasoned from the documented
+conventions and verified against the generated output; whether they resolve the
+reported symptoms is unknown until someone runs the build.
+
+### v0.5.0 — TESTED IN MINECRAFT · FAILED
+
+The first real in-game test of this project, performed by the project owner.
+**It failed**, and it found things no check in this repository could have.
+
+Reported:
+
+| Area | Result |
+|---|---|
+| Item registers and can be obtained | ✅ |
+| Appears in the sword/combat creative section | ❌ — appeared in the generic Items tab |
+| Icon displays | ❌ — not displaying correctly |
+| Display name | ❌ — showed `item.custom_swords:inferno_sword` |
+| Overall | "partially registered but not correctly integrated" |
+
+Root causes and fixes: see `CHANGELOG.md` v0.5.1 and
+`ARCHITECTURE.md` §11. Two were confirmed defects in generated pack content; the
+icon report could not be traced to a defect and may have been a consequence of
+the invalid `menu_category`.
+
+**The lesson, recorded because it generalises:** every automated check in this
+repository was green when this build shipped. The validator confirmed the item's
+name key matched the generator's name key and existed in `en_US.lang` — both
+true, and both wrong, because a consistency check cannot catch
+consistent-but-wrong. Static validation proves the packs agree with *themselves*.
+Only a client proves they agree with *Minecraft*.
+
+### v0.5.0 — automated results at time of shipping
 
 The Elemental Collection is complete in code and passes everything this
 repository can check without a game:
@@ -427,12 +494,10 @@ repository can check without a game:
 | Texture linter | 8 sources, 0 warnings |
 | Performance audit | 1 recurring interval, 6 engine subscriptions, 0 gameplay tick loops |
 
-**None of that is evidence the add-on works in Minecraft.** No build of this
-project has ever been loaded into a Minecraft client, on any platform, by
-anyone. Every box in the checklist above and every "Tested" cell in the sword
-test matrix is open, and they should stay open until someone actually plays it.
-
-What that leaves genuinely unverified, and cannot be verified any other way:
+All of it passed. **The build was still broken in-game**, as the section above
+records. What follows was written before that test and is left unedited, because
+the gap between this list and what actually happened is the most useful thing in
+this document:
 
 - whether Minecraft parses the item JSON and the custom component at all;
 - whether the icons read well in a hotbar, which is the only test of the texture

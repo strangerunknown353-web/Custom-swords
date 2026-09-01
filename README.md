@@ -5,15 +5,17 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.5.0 — the Elemental Collection.**
+> **Status: v0.5.1 — the Elemental Collection, item registration fixed.**
 > The first **seven** final swords are in: Inferno 🔥, Thunder ⚡, Frost ❄️,
 > Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿, on top of the framework, the
 > Ability Engine and the combat layer. See `SWORD_CATALOG.md` for the full
 > roster and `ROADMAP.md` for what comes next.
 >
-> **Not yet tested in Minecraft.** Every automated check passes; no build has
-> been loaded into a client. `docs/TESTING.md` is explicit about the
-> difference.
+> **v0.5.0 was tested in a client and failed**: the swords registered but landed
+> in the wrong creative tab with a raw translation key for a name. Both defects
+> are fixed in v0.5.1 and guarded by new tests, but **the fix itself has not been
+> re-tested in a client**. `docs/TESTING.md` records exactly what was and was
+> not verified.
 
 ---
 
@@ -32,11 +34,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.5.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.5.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.5.0.mcpack` | resource pack alone |
+| `CustomSwords-v0.5.1.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.5.1.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.5.1.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.5.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.5.1.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -115,7 +117,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 322 unit and integration tests against a mocked engine |
+| `npm test` | 331 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |
@@ -139,10 +141,11 @@ not meet `docs/TEXTURE_STANDARD.md`.
 
 Stated plainly:
 
-- **Not tested inside Minecraft.** Everything below the line in
-  `docs/TESTING.md` is unchecked, and every "Tested" cell in the sword test
-  matrix is empty. The code passes static validation and a full test suite
-  against a *mocked* engine — that is not the same as running.
+- **No sword behaviour has ever been observed in Minecraft.** The one in-game
+  test so far (v0.5.0) failed at item registration before any ability could be
+  exercised. Every "Tested" cell in the sword test matrix is still empty. The
+  code passes static validation and a full test suite against a *mocked*
+  engine — v0.5.0 proved that is not the same as working.
 - **7 of 20–25 swords.** The remaining 13–18 arrive in milestones 7, 9 and 10.
 - **`custom_swords:test_blade`** is a diagnostic item marked `isTestItem: true`.
   It is excluded from the shipped collection and will be debug-gated before

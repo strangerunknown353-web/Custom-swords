@@ -13,6 +13,64 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.5.1] — 2026-09-01
+
+**Bug fix: item registration.** The first real in-game test of this project
+found that the swords registered but did not integrate: they appeared in the
+generic Items tab instead of beside the vanilla swords, and every tooltip read
+`item.custom_swords:<name>` instead of the sword's name.
+
+Both were defects in generated pack content that a green test suite and a clean
+validator had missed entirely, because nothing checked the generated output
+against the conventions Minecraft actually uses.
+
+### Fixed
+
+- **Creative category.** `menu_category.group` was the bare
+  `itemGroup.name.sword`. A creative group reference must carry the namespace:
+  `minecraft:itemGroup.name.sword`. Minecraft's own older tutorials show the
+  unnamespaced form, which is where it came from; the current wiki and the
+  1.26.20 validation changes make the namespaced form the correct one.
+- **Display name.** The only name key emitted was `item.<id>.name`. That is the
+  *vanilla* item convention. For a **namespaced custom item** Minecraft
+  generates the key `item.<namespace>:<local_name>` with **no `.name` suffix**,
+  so nothing resolved and the raw key showed in the tooltip. `en_US.lang` now
+  emits both keys, and `minecraft:display_name` points at the one the engine
+  actually looks up.
+
+### Changed
+
+- `CREATIVE_CATEGORY` and `CREATIVE_GROUP` moved into `core/identifiers.js`.
+  The bad group string was hard-coded inline in `tools/generate.mjs`, outside
+  the module whose entire job is to own namespaced strings — which is why the
+  existing identifier tests could pass while the shipped item was wrong.
+
+### Added
+
+- **`tests/unit/pack_output.test.mjs`** — contract tests that read the *real*
+  generated item JSON, `item_texture.json` and `en_US.lang` rather than the
+  helpers that produce them. Re-introducing either bug fails three of them.
+- **Validator checks** for the creative category and group, for both name keys
+  being present in `en_US.lang`, and for a missing `menu_category`. All three
+  were negative-tested against seeded defects.
+- **`verifyPng()`** (`tools/lib/png.mjs`), run by the validator on every sword
+  icon: chunk CRCs, chunk ordering, 8-bit RGBA, non-interlaced, exact
+  decompressed IDAT length and legal per-scanline filter bytes. Written while
+  investigating the icon report — the PNG encoder here is hand-written, so
+  "another decoder opened it" was not good enough evidence. It cleared the
+  encoder rather than convicting it, and is kept as a permanent gate.
+
+### Not fixed
+
+- **The icon report could not be reproduced or traced to a defect.** Every link
+  in the pipeline verifies: the `minecraft:icon` schema matches the current
+  reference, the shortname resolves in `item_texture.json`, the path is correct
+  and extension-less, the PNGs are byte-level conformant. The leading
+  hypothesis is that the icon failure was a *consequence* of the invalid
+  `menu_category`, since an item whose description block is rejected does not
+  resolve its icon either — in which case the category fix resolves it too.
+  Unconfirmed until the next in-game test.
+
 ## [0.5.0] — 2026-09-01
 
 The **Elemental Collection** — the first seven final swords (roadmap step 5).

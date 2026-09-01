@@ -69,6 +69,14 @@ from the definitions so it cannot drift.
 
 ## Phase 2 — Content
 
+### 5a. Item-registration fix (v0.5.1) — **done**
+Not a milestone; an unplanned bug fix between 5 and 6. The first in-game test
+found the swords registering but not integrating — wrong creative tab, raw
+translation key for a name. Both were generated-content defects that every
+automated check had passed. Fixed, with contract tests against the real
+generated files and three new validator checks so the class cannot recur.
+Milestone 6 does not start until the fix is confirmed in a client.
+
 ### 6. Ability library — spatial (planned)
 Teleportation, gravity manipulation, earthquakes and area denial. Introduces
 block-aware targeting beyond the `point` mode already shipped, and the safety

@@ -35,7 +35,17 @@ import { compile as compileTexture, validateSource } from './lib/texture.mjs';
 
 const CHECK_ONLY = process.argv.includes('--check');
 
-const { SWORD_COMPONENT_ID, SWORD_ITEM_TAG, localNameOf, nameKey, descriptionKey, swordTexturePath } = await import(
+const {
+    SWORD_COMPONENT_ID,
+    SWORD_ITEM_TAG,
+    CREATIVE_CATEGORY,
+    CREATIVE_GROUP,
+    localNameOf,
+    nameKey,
+    legacyNameKey,
+    descriptionKey,
+    swordTexturePath,
+} = await import(
     MODULES.identifiers
 );
 const { colorize, requireRarity } = await import(MODULES.rarity);
@@ -129,7 +139,7 @@ function buildItemJson(sword) {
         'minecraft:item': {
             description: {
                 identifier: sword.id,
-                menu_category: { category: 'equipment', group: 'itemGroup.name.sword' },
+                menu_category: { category: CREATIVE_CATEGORY, group: CREATIVE_GROUP },
             },
             components,
         },
@@ -171,7 +181,14 @@ function buildResourceLang(swords) {
         lines.push(`## ${sword.id} - ${tier.label}`);
         // Rarity is expressed as a section colour code on the name itself, which
         // colours it in the hotbar, the inventory and the hover tooltip alike.
-        lines.push(`${nameKey(sword.id)}=${colorize(sword.rarity, sword.name)}`);
+        // Two name keys on purpose. `nameKey` is the key Minecraft generates for
+        // a namespaced custom item (`item.<id>`, no suffix) and is the one that
+        // actually resolves; `legacyNameKey` is the vanilla-style
+        // `item.<id>.name`, emitted as a hedge. Shipping only the latter is the
+        // v0.5.0 bug that put the raw identifier in every tooltip.
+        const displayName = colorize(sword.rarity, sword.name);
+        lines.push(`${nameKey(sword.id)}=${displayName}`);
+        lines.push(`${legacyNameKey(sword.id)}=${displayName}`);
         lines.push(`${descriptionKey(sword.id)}=${sword.description}`);
         lines.push('');
     }

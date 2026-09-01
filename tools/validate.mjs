@@ -22,9 +22,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { PATHS, MODULES, artFile, resourceFile } from './lib/project.mjs';
+import { verifyPng } from './lib/png.mjs';
 import { inspectQuality, validateSource } from './lib/texture.mjs';
 
-const { NAMESPACE, SWORD_COMPONENT_ID, SWORD_ITEM_TAG, localNameOf, namespaceOf, nameKey, swordTexturePath } =
+const {
+    NAMESPACE,
+    SWORD_COMPONENT_ID,
+    SWORD_ITEM_TAG,
+    CREATIVE_CATEGORY,
+    CREATIVE_GROUP,
+    localNameOf,
+    namespaceOf,
+    nameKey,
+    legacyNameKey,
+    swordTexturePath,
+} =
     await import(MODULES.identifiers);
 const { RARITIES } = await import(MODULES.rarity);
 const { describeAll } = await import(MODULES.swordStats);
@@ -331,8 +343,16 @@ function validateItemsAndResources(swords) {
                         `Sword icons live at '${expectedPath}'.`,
                 );
             }
-            if (!fs.existsSync(resourceFile(declared))) {
+            const png = resourceFile(declared);
+            if (!fs.existsSync(png)) {
                 error(`${relative}: texture '${declared}.png' does not exist in the resource pack.`);
+            } else {
+                // The PNG encoder is hand-written, so the bytes are verified
+                // rather than assumed. A lenient decoder opening the file is
+                // not evidence that Minecraft will.
+                for (const problem of verifyPng(fs.readFileSync(png))) {
+                    error(`${relative}: icon '${declared}.png' is not a conformant PNG — ${problem}.`);
+                }
             }
         }
 
@@ -344,6 +364,33 @@ function validateItemsAndResources(swords) {
             error(`${relative}: display name key '${declaredNameKey}' should be '${expectedNameKey}'.`);
         } else if (!rpLangKeys.has(declaredNameKey)) {
             error(`${relative}: display name key '${declaredNameKey}' is not defined in the resource pack en_US.lang.`);
+        }
+
+        // The v0.5.0 tooltip bug: only `item.<id>.name` was defined, which the
+        // engine never looks up for a namespaced custom item, so the raw
+        // identifier showed instead of the name. Both keys are required now.
+        if (!rpLangKeys.has(legacyNameKey(identifier))) {
+            error(
+                `${relative}: '${legacyNameKey(identifier)}' is not defined in the resource pack en_US.lang. ` +
+                    'Both name keys are emitted deliberately — see identifiers.js.',
+            );
+        }
+
+        // The v0.5.0 creative-category bug: an unnamespaced group is not a
+        // valid group reference, so the swords fell into the generic tab.
+        const menu = item.description?.menu_category;
+        if (menu === undefined || typeof menu !== 'object') {
+            error(`${relative}: description.menu_category is missing — the item will default to the Items tab.`);
+        } else {
+            if (menu.category !== CREATIVE_CATEGORY) {
+                error(`${relative}: menu_category.category is '${menu.category}', expected '${CREATIVE_CATEGORY}'.`);
+            }
+            if (menu.group !== CREATIVE_GROUP) {
+                error(
+                    `${relative}: menu_category.group is '${menu.group}', expected '${CREATIVE_GROUP}'. ` +
+                        'A creative group reference must carry the minecraft: namespace.',
+                );
+            }
         }
     }
 

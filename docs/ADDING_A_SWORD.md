@@ -80,7 +80,7 @@ Do not write particle ids and sound names into a binding by hand. Name a
 profile:
 
 ```js
-visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | arcane
+visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember | arcane
 ```
 
 That supplies the caster particle, the target particle, the trail used for arcs
@@ -100,6 +100,39 @@ Two rules, and they are not stylistic:
   sound event list.
 
 Adding a new theme means adding a profile, not editing seven swords.
+
+### State that carries between activations
+
+If a sword should build something up as you fight with it — heat, a combo,
+momentum — use the charge primitive on `PlayerStateStore` rather than inventing
+storage:
+
+```js
+// In the passive, on a hit that landed:
+const total = services.state.addCharge(ctx.playerId, 'ember_heat', 1, 5);
+
+// In the active:
+const charges = services.state.spendCharges(ctx.playerId, 'ember_heat');
+const damage = params.damage + charges * params.damagePerCharge;
+```
+
+The store handles what would otherwise be repeated (and eventually got wrong)
+per sword: counters are keyed by `player.id` so two players can never share one,
+they are life-scoped so death clears them, they are clamped to `max` so nothing
+can leak an unbounded number, and non-finite input is refused.
+`spendCharges` reads and clears in one step, so two rapid activations cannot
+both claim the same stacks.
+
+Two rules for the ability itself:
+
+- **Bank only on success.** Ember Edge banks a stack only when the hit actually
+  damaged something, so a blocked or filtered target does not feed the meter.
+- **Do not spend on a miss.** Ember Burst returns `{ ok: false }` before
+  spending when nothing is in range, which also means no cooldown is consumed.
+  Losing a full meter to a mistimed click feels terrible.
+
+Ember Blade is the worked example — see `swords/ember_blade.js` and both
+`abilities/builtin/ember_*.js`.
 
 ### Sword feel: swing duration
 

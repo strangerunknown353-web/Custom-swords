@@ -154,8 +154,8 @@ describe('shipped art', () => {
         });
     }
 
-    it('the Test Blade is the documented benchmark and is richly shaded', () => {
-        const source = JSON.parse(fs.readFileSync(artFile('test_blade'), 'utf8'));
+    it('the Ember Blade is the documented benchmark and is richly shaded', () => {
+        const source = JSON.parse(fs.readFileSync(artFile('ember_blade'), 'utf8'));
         const { stats } = inspectQuality(source);
         // The benchmark has to clear the bar comfortably, not scrape past it.
         assert.ok(stats.colours >= 12, `expected a rich palette, got ${stats.colours}`);

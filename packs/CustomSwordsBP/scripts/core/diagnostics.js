@@ -162,7 +162,7 @@ export class Diagnostics {
         if (argument.length === 0) {
             return [`§cUsage: /scriptevent ${NAMESPACE}:info <sword id or local name>`];
         }
-        // Accept both `custom_swords:test_blade` and plain `test_blade`.
+        // Accept both `custom_swords:ember_blade` and plain `ember_blade`.
         const id = argument.includes(':') ? argument : `${NAMESPACE}:${argument}`;
         const sword = this.swords.get(id);
         if (sword === undefined) {

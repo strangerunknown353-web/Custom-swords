@@ -110,13 +110,15 @@ the input source can be swapped later without touching a single ability.
 
 ## 3. The sword data model
 
-A sword is **pure data**: no code, no conditionals, no engine calls. This is the
-Test Blade, and it is also the shape every one of the eventual 20–25 swords
+A sword is **pure data**: no code, no conditionals, no engine calls. This is
+Ember Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
 
-Eight swords are registered today: the seven Elemental Collection blades
-(Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade, which
-is flagged `testItem: true` and excluded from `shipped`. All seven were added
+Eight swords are registered today, all shipped: Ember Blade plus the seven
+Elemental Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal,
+Nature). The project no longer ships a diagnostic item — the former Test Blade
+became Ember Blade — though `isTestItem` remains in the data model for future
+use. All seven were added
 without a single new engine call — six of the seven reuse abilities the previous
 milestone already shipped, and the seventh, `cleave`, is generic enough that a
 future sword can bind it too. `SWORD_CATALOG.md` is generated from those
@@ -132,11 +134,11 @@ Same code, two different weapons.
 ```js
 {
   // Identity
-  id:          'custom_swords:test_blade',   // namespace:local_name
-  name:        'Test Blade',
+  id:          'custom_swords:ember_blade',  // namespace:local_name
+  name:        'Ember Blade',
   rarity:      'uncommon',                   // one of six tiers
   description: 'Framework diagnostic sword.',
-  texture:     'test_blade',                 // resource-pack shortname
+  texture:     'ember_blade',                // resource-pack shortname
   isTestItem:  true,                         // excluded from collection counts
 
   // Vanilla item statistics — the single source of truth for the item JSON
@@ -154,7 +156,7 @@ Same code, two different weapons.
       activation:    'use',              // right-click / long-press
       abilityId:     'custom_swords:shockwave',
       cooldownTicks: 60,
-      hudCategory:   'custom_swords_test_blade',
+      hudCategory:   'custom_swords_ember_blade',
       targeting:     { type: 'area', range: 4, maxTargets: 8 },
       effects:       [{ effect: 'slowness', durationTicks: 40 }],
       particles:     [{ id: 'minecraft:critical_hit_emitter', count: 12, at: 'caster' }],
@@ -229,11 +231,11 @@ Derived from it, and never written out by hand anywhere else:
 
 | Thing | Value | Example |
 |---|---|---|
-| Sword item id | `custom_swords:<name>` | `custom_swords:test_blade` |
+| Sword item id | `custom_swords:<name>` | `custom_swords:ember_blade` |
 | Ability id | `custom_swords:<name>` | `custom_swords:diagnostic_pulse` |
 | Item custom component | `custom_swords:sword` | one for the whole addon |
 | Item tag | `custom_swords:is_custom_sword` | on every sword |
-| Display-name key | `item.<id>.name` | `item.custom_swords:test_blade.name` |
+| Display-name key | `item.<id>` | `item.custom_swords:ember_blade` |
 | Description key | `item.<id>.description` | — |
 | Texture path | `textures/items/custom_swords/swords/<shortname>` | — |
 | Diagnostic commands | `/scriptevent custom_swords:<command>` | `list`, `held`, `info` |
@@ -720,6 +722,24 @@ The combat layer stores nothing of its own: hit protection lives in
 `CooldownManager` under `hit:<entityId>` keys owned by the striking player, and
 the per-execution duplicate set is a local variable that dies with the call.
 
+### Stacking charges
+
+`PlayerStateStore` exposes the one primitive for "this sword builds something up
+as you fight": `addCharge` / `charges` / `spendCharges`. Ember Blade's heat is
+the first user; combo counters and momentum meters are the intended next ones.
+
+Three properties are enforced centrally rather than per ability, because each is
+a way the multiplayer rule could quietly break:
+
+| Property | Why it lives in the store |
+|---|---|
+| Keyed by `player.id` | there is no un-keyed way to reach a counter, so one player's meter structurally cannot feed another's |
+| Life-scoped | dying clears the meter; nobody respawns holding a full one |
+| Clamped to `max`, non-finite input rejected | an ability cannot leak an unbounded counter, and the clamp is tested once instead of once per sword |
+
+`spendCharges` reads and clears in a single step, so two rapid activations
+cannot both claim the same stacks.
+
 Cooldowns are deliberately **not** life-scoped: dying to reset a long cooldown
 would be an exploit.
 
@@ -932,10 +952,11 @@ only fills gaps. Abilities read `ctx.visual?.trail` for decorative geometry, so
 `cleave` draws its arc in flame on Inferno and in storm-sparks on Thunder
 without knowing either theme exists.
 
-Eight profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
-`grove`, and `arcane` for the diagnostic Test Blade. A test asserts no two
+Nine profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`, `grove`,
+`ember`, and `arcane` as the framework's neutral default. A test asserts no two
 share a caster particle or a cast sound, so "distinct look per theme" is
-enforced rather than intended.
+enforced rather than intended — which is what keeps `ember` and `fire` from
+converging as more fire-themed swords arrive.
 
 ### Why this layer exists
 

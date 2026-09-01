@@ -13,7 +13,7 @@
  * under `art/swords/`, run `npm run all`.
  */
 
-import { testBlade } from './test_blade.js';
+import { emberBlade } from './ember_blade.js';
 import { infernoSword } from './inferno_sword.js';
 import { thunderSword } from './thunder_sword.js';
 import { frostSword } from './frost_sword.js';
@@ -24,7 +24,7 @@ import { natureSword } from './nature_sword.js';
 
 /** @type {readonly import('../core/types.js').SwordDefinition[]} */
 export const SWORDS = Object.freeze([
-    testBlade,
+    emberBlade,
     infernoSword,
     thunderSword,
     frostSword,

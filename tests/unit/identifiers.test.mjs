@@ -37,7 +37,7 @@ describe('identifier convention', () => {
     });
 
     it('accepts well-formed identifiers', () => {
-        for (const id of ['custom_swords:test_blade', 'minecraft:iron_ingot', 'a:b', 'ns1:name_2']) {
+        for (const id of ['custom_swords:ember_blade', 'minecraft:iron_ingot', 'a:b', 'ns1:name_2']) {
             assert.equal(isValidIdentifier(id), true, id);
         }
     });
@@ -61,31 +61,31 @@ describe('identifier convention', () => {
     });
 
     it('splits namespace and local name safely', () => {
-        assert.equal(namespaceOf('custom_swords:test_blade'), 'custom_swords');
-        assert.equal(localNameOf('custom_swords:test_blade'), 'test_blade');
+        assert.equal(namespaceOf('custom_swords:ember_blade'), 'custom_swords');
+        assert.equal(localNameOf('custom_swords:ember_blade'), 'ember_blade');
         assert.equal(namespaceOf('unqualified'), '');
         assert.equal(localNameOf('unqualified'), 'unqualified');
     });
 
     it('recognises only our own namespace as owned', () => {
-        assert.equal(isOwnedIdentifier('custom_swords:test_blade'), true);
+        assert.equal(isOwnedIdentifier('custom_swords:ember_blade'), true);
         assert.equal(isOwnedIdentifier('minecraft:diamond_sword'), false);
-        assert.equal(isOwnedIdentifier('other_addon:test_blade'), false);
+        assert.equal(isOwnedIdentifier('other_addon:ember_blade'), false);
         assert.equal(isOwnedIdentifier(undefined), false);
         assert.equal(isOwnedIdentifier(null), false);
         assert.equal(isOwnedIdentifier(123), false);
     });
 
     it('validates bare local names for texture shortnames', () => {
-        assert.equal(isValidLocalName('test_blade'), true);
-        assert.equal(isValidLocalName('custom_swords:test_blade'), false);
+        assert.equal(isValidLocalName('ember_blade'), true);
+        assert.equal(isValidLocalName('custom_swords:ember_blade'), false);
         assert.equal(isValidLocalName('TestBlade'), false);
     });
 
     it('builds localisation keys and texture paths consistently', () => {
-        assert.equal(descriptionKey('custom_swords:test_blade'), 'item.custom_swords:test_blade.description');
+        assert.equal(descriptionKey('custom_swords:ember_blade'), 'item.custom_swords:ember_blade.description');
         assert.equal(SWORD_TEXTURE_DIR, 'textures/items/custom_swords/swords');
-        assert.equal(swordTexturePath('test_blade'), 'textures/items/custom_swords/swords/test_blade');
+        assert.equal(swordTexturePath('ember_blade'), 'textures/items/custom_swords/swords/ember_blade');
     });
 
     // Regression: v0.5.0 shipped `item.<id>.name` as the only name key. That is

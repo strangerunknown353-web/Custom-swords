@@ -74,6 +74,11 @@ export const SOUND_LIBRARY = Object.freeze({
 
     nature_cast: { id: 'block.cave_vines.place', volume: 0.9, pitch: 0.9 },
     nature_impact: { id: 'break.amethyst_cluster', volume: 0.6, pitch: 1.3 },
+
+    // Ember: quenching steel, then the crackle of what it left behind. Pitched
+    // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
+    ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },
+    ember_impact: { id: 'block.campfire.crackle', volume: 0.7, pitch: 1.5 },
 });
 
 /** Preset names, for the validator and for diagnostics. */

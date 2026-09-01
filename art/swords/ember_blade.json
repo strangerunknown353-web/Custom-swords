@@ -1,0 +1,37 @@
+{
+  "name": "Ember Blade",
+  "description": "A slim, straight duelling blade of cold-polished steel whose lower third still holds forge heat, fading to a keen grey point. Compact steel guard with a live ember caught between the quillons, dark wire-wrapped grip, small brass pommel.",
+  "palette": {
+    "o": "#0b0709",
+    "X": "#dcd8e2",
+    "H": "#9a94a6",
+    "B": "#635d70",
+    "S": "#3a3544",
+    "M": "#ff8c1a",
+    "F": "#ffe9a8",
+    "R": "#ff4d0d",
+    "G": "#8e8798",
+    "g": "#565061",
+    "W": "#453d4a",
+    "P": "#e0a838",
+    "p": "#8a621c"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHBo",
+    "..........oXHBo.",
+    ".........oXHBSo.",
+    "........oMHBSo..",
+    ".......oMFBSo...",
+    "....ooMMBSoo....",
+    "...oGgRgGo......",
+    "..oGgWWgGo......",
+    "...ooWWoo.......",
+    "....oWXo........",
+    "....oWWo........",
+    "....oPPo........",
+    ".....opo........"
+  ]
+}

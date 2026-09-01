@@ -5,22 +5,17 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.5.2 — the Elemental Collection, registration and presentation
-> fixed.**
-> The first **seven** final swords are in: Inferno 🔥, Thunder ⚡, Frost ❄️,
-> Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿, on top of the framework, the
-> Ability Engine and the combat layer. See `SWORD_CATALOG.md` for the full
-> roster and `ROADMAP.md` for what comes next.
+> **Status: v0.6.0 — eight swords, and the first green client test.**
+> Ember Blade 🔥 joins the seven Elemental Collection blades: Inferno 🔥,
+> Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿. See
+> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
 >
-> **Two client tests, two failures, two fixes.** v0.5.0 put the swords in the
-> wrong creative tab with a raw translation key for a name. v0.5.1 fixed that
-> and the abilities turned out to be invisible and silent — fourteen sound
-> presets that were never defined, five particle identifiers that render
-> nothing. Both classes are now build-time errors, checked against transcribed
-> vanilla lists.
+> **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
+> icon, name, rendering, attack animation, abilities, particles, sounds and
+> cooldowns all confirmed working. That followed two failed client tests and two
+> rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> **Neither fix has been confirmed in a client.** `docs/TESTING.md` records
-> exactly what was and was not verified, per version.
+> Ember Blade itself has **not** been client-tested yet.
 
 ---
 
@@ -39,17 +34,18 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.5.2.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.5.2.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.5.2.mcpack` | resource pack alone |
+| `CustomSwords-v0.6.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v0.6.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v0.6.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.5.2.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v0.6.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
 both packs enabled, then give yourself a sword and right-click:
 
 ```
+/give @s custom_swords:ember_blade       fast ember burst; build heat by hitting things
 /give @s custom_swords:inferno_sword     a burning arc
 /give @s custom_swords:thunder_sword     a bolt where you are looking
 /give @s custom_swords:frost_sword       slowness and mining fatigue
@@ -123,7 +119,7 @@ Anything marked GENERATED is derived from `scripts/swords/*.js` by
 |---|---|
 | `npm run generate` | rebuild item JSON, texture atlas, compiled PNGs and `.lang` from the sword definitions |
 | `npm run validate` | check manifests, UUIDs, JSON, cross-references and architecture rules |
-| `npm test` | 347 unit and integration tests against a mocked engine |
+| `npm test` | 359 unit and integration tests against a mocked engine |
 | `npm run build` | package `.mcaddon` and `.mcpack` files into `dist/` |
 | `npm run catalog` | regenerate `SWORD_CATALOG.md` from the sword definitions |
 | `npm run check` | generate + validate + catalog check + test |
@@ -152,10 +148,7 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **7 of 20–25 swords.** The remaining 13–18 arrive in milestones 7, 9 and 10.
-- **`custom_swords:test_blade`** is a diagnostic item marked `isTestItem: true`.
-  It is excluded from the shipped collection and will be debug-gated before
-  release.
+- **8 of 20–25 swords.** The remaining 12–17 arrive in milestones 7, 9 and 10.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No crafting, loot or trades.** The swords are creative/`/give` only so far.

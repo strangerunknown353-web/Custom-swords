@@ -653,6 +653,47 @@ function validateArchitecture() {
 }
 
 // ---------------------------------------------------------------------------
+// 4b. Uniqueness
+// ---------------------------------------------------------------------------
+
+/**
+ * No two swords may share an identifier, a display name, a texture shortname or
+ * a localisation key.
+ *
+ * The registry already rejects a duplicate *id* at startup, but the other three
+ * collide silently: two swords pointing at one texture shortname simply render
+ * the same icon, and two sharing a display name are indistinguishable in the
+ * creative menu. Both are cheap mistakes to make by copying a definition, and
+ * they get harder to spot as the collection grows towards 25.
+ *
+ * @param {readonly any[]} swords
+ */
+function validateUniqueness(swords) {
+    /** @type {Record<string, Map<string, string>>} */
+    const seen = { id: new Map(), name: new Map(), texture: new Map(), nameKey: new Map() };
+
+    for (const sword of swords) {
+        /** @type {[keyof typeof seen, string, string][]} */
+        const claims = [
+            ['id', sword.id, 'identifier'],
+            ['name', sword.name, 'display name'],
+            ['texture', sword.texture ?? localNameOf(sword.id), 'texture shortname'],
+            ['nameKey', nameKey(sword.id), 'localisation key'],
+        ];
+        for (const [bucket, value, label] of claims) {
+            const owner = seen[bucket].get(value);
+            if (owner !== undefined) {
+                error(`${label} '${value}' is claimed by both '${owner}' and '${sword.id}'.`);
+            } else {
+                seen[bucket].set(value, sword.id);
+            }
+        }
+    }
+
+    note(`${swords.length} sword(s): identifiers, names, texture shortnames and lang keys all unique.`);
+}
+
+// ---------------------------------------------------------------------------
 // 5b. Audio catalogue
 // ---------------------------------------------------------------------------
 
@@ -701,6 +742,7 @@ async function main() {
     validateManifests();
     validateAllJson();
     const swords = await validateDefinitions();
+    validateUniqueness(swords);
     validateItemsAndResources(swords);
     validateTextures(swords);
     await validateSoundLibrary();

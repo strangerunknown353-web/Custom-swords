@@ -30,7 +30,23 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
-## Completed in bug-fix 2 (v0.5.2)
+## Completed in Ember Blade finalization (v0.6.0)
+
+- [x] Test Blade renamed to Ember Blade and promoted to a shipped sword; the
+      project no longer ships a diagnostic item.
+- [x] `ember_burst` active and `ember_edge` passive — one coherent heat
+      mechanic replacing four diagnostic bindings.
+- [x] Stacking charges on `PlayerStateStore` (`addCharge` / `charges` /
+      `spendCharges`), life-scoped, clamped and player-keyed.
+- [x] `ember` visual profile plus `ember_cast` / `ember_impact` presets.
+- [x] New Ember Blade texture, distinct in silhouette and palette from Inferno.
+- [x] Validator gate: no two swords may share an identifier, display name,
+      texture shortname or localisation key.
+- [x] `SWORD_CATALOG.md` extended with swing duration, visual profile, texture
+      status and per-binding particle and sound columns.
+- [x] Framework tests decoupled from any shipped sword's tuning.
+
+
 
 - [x] All fourteen elemental sound presets defined and mapped to real vanilla
       sound events. Ability audio was completely silent before this.
@@ -145,7 +161,10 @@ Only items actually finished are ticked.
       survive a world reload. `PlayerStateStore` is deliberately in-memory only.
 - [ ] Runtime configuration (`/scriptevent` or a settings UI) so operators can
       change the PvP toggle and damage multiplier without editing `config.js`.
-- [ ] Debug-gate the Test Blade so it cannot ship in a release build.
+- [ ] Decide whether a diagnostic item should return behind a debug flag. The
+      Test Blade became Ember Blade, so `isTestItem` is currently unused; a
+      hidden probe item would be useful again once swords need in-world
+      inspection.
 
 ## Tooling
 

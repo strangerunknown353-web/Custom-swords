@@ -22,7 +22,7 @@ import { createFramework } from '../../packs/CustomSwordsBP/scripts/core/bootstr
 import { SWORD_COMPONENT_ID } from '../../packs/CustomSwordsBP/scripts/core/input_router.js';
 import { AbilityExecutor } from '../../packs/CustomSwordsBP/scripts/core/ability_executor.js';
 
-const TEST_SWORD_ID = 'custom_swords:test_blade';
+const TEST_SWORD_ID = 'custom_swords:ember_blade';
 
 /** Deterministic clock shared by the framework under test. */
 let tick = 0;
@@ -88,6 +88,37 @@ function swordDefinition(overrides = {}) {
     };
 }
 
+/**
+ * A sword with two `use`-side bindings on independent cooldowns.
+ *
+ * Ember Blade binds only `use` and `attack`, so tests about activation routing
+ * and per-binding cooldowns use this instead. A shipped sword should never have
+ * to keep a binding alive purely to satisfy a framework test.
+ */
+const twoActivationSword = {
+    id: 'custom_swords:two_activation_probe',
+    name: 'Two Activation Probe',
+    rarity: 'common',
+    description: 'Two bindings, two cooldowns.',
+    item: { attackDamage: 1, durability: 10 },
+    abilities: [
+        {
+            activation: 'use',
+            abilityId: 'custom_swords:burst',
+            cooldownTicks: 60,
+            targeting: { type: 'area', range: 4 },
+            params: { damage: 2 },
+        },
+        {
+            activation: 'sneak_use',
+            abilityId: 'custom_swords:strike',
+            cooldownTicks: 100,
+            targeting: { type: 'single', range: 7 },
+            params: { damage: 4 },
+        },
+    ],
+};
+
 describe('framework bootstrap', () => {
     beforeEach(() => {
         resetMocks();
@@ -109,10 +140,21 @@ describe('framework bootstrap', () => {
 
     it('indexes which swords use each ability', () => {
         const framework = createFramework({ clock });
-        const usage = framework.abilities.swordsUsing('custom_swords:burst');
-        // The diagnostic sword binds `burst` on use; the elemental collection
-        // binds the rest, so nothing should be orphaned.
-        assert.ok(usage.some((u) => u.swordId === TEST_SWORD_ID && u.activation === 'use'));
+        // Ember Blade owns both halves of the heat mechanic, and nothing else
+        // binds them — that pairing is the sword's identity.
+        const burst = framework.abilities.swordsUsing('custom_swords:ember_burst');
+        assert.deepEqual(
+            burst.map((u) => [u.swordId, u.activation]),
+            [[TEST_SWORD_ID, 'use']],
+        );
+        const edge = framework.abilities.swordsUsing('custom_swords:ember_edge');
+        assert.deepEqual(
+            edge.map((u) => [u.swordId, u.activation]),
+            [[TEST_SWORD_ID, 'attack']],
+        );
+        // `burst` proper is Earth's; the elemental collection binds the rest,
+        // so nothing should be orphaned.
+        assert.ok(framework.abilities.swordsUsing('custom_swords:burst').length > 0);
         assert.deepEqual(framework.abilities.unused(), []);
     });
 
@@ -189,6 +231,7 @@ describe('input router and activation', () => {
     });
 
     it('runs the whole pipeline on use: targets, damages, emits, gives feedback', () => {
+        // Drives the real shipped Ember Blade end to end, not a fixture.
         const registry = install(createFramework({ clock }));
         const { player, dimension } = makeWorld(3);
 
@@ -197,27 +240,47 @@ describe('input router and activation', () => {
         const zombies = dimension.entities.filter((e) => e.typeId === 'minecraft:zombie');
         assert.equal(zombies.every((z) => z.damageTaken.length === 1), true);
         assert.equal(zombies.every((z) => z.knockbacks.length === 1), true);
-        assert.equal(zombies.every((z) => z.effects[0].effect === 'slowness'), true);
+        assert.equal(zombies.every((z) => z.ignitions.length === 1), true, 'Ember Burst scorches what it hits');
         assert.ok(dimension.particles.length > 0, 'expected particles');
         assert.ok(dimension.sounds.length > 0, 'expected a sound');
-        assert.match(player.actionBarMessages.at(-1), /Burst/);
+        assert.match(player.actionBarMessages.at(-1), /Ember Burst/);
     });
 
     it('routes sneak + use to the sword\'s sneak binding', () => {
-        const registry = install(createFramework({ clock }));
-        const { player, dimension } = makeWorld(1, { distance: 6 });
+        // A local fixture rather than a shipped sword: this asserts the
+        // router's behaviour, and no shipped sword should have to keep a
+        // binding alive just to satisfy a test of the router.
+        const sword = swordDefinition({
+            abilities: [
+                {
+                    activation: 'use',
+                    abilityId: 'custom_swords:burst',
+                    targeting: { type: 'area', range: 4 },
+                    params: { damage: 2 },
+                },
+                {
+                    activation: 'sneak_use',
+                    abilityId: 'custom_swords:strike',
+                    targeting: { type: 'single', range: 7 },
+                    effects: [{ effect: 'weakness', durationTicks: 60 }],
+                    params: { damage: 6 },
+                },
+            ],
+        });
+        const registry = install(createFramework({ clock, swords: [sword] }));
+        const { player, dimension } = makeWorld(1, { swordId: sword.id, distance: 6 });
         const zombie = dimension.entities.find((e) => e.typeId === 'minecraft:zombie');
 
         // Standing: the area binding has range 4, so a mob 6 blocks out is missed.
-        use(registry, player);
+        use(registry, player, sword.id);
         assert.equal(zombie.damageTaken.length, 0, 'the standing burst should not reach 6 blocks');
 
         // Sneaking: the single-target binding reaches 7 blocks and hits harder.
         tick += 200;
         player.isSneaking = true;
-        use(registry, player);
+        use(registry, player, sword.id);
         assert.equal(zombie.damageTaken.length, 1, 'the sneak binding should reach it');
-        assert.equal(zombie.effects.at(-1).effect, 'weakness', 'the sneak envelope applies weakness, not slowness');
+        assert.equal(zombie.effects.at(-1).effect, 'weakness', 'the sneak envelope applies weakness');
     });
 
     it('falls back to the base activation when no sneak binding exists', () => {
@@ -387,36 +450,36 @@ describe('cooldown behaviour through the executor', () => {
     });
 
     it('keeps a sword\'s two activations on independent cooldowns', () => {
-        const framework = createFramework({ clock });
+        const framework = createFramework({ clock, swords: [twoActivationSword] });
         const registry = install(framework);
-        const { player, dimension } = makeWorld(1, { distance: 2 });
+        const { player, dimension } = makeWorld(1, { swordId: twoActivationSword.id, distance: 2 });
         const zombie = dimension.entities.find((e) => e.typeId === 'minecraft:zombie');
 
-        use(registry, player);
+        use(registry, player, twoActivationSword.id);
         assert.equal(zombie.damageTaken.length, 1);
 
         // Past the per-target hit-protection window, so this test measures
-        // cooldowns rather than that. The standing burst is still cooling down;
-        // the sneak strike runs on its own timer.
+        // cooldowns rather than that. The standing binding is still cooling
+        // down; the sneak binding runs on its own timer.
         tick += 20;
         player.isSneaking = true;
-        use(registry, player);
+        use(registry, player, twoActivationSword.id);
         assert.equal(zombie.damageTaken.length, 2, 'the sneak binding has its own cooldown');
     });
 
     it('protects a target from being re-hit by the same player immediately', () => {
-        const framework = createFramework({ clock });
+        const framework = createFramework({ clock, swords: [twoActivationSword] });
         const registry = install(framework);
-        const { player, dimension } = makeWorld(1, { distance: 2 });
+        const { player, dimension } = makeWorld(1, { swordId: twoActivationSword.id, distance: 2 });
         const zombie = dimension.entities.find((e) => e.typeId === 'minecraft:zombie');
 
-        use(registry, player);
+        use(registry, player, twoActivationSword.id);
         assert.equal(zombie.damageTaken.length, 1);
 
         // Different activation, so no cooldown blocks it — but the target is
         // still inside its hit-protection window.
         player.isSneaking = true;
-        use(registry, player);
+        use(registry, player, twoActivationSword.id);
         assert.equal(zombie.damageTaken.length, 1, 'the follow-up hit must be absorbed');
     });
 
@@ -442,14 +505,14 @@ describe('cooldown behaviour through the executor', () => {
         const sword = framework.swords.require(TEST_SWORD_ID);
         const key = AbilityExecutor.cooldownKey(sword, sword.abilities[0]);
         assert.equal(framework.services.cooldowns.isReady(player.id, key), true);
-        assert.match(player.actionBarMessages.at(-1), /Nothing in range/);
+        assert.match(player.actionBarMessages.at(-1), /Nothing close enough/);
     });
 
     it('mirrors the cooldown onto the vanilla item HUD when a category is set', () => {
         const registry = install(createFramework({ clock }));
         const { player } = makeWorld(1);
         use(registry, player);
-        assert.deepEqual(player.itemCooldowns, [{ category: 'custom_swords_test_blade', ticks: 60 }]);
+        assert.deepEqual(player.itemCooldowns, [{ category: 'custom_swords_ember_blade', ticks: 70 }]);
     });
 
     it('contains a throwing ability instead of letting it escape the handler', () => {

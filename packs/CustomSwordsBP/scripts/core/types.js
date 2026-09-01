@@ -154,7 +154,7 @@
  * A complete sword. Pure data — no engine imports, no functions.
  *
  * @typedef {Object} SwordDefinition
- * @property {string} id Fully-qualified item identifier, e.g. `custom_swords:test_blade`.
+ * @property {string} id Fully-qualified item identifier, e.g. `custom_swords:ember_blade`.
  * @property {string} name Display name shown in-game (before rarity colouring).
  * @property {SwordRarity} rarity
  * @property {string} description One-line summary used in docs and in the item tooltip.

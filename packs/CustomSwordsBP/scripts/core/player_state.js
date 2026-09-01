@@ -94,6 +94,55 @@ export class PlayerStateStore {
     }
 
     /**
+     * Adds to a life-scoped stacking counter and returns the new total, clamped
+     * to `max`. The generic "this sword builds something up as you fight it"
+     * primitive.
+     *
+     * Life-scoped deliberately: a combo or heat meter should not survive death.
+     * Clamping here rather than in each ability means no ability can leak an
+     * unbounded counter, and the clamp is tested once instead of per sword.
+     *
+     * @param {string} playerId
+     * @param {string} name Bare name; the `life:` prefix is applied here.
+     * @param {number} [amount] Defaults to 1.
+     * @param {number} [max] Defaults to 10.
+     * @returns {number} The new total.
+     */
+    addCharge(playerId, name, amount = 1, max = 10) {
+        if (!Number.isFinite(amount) || !Number.isFinite(max) || max < 0) return this.charges(playerId, name);
+        return this.update(playerId, lifeKey(name), 0, (current) => {
+            const total = (Number.isFinite(current) ? current : 0) + amount;
+            return Math.max(0, Math.min(max, total));
+        });
+    }
+
+    /**
+     * Reads a stacking counter without changing it.
+     *
+     * @param {string} playerId
+     * @param {string} name
+     * @returns {number}
+     */
+    charges(playerId, name) {
+        const value = this.get(playerId, lifeKey(name), 0);
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    /**
+     * Reads a stacking counter and resets it to zero — the "spend what you have
+     * built up" half of the primitive.
+     *
+     * @param {string} playerId
+     * @param {string} name
+     * @returns {number} The value before the reset.
+     */
+    spendCharges(playerId, name) {
+        const value = this.charges(playerId, name);
+        this.delete(playerId, lifeKey(name));
+        return value;
+    }
+
+    /**
      * @param {string} playerId
      * @param {string} key
      */

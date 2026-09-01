@@ -13,6 +13,77 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.6.0] — 2026-09-01
+
+**Ember Blade.** The framework's diagnostic Test Blade becomes a finished
+sword, and the project ships no test item for the first time. This is also the
+first release built on a client test that passed: v0.5.2 was confirmed working
+in Minecraft Bedrock — creative category, icon, name, rendering, attack
+animation, abilities, effects, sounds and cooldowns all correct.
+
+### Added
+
+- **Ember Blade** (`custom_swords:ember_blade`) — Uncommon, 6 melee, 500
+  durability, and the fastest swing in the collection at 0.22s. A light,
+  fast, close-range ember weapon, deliberately positioned at the base of the
+  balance curve.
+- **`custom_swords:ember_burst`** — the active. A 3-block burst on a 3.5s
+  cooldown whose damage comes from banked heat rather than a large base number:
+  4 damage cold, +1.5 per stack, up to 11.5 with a full meter. Burn duration
+  scales the same way. A burst that finds nothing **keeps its heat** and starts
+  no cooldown.
+- **`custom_swords:ember_edge`** — the passive. Each landed melee hit banks one
+  heat stack (capped at 5) plus 1 chip damage and a 1s scorch. Its own 0.6s
+  cooldown is what stops the collection's fastest sword from filling its meter
+  in a single flurry.
+- **Stacking charges on `PlayerStateStore`** — `addCharge`, `charges`,
+  `spendCharges`. The reusable "this sword builds something up as you fight"
+  primitive, life-scoped so death clears it, clamped centrally so no ability can
+  leak an unbounded counter, and rejecting non-finite input. Ember Blade is the
+  first user; combo and momentum swords are the intended next ones.
+- **`ember` visual profile** — spark motes at the hand
+  (`redstone_torch_dust_particle`), a controlled candle flame on each target,
+  glowing dust for the burst ring. Built from a different vocabulary than
+  `fire` on purpose.
+- **`ember_cast` / `ember_impact`** sound presets — quenching steel then the
+  crackle it leaves, pitched up and quieter than Inferno's blaze roar.
+- **Uniqueness gate in the validator** — no two swords may share an identifier,
+  display name, texture shortname or localisation key. The registry already
+  rejected duplicate ids; the other three collided silently, which gets more
+  dangerous as the collection grows toward 25.
+- **`tests/unit/ember_heat.test.mjs`** — the charge primitive and the mechanic
+  end to end, including that one player can neither gain nor spend another's
+  heat, that a missed burst does not waste it, and that dying clears it.
+
+### Changed
+
+- **Test Blade → Ember Blade.** Renamed everywhere: definition, texture source,
+  item JSON, texture atlas, localisation, catalogue, tests and docs. Its four
+  diagnostic bindings (one per activation method, chosen to exercise the engine
+  rather than to play well) are replaced by two that form a single coherent
+  mechanic. `isTestItem` remains in the data model, unused.
+- **A new texture**, not a recolour: a slim straight blade of cold-polished
+  steel holding forge heat in its lower third, a compact steel guard with a live
+  ember between the quillons, wire-wrapped grip, brass pommel. Set beside
+  Inferno's broad molten-seamed blade, the two read as different weapons rather
+  than one weapon at two power levels.
+- **`SWORD_CATALOG.md` gained swing duration, visual profile, texture status,
+  and per-binding particle and sound columns**, so the published entry now
+  states everything a sword's presentation depends on.
+- **Framework tests no longer lean on a shipped sword's tuning.** Several tests
+  asserted the Test Blade's specific bindings — a sneak activation, a
+  hostile-only filter, a 4-block range. They now build local fixtures, because a
+  shipped sword should never have to keep a binding alive to satisfy a test of
+  the router.
+
+### Notes
+
+- Inferno Sword is untouched. The two fire swords are deliberately separate in
+  fantasy, rarity, stats, swing speed, ability, damage model and visual
+  vocabulary — the comparison table is in `swords/ember_blade.js`.
+- No diagnostic item ships any more. `/scriptevent custom_swords:list` now
+  reports 8 shipped, 0 diagnostic.
+
 ## [0.5.2] — 2026-09-01
 
 **Bug fix: ability presentation.** Reported as "the sword animations are not

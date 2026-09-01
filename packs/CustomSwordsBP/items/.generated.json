@@ -2,10 +2,10 @@
   "note": "Written by tools/generate.mjs so stale generated files can be pruned. Not read by Minecraft.",
   "items": [
     "earth_sword.item.json",
+    "ember_blade.item.json",
     "frost_sword.item.json",
     "inferno_sword.item.json",
     "nature_sword.item.json",
-    "test_blade.item.json",
     "thunder_sword.item.json",
     "tidal_sword.item.json",
     "wind_sword.item.json"

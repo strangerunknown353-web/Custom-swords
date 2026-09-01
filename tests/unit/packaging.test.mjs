@@ -92,8 +92,8 @@ describe('png encoder', () => {
     });
 
     it('renders a 16x16 icon deterministically per seed', () => {
-        const a1 = placeholderSwordIcon({ seed: 'custom_swords:test_blade' });
-        const a2 = placeholderSwordIcon({ seed: 'custom_swords:test_blade' });
+        const a1 = placeholderSwordIcon({ seed: 'custom_swords:ember_blade' });
+        const a2 = placeholderSwordIcon({ seed: 'custom_swords:ember_blade' });
         const b = placeholderSwordIcon({ seed: 'custom_swords:other_blade' });
 
         assert.deepEqual(a1, a2, 'same seed must give the same icon');

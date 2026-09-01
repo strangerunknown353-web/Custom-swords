@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 347 unit + integration tests against a mocked @minecraft/server
+npm test            # 359 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -70,6 +70,9 @@ npm run all         # check + build
   `SOUND_LIBRARY` is a real vanilla sound event**, checked against the 1824
   events in `tools/data/vanilla_sound_events.json`;
 - **every binding names a known visual profile**;
+- **no two swords share an identifier, display name, texture shortname or
+  localisation key** — the registry already rejected duplicate ids, but the
+  other three collide silently;
 - `SWORD_CATALOG.md` matches the definitions (`npm run catalog -- --check`);
 - **the texture standard**: every sword has an authored source, of the right
   dimensions, with no unused palette tones, an unbroken silhouette, a real dark
@@ -160,17 +163,16 @@ packs.
 
 ## Sword test matrix
 
-One row per shipped sword. **Every "Tested" cell is still empty.** v0.5.0 was
-loaded into a client and failed at the item-registration layer before any sword
-behaviour could be exercised (see "Recording results"), so nothing in the
-Active/Passive/FX columns has been observed working. The other columns
-record what has been verified *statically* — the definition validates, the
-texture passes the linter, the item JSON generates, the sound preset and
-particle ids exist in the definition — which is a different and much weaker
-claim.
+**v0.5.2 passed a full client test** — creative category, icon, name, holding,
+rendering, attack animation, abilities, particles, sounds and cooldowns were all
+confirmed working by the project owner. The Tested column below is ticked for
+the item-and-presentation layer on that basis.
 
-Fill the last column in only after performing the corresponding block of the
-in-game checklist below.
+What is **not** ticked is per-sword ability behaviour: the client test exercised
+the add-on, not all eight swords' individual actives and passives. Ember Blade
+is new in v0.6.0 and has not been in a client at all.
+
+The other columns record what is verified *statically*.
 
 | Sword | Item id | Attack | Active (cooldown) | Passive | Texture | Sound | FX | Tested in-game |
 |---|---|---:|---|---|:---:|:---:|:---:|:---:|
@@ -181,7 +183,7 @@ in-game checklist below.
 | Earth 🪨 | `custom_swords:earth_sword` | 10 | Burst — ground shock, distance falloff (9 s) | Bolster — resistance 5 s | ✅ | ✅ | ✅ | ☐ |
 | Tidal 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
 | Nature 🌿 | `custom_swords:nature_sword` | 7 | Strike — execute below 40 % health (5.5 s) | Bolster — regeneration 4 s | ✅ | ✅ | ✅ | ☐ |
-| Test Blade | `custom_swords:test_blade` | 7 | 4 diagnostic bindings across all activations | — | ✅ | ✅ | ✅ | ☐ |
+| Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
 
@@ -214,7 +216,7 @@ Enable *Settings → Creator → Content Log GUI* to read it in-game.
 - [ ] No red error entries in the content log during world load
 - [ ] The content log shows `[CustomSwords] Registered item component 'custom_swords:sword'.`
 - [ ] The content log shows
-      `[CustomSwords] v0.5.1 ready - 8 sword(s) (7 shipped, 1 diagnostic), 7 ability(ies).`
+      `[CustomSwords] v0.6.0 ready - 8 sword(s) (8 shipped, 0 diagnostic), 9 ability(ies).`
 
 ### A2. Item registration — run this first
 
@@ -243,18 +245,18 @@ For **each** of the eight items:
       this is the check the texture linter cannot perform
 - [ ] It renders as a held tool in first and third person
 - [ ] Its melee damage matches `SWORD_CATALOG.md` (Inferno 9, Thunder 9,
-      Frost 7, Wind 6, Earth 10, Tidal 8, Nature 7, Test Blade 7)
+      Frost 7, Wind 6, Earth 10, Tidal 8, Nature 7, Ember Blade 6)
 - [ ] Its durability bar depletes when it is used to attack
 - [ ] It can be enchanted at an enchanting table
 - [ ] It can be repaired at an anvil with the material named in the catalogue
       (blaze rod, copper ingot, packed ice, phantom membrane, deepslate,
-      prismarine shard, moss block, iron ingot respectively)
+      prismarine shard, moss block, and copper ingot for Ember Blade)
 
 ### C. Registry and identification
 
 - [ ] `/scriptevent custom_swords:list` reports
-      `8 registered — 7 shipped, 1 diagnostic` and lists all eight
-- [ ] `/scriptevent custom_swords:abilities` reports seven abilities and, for
+      `8 registered — 8 shipped, 0 diagnostic` and lists all eight
+- [ ] `/scriptevent custom_swords:abilities` reports nine abilities and, for
       each, the swords that bind it — `repulse` must list **both** Wind and
       Tidal
 - [ ] Holding each sword, `/scriptevent custom_swords:held` reports a
@@ -273,44 +275,49 @@ For **each** of the eight items:
 - [ ] Right-clicking a vanilla sword does nothing unusual
 - [ ] No content-log output appears when using vanilla items
 
-### E. Ability Engine — Test Blade
+### E. Ember Blade — the heat mechanic
 
-The Test Blade binds a different ability to each of the four activations, so one
-item verifies the whole engine.
+Ember Blade is the only sword whose power comes from state carried between
+activations, so it needs its own block. The thing to judge is whether the
+mechanic **reads**: a player should work out on their own that hitting things
+makes the burst stronger.
 
-**Right-click (`use` → `burst`, 3 s):**
+**Cold open (`use` → Ember Burst, 3.5 s, 3-block radius):**
 
-- [ ] With hostile mobs within 4 blocks: they take damage, are pushed away, and
-      gain Slowness. **Passive mobs are ignored** — the binding allows only
-      `hostile`
-- [ ] Particles appear at the player's feet and on each mob hit
-- [ ] A cast sound plays, and an impact sound plays per target
-- [ ] The action bar reads `Burst   <n> hit`
-- [ ] Using it again immediately is refused, with a countdown on the action bar
-- [ ] With no mobs in range it shows `Nothing in range.` **and does not start a
-      cooldown** — the next use with a mob present must fire immediately
+- [ ] With no heat banked, right-click near mobs: they take modest damage, are
+      pushed back slightly, and catch fire briefly
+- [ ] Orange spark motes appear at the wielder, a small flame on each target,
+      and a ring of glowing dust marks the 3-block reach
+- [ ] A quench sound plays on cast, a crackle per target
+- [ ] The action bar reads `Ember Burst   <n> hit`
+- [ ] Using it again immediately is refused with a countdown
+- [ ] With nothing in range it shows `Nothing close enough to scorch.` **and
+      starts no cooldown**
 
-**Sneak + right-click (`sneak_use` → `strike`, 5 s):**
+**Banking heat (`attack` → Ember Edge):**
 
-- [ ] Crouch and look at a single mob up to 7 blocks away: it takes noticeably
-      more damage, is thrown back harder, and gains Weakness (not Slowness)
-- [ ] A mob below half health takes visibly more than a healthy one (the execute
-      bonus)
-- [ ] It fires while the standing burst is still cooling down — the two
-      activations have independent timers
-- [ ] Jumping and using it mid-air is refused with `Must be on the ground.`
+- [ ] Each melee hit that lands shows `heat 1/5`, `heat 2/5` … on the action bar
+- [ ] Sparks appear on the target with each hit
+- [ ] The counter stops at **5/5** and does not go higher
+- [ ] Swinging at thin air banks nothing
 
-**Melee hit (`attack` → `brand`, 2 s):** 
+**Spending it — the payoff:**
 
-- [ ] Hitting a mob poisons it, in addition to the normal 7 melee damage
-- [ ] Hitting the same mob repeatedly does not stack a new poison every swing —
-      the binding has its own cooldown
+- [ ] Bank 5 heat, then burst: the damage is **clearly** higher than the cold
+      open above, and the burn lasts longer
+- [ ] The action bar reads `Ember Burst   <n> hit · 5 heat`
+- [ ] Immediately bursting again does far less — the meter was emptied
+- [ ] Bursting with heat banked but **nothing in range** does not consume the
+      heat: the next burst on a real target must still be a big one
 
-**Sneak + melee hit (`sneak_attack` → `cleave`, 4 s):**
+**Death resets it:**
 
-- [ ] Crouching and hitting a mob also strikes everything in a 100° arc ahead
-- [ ] A mob directly ahead takes more than one at the edge of the arc
-- [ ] Everything struck is thrown backwards
+- [ ] Bank heat, die, respawn: the next hit shows `heat 1/5`, not `heat 4/5`
+
+**Feel:**
+
+- [ ] The 0.22 s swing is noticeably faster than Inferno's — quick, not twitchy
+- [ ] Ember Blade and Inferno are distinguishable in the hotbar **at a glance**
 
 ### F. The seven elemental swords
 
@@ -448,7 +455,7 @@ It was **not** loaded into a Minecraft client.
 ### v0.3.0 — not tested in Minecraft
 
 The Ability Engine and the texture standard passed every automated check. The
-Test Blade's icon was reviewed visually as a rendered contact sheet, which is
+The diagnostic sword's icon was reviewed visually as a rendered contact sheet, which is
 not the same as seeing it in a hotbar. Never loaded into a client.
 
 ### v0.4.0 — not tested in Minecraft
@@ -456,7 +463,44 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
 
-### v0.5.2 — presentation fix, not yet tested in Minecraft
+### v0.6.0 — Ember Blade, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run generate` | up to date, 8 definitions |
+| `npm run catalog -- --check` | up to date |
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **359 passed**, 0 failed |
+| Uniqueness | 8 swords: ids, names, texture shortnames, lang keys all unique |
+| Sound presets | 21 verified against 1824 vanilla events |
+| Registry | 8 shipped, 0 diagnostic; 9 abilities, none orphaned |
+
+New guards, negative-tested by seeding the defect: two swords sharing a display
+name, and two sharing a texture shortname, are both build failures.
+
+**Ember Blade has never been in a client.** The specific things worth watching
+when it is:
+
+- whether the heat mechanic *reads* — a player needs to notice that hitting
+  things makes the burst stronger. The action bar shows `heat n/5` on each hit
+  and `n hit · n heat` on the burst, but whether that lands is a design question
+  no test answers.
+- whether 0.22s swing duration feels good or twitchy;
+- whether Ember Blade and Inferno are actually distinguishable in the hotbar at
+  a glance, which is the only real test of the texture work;
+- whether the ember particles and the quench/crackle sounds suit the sword.
+
+### v0.5.2 — TESTED IN MINECRAFT · PASSED
+
+The project owner confirmed all of the following working in Minecraft Bedrock:
+custom sword in the correct Sword/Combat section, icon displaying, human-readable
+name, obtainable, holdable, rendering correctly, normal attack, attack animation,
+ability system, visual effects, sounds, and cooldowns.
+
+This closed out two rounds of client failures (v0.5.0 and v0.5.1) and is the
+project's first green client test.
+
+### v0.5.2 — automated results at time of shipping
 
 The user reported that the sword animations were not working. The audit found
 the abilities had been firing correctly all along — they were invisible and

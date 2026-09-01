@@ -28,7 +28,7 @@ function definition(id, name) {
 
 function makeIdentifier() {
     const swords = new SwordRegistry();
-    swords.register(definition('custom_swords:test_blade', 'Test Blade'));
+    swords.register(definition('custom_swords:ember_blade', 'Ember Blade'));
     swords.register(definition('custom_swords:other_blade', 'Other Blade'));
     swords.seal();
     return { identifier: new ItemIdentifier({ swords }), swords };
@@ -38,7 +38,7 @@ describe('ItemIdentifier', () => {
     describe('resolution', () => {
         it('identifies each of our registered swords distinctly', () => {
             const { identifier } = makeIdentifier();
-            assert.equal(identifier.fromItemStack(new MockItemStack('custom_swords:test_blade'))?.name, 'Test Blade');
+            assert.equal(identifier.fromItemStack(new MockItemStack('custom_swords:ember_blade'))?.name, 'Ember Blade');
             assert.equal(identifier.fromItemStack(new MockItemStack('custom_swords:other_blade'))?.name, 'Other Blade');
         });
 
@@ -77,7 +77,7 @@ describe('ItemIdentifier', () => {
         it('classifies all four kinds of item', () => {
             const { identifier } = makeIdentifier();
 
-            assert.equal(identifier.describe(new MockItemStack('custom_swords:test_blade')).kind, 'custom_sword');
+            assert.equal(identifier.describe(new MockItemStack('custom_swords:ember_blade')).kind, 'custom_sword');
             assert.equal(
                 identifier.describe(new MockItemStack('minecraft:iron_sword', [VANILLA_SWORD_TAG])).kind,
                 'vanilla_sword',
@@ -88,7 +88,7 @@ describe('ItemIdentifier', () => {
 
         it('returns the definition only for our own swords', () => {
             const { identifier } = makeIdentifier();
-            assert.equal(identifier.describe(new MockItemStack('custom_swords:test_blade')).sword?.name, 'Test Blade');
+            assert.equal(identifier.describe(new MockItemStack('custom_swords:ember_blade')).sword?.name, 'Ember Blade');
             assert.equal(identifier.describe(new MockItemStack('minecraft:iron_sword', [VANILLA_SWORD_TAG])).sword, undefined);
         });
 
@@ -106,11 +106,11 @@ describe('ItemIdentifier', () => {
         it('finds a custom sword in the main hand', () => {
             const { identifier } = makeIdentifier();
             const player = new MockPlayer({ id: 'player-a' });
-            player.setMainhand(new MockItemStack('custom_swords:test_blade'));
+            player.setMainhand(new MockItemStack('custom_swords:ember_blade'));
 
             const held = identifier.heldSword(player);
-            assert.equal(held?.sword.id, 'custom_swords:test_blade');
-            assert.equal(held?.itemStack.typeId, 'custom_swords:test_blade');
+            assert.equal(held?.sword.id, 'custom_swords:ember_blade');
+            assert.equal(held?.itemStack.typeId, 'custom_swords:ember_blade');
         });
 
         it('returns undefined for an empty hand, a vanilla sword, or another item', () => {
@@ -127,7 +127,7 @@ describe('ItemIdentifier', () => {
         it('reads the main hand slot specifically, not the off hand', () => {
             const { identifier } = makeIdentifier();
             const player = new MockPlayer({ id: 'player-a' });
-            player.equipment[EquipmentSlot.Offhand] = new MockItemStack('custom_swords:test_blade');
+            player.equipment[EquipmentSlot.Offhand] = new MockItemStack('custom_swords:ember_blade');
 
             assert.equal(identifier.heldSword(player), undefined);
         });
@@ -138,7 +138,7 @@ describe('ItemIdentifier', () => {
             assert.equal(identifier.heldSword(null), undefined);
 
             const gone = new MockPlayer({ id: 'player-gone' });
-            gone.setMainhand(new MockItemStack('custom_swords:test_blade'));
+            gone.setMainhand(new MockItemStack('custom_swords:ember_blade'));
             gone.isValid = false;
             assert.doesNotThrow(() => identifier.heldSword(gone));
             assert.equal(identifier.heldSword(gone), undefined);

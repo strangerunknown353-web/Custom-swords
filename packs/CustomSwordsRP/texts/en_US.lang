@@ -3,10 +3,10 @@
 pack.name=Custom Swords
 pack.description=Custom Swords - resources (textures and text).
 
-## custom_swords:test_blade - Uncommon
-item.custom_swords:test_blade=§aTest Blade§r
-item.custom_swords:test_blade.name=§aTest Blade§r
-item.custom_swords:test_blade.description=Framework diagnostic sword. Every activation exercises a different subsystem.
+## custom_swords:ember_blade - Uncommon
+item.custom_swords:ember_blade=§aEmber Blade§r
+item.custom_swords:ember_blade.name=§aEmber Blade§r
+item.custom_swords:ember_blade.description=Quenched while still glowing. The forge never fully left the steel.
 
 ## custom_swords:inferno_sword - Epic
 item.custom_swords:inferno_sword=§dInferno Sword§r

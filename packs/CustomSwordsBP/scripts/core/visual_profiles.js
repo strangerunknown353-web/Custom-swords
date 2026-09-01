@@ -97,7 +97,22 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'nature_impact',
     }),
 
-    /** The framework's neutral default, used by the diagnostic Test Blade. */
+    /**
+     * Ember: sparks off heated steel, not a conflagration. Deliberately built
+     * from a different vocabulary than `fire` — spark motes rather than open
+     * flame at the hand, a single controlled candle-flame on the target rather
+     * than molten spatter — so Ember Blade and Inferno never read as the same
+     * weapon at two power levels.
+     */
+    ember: Object.freeze({
+        caster: 'minecraft:redstone_torch_dust_particle',
+        target: 'minecraft:candle_flame_particle',
+        trail: 'minecraft:obsidian_glow_dust_particle',
+        castSound: 'ember_cast',
+        impactSound: 'ember_impact',
+    }),
+
+    /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',
         target: 'minecraft:evoker_spell',

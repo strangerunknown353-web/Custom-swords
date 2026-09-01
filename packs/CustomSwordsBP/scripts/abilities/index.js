@@ -19,6 +19,18 @@ import { brand } from './builtin/brand.js';
 import { cleave } from './builtin/cleave.js';
 import { surge } from './builtin/surge.js';
 import { bolster } from './builtin/bolster.js';
+import { emberBurst } from './builtin/ember_burst.js';
+import { emberEdge } from './builtin/ember_edge.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
-export const ABILITIES = Object.freeze([strike, burst, repulse, brand, cleave, surge, bolster]);
+export const ABILITIES = Object.freeze([
+    strike,
+    burst,
+    repulse,
+    brand,
+    cleave,
+    surge,
+    bolster,
+    emberBurst,
+    emberEdge,
+]);

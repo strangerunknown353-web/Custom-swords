@@ -17,8 +17,8 @@ import { log } from '../../packs/CustomSwordsBP/scripts/core/log.js';
 function setup() {
     const swords = new SwordRegistry();
     swords.register({
-        id: 'custom_swords:test_blade',
-        name: 'Test Blade',
+        id: 'custom_swords:ember_blade',
+        name: 'Ember Blade',
         rarity: 'uncommon',
         description: 'Framework diagnostic sword.',
         isTestItem: true,
@@ -36,7 +36,7 @@ function setup() {
 
     const abilities = new AbilityRegistry();
     abilities.register({ id: 'custom_swords:shockwave', name: 'Shockwave', description: 'Test.', execute() {} });
-    abilities.link('custom_swords:shockwave', 'custom_swords:test_blade', 'use');
+    abilities.link('custom_swords:shockwave', 'custom_swords:ember_blade', 'use');
     abilities.seal();
 
     const identifier = new ItemIdentifier({ swords });
@@ -57,13 +57,13 @@ describe('Diagnostics', () => {
 
         const output = player.chatMessages.join('\n');
         assert.match(output, /1 registered — 0 shipped, 1 diagnostic/);
-        assert.match(output, /Test Blade/);
+        assert.match(output, /Ember Blade/);
         assert.match(output, /\[diagnostic\]/);
     });
 
     it('reports a held custom sword with its resolved stats', () => {
         const { diagnostics, player } = setup();
-        player.setMainhand(new MockItemStack('custom_swords:test_blade'));
+        player.setMainhand(new MockItemStack('custom_swords:ember_blade'));
         diagnostics.handle(event('custom_swords:held', player));
 
         const output = player.chatMessages.join('\n');
@@ -93,12 +93,12 @@ describe('Diagnostics', () => {
 
     it('looks a sword up by full id or bare local name', () => {
         const { diagnostics, player } = setup();
-        diagnostics.handle(event('custom_swords:info', player, 'custom_swords:test_blade'));
-        assert.match(player.chatMessages.join('\n'), /Test Blade/);
+        diagnostics.handle(event('custom_swords:info', player, 'custom_swords:ember_blade'));
+        assert.match(player.chatMessages.join('\n'), /Ember Blade/);
 
         player.chatMessages.length = 0;
-        diagnostics.handle(event('custom_swords:info', player, 'test_blade'));
-        assert.match(player.chatMessages.join('\n'), /Test Blade/);
+        diagnostics.handle(event('custom_swords:info', player, 'ember_blade'));
+        assert.match(player.chatMessages.join('\n'), /Ember Blade/);
     });
 
     it('explains itself for an unknown sword, a missing argument and an unknown command', () => {

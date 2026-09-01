@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.5.2.mcaddon` | The Elemental Collection — seven final swords (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus the Test Blade. Fixes both rounds of client bugs: item registration (creative category, display name) in v0.5.1, and ability presentation (all audio silent, five particle identifiers rendering nothing) in v0.5.2. |
+| `CustomSwords-v0.6.0.mcaddon` | Eight swords: Ember Blade plus the seven Elemental Collection blades. Includes both rounds of client bug fixes (item registration in v0.5.1, ability presentation in v0.5.2), which the project owner confirmed working in Minecraft Bedrock. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -25,6 +25,7 @@ toggles are needed.
 4. Give yourself a sword and right-click (or long-press) with mobs nearby:
 
    ```
+   /give @s custom_swords:ember_blade
    /give @s custom_swords:inferno_sword
    /give @s custom_swords:thunder_sword
    /give @s custom_swords:frost_sword

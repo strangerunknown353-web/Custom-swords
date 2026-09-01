@@ -23,15 +23,15 @@ import { createFramework, subscribePlayerLifecycle } from '../../packs/CustomSwo
 import { SWORD_COMPONENT_ID } from '../../packs/CustomSwordsBP/scripts/core/input_router.js';
 import { lifeKey } from '../../packs/CustomSwordsBP/scripts/core/player_state.js';
 
-const TEST_SWORD = 'custom_swords:test_blade';
+const TEST_SWORD = 'custom_swords:ember_blade';
 const EARTH = 'custom_swords:earth_sword';
 const THUNDER = 'custom_swords:thunder_sword';
 
 let tick = 0;
 const clock = () => tick;
 
-function install() {
-    const framework = createFramework({ clock });
+function install(options = {}) {
+    const framework = createFramework({ clock, ...options });
     const registry = new MockItemComponentRegistry();
     framework.router.register(registry);
     subscribePlayerLifecycle(framework);
@@ -81,7 +81,7 @@ describe('edge cases', () => {
         use(component, player);
 
         assert.equal(framework.services.cooldowns.isReady(player.id, `${TEST_SWORD}#use`), true);
-        assert.match(player.actionBarMessages.at(-1), /Nothing in range/);
+        assert.match(player.actionBarMessages.at(-1), /Nothing close enough/);
     });
 
     it('a target that dies mid-execution does not abort the rest of the sweep', () => {
@@ -207,20 +207,40 @@ describe('edge cases', () => {
         });
         dimension.entities.push(foreign);
 
-        use(component, player); // the diagnostic sword's use binding is hostile-only
+        use(component, player); // Ember Burst allows only 'mob' and 'player'
 
         assert.equal(foreign.damageTaken.length, 0);
     });
 
     it('a vanilla passive mob is spared by a hostile-only ability', () => {
-        const { component } = install();
+        // A local fixture: no shipped sword is hostile-only, and none should be
+        // forced to become so to keep this assertion alive. What is under test
+        // is the `allowedTargets` filter, not any particular sword.
+        const hostileOnly = {
+            id: 'custom_swords:hostile_probe',
+            name: 'Hostile Probe',
+            rarity: 'common',
+            description: 'Only strikes hostiles.',
+            item: { attackDamage: 1, durability: 10 },
+            abilities: [
+                {
+                    activation: 'use',
+                    abilityId: 'custom_swords:burst',
+                    cooldownTicks: 20,
+                    targeting: { type: 'area', range: 4 },
+                    allowedTargets: ['hostile'],
+                    params: { damage: 2 },
+                },
+            ],
+        };
+        const { component } = install({ swords: [hostileOnly] });
         const dimension = new MockDimension();
-        const player = wielder(dimension, 'player-a');
+        const player = wielder(dimension, 'player-a', hostileOnly.id);
         const pig = new MockEntity({ id: 'pig', typeId: 'minecraft:pig', location: { x: 0, y: 64, z: 2 }, dimension });
         const mob = zombie(dimension, 'z1', 2);
         dimension.entities.push(pig);
 
-        use(component, player);
+        use(component, player, hostileOnly.id);
 
         assert.equal(pig.damageTaken.length, 0, 'the pig must be spared');
         assert.equal(mob.damageTaken.length, 1);

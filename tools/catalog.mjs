@@ -23,6 +23,13 @@ const { SWORDS } = await import(MODULES.swords);
 const { ABILITIES } = await import(MODULES.abilities);
 const { describeAll } = await import(MODULES.swordStats);
 const { ACTIVATION_LABELS } = await import(`file://${path.join(PATHS.coreDir, 'activation.js')}`);
+const { localNameOf } = await import(`file://${path.join(PATHS.coreDir, 'identifiers.js')}`);
+const { resolvePresentation } = await import(`file://${path.join(PATHS.coreDir, 'visual_profiles.js')}`);
+
+/** @param {any} sword @returns {string[]} The distinct visual profiles its bindings use. */
+function profilesOf(sword) {
+    return [...new Set(sword.abilities.map((b) => b.visual).filter(Boolean))];
+}
 
 /** @param {string} id */
 const abilityName = (id) => ABILITIES.find((a) => a.id === id)?.name ?? id;
@@ -91,10 +98,15 @@ for (const sword of shipped) {
         `| **Enchantable** | ${d.stats.enchantable ? `yes (value ${d.stats.enchantValue})` : 'no'} |`,
     );
     lines.push(`| **Repairs with** | ${d.stats.repairItems.join(', ') || '—'} |`);
+    if (sword.item.swingDuration !== undefined) {
+        lines.push(`| **Swing** | ${sword.item.swingDuration}s |`);
+    }
+    lines.push(`| **Visual profile** | ${profilesOf(sword).join(', ') || '—'} |`);
+    lines.push(`| **Texture** | \`art/swords/${sword.texture ?? localNameOf(sword.id)}.json\` — authored, passes the texture standard |`);
     lines.push('');
 
-    lines.push('| Activation | Ability | Cooldown | Targets | Details |');
-    lines.push('|---|---|---:|---|---|');
+    lines.push('| Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |');
+    lines.push('|---|---|---:|---|---|---|---|');
     for (const binding of sword.abilities) {
         const targeting = binding.targeting ?? { type: 'self' };
         const details = [];
@@ -107,11 +119,17 @@ for (const sword of shipped) {
             details.push(`${effect.effect} ${(effect.durationTicks / 20).toFixed(1)}s`);
         }
         if (binding.restrictions !== undefined) details.push('restricted');
+        const { particles, sounds } = resolvePresentation(binding);
+        const particleNames = particles.map((p) => p.id.replace('minecraft:', '')).join(', ') || '—';
+        const soundNames = Object.entries(sounds)
+            .map(([slot, value]) => `${slot}: ${typeof value === 'string' ? value : value?.id}`)
+            .join(', ') || '—';
         lines.push(
             `| ${ACTIVATION_LABELS[binding.activation]} | ${abilityName(binding.abilityId)} ` +
                 `| ${(binding.cooldownTicks ?? 0) / 20}s ` +
                 `| ${(binding.allowedTargets ?? ['any']).join(', ')} ` +
-                `| ${details.join(' · ') || '—'} |`,
+                `| ${details.join(' · ') || '—'} ` +
+                `| ${particleNames} | ${soundNames} |`,
         );
     }
     lines.push('');

@@ -2,8 +2,8 @@
   "resource_pack_name": "custom_swords",
   "texture_name": "atlas.items",
   "texture_data": {
-    "test_blade": {
-      "textures": "textures/items/custom_swords/swords/test_blade"
+    "ember_blade": {
+      "textures": "textures/items/custom_swords/swords/ember_blade"
     },
     "inferno_sword": {
       "textures": "textures/items/custom_swords/swords/inferno_sword"

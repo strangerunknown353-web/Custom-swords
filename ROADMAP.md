@@ -89,6 +89,16 @@ as the catalogue it was checked against.** There are now three such catalogues �
 effects, particles and sound events — and milestone 11 will add custom assets
 behind the same gate.
 
+### Interlude — Ember Blade finalization (v0.6.0) — **done**
+Also not a roadmap milestone. The framework's diagnostic Test Blade became a
+finished sword, taking the collection to eight shipped and none diagnostic.
+
+It earned its place by exercising something new: Ember Blade is the first sword
+whose damage comes from state carried *between* activations, which turned into a
+reusable stacking-charge primitive on `PlayerStateStore` rather than bespoke
+logic. That is the shape every content milestone below should take — a sword
+that needs something new leaves a reusable capability behind.
+
 ### 6. Ability library — spatial (planned)
 Teleportation, gravity manipulation, earthquakes and area denial. Introduces
 block-aware targeting beyond the `point` mode already shipped, and the safety

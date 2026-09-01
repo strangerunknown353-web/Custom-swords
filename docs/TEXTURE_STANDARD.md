@@ -108,7 +108,7 @@ and can be checked automatically:
 
 ```json
 {
-  "name": "Test Blade",
+  "name": "Ember Blade",
   "description": "What the design is going for.",
   "palette": {
     "o": "#0d0d14",
@@ -126,7 +126,7 @@ and can be checked automatically:
 - Every palette entry must be used by at least one pixel.
 - All 16 rows, all 16 characters wide.
 
-A suggested letter convention, followed by the Test Blade:
+A suggested letter convention, followed by every shipped sword:
 
 | Letter | Role |
 |---|---|
@@ -183,13 +183,32 @@ the first result.
 5. `npm run validate` — the gate must pass with zero errors and zero warnings.
 6. Only then is the sword complete.
 
-## 9. Benchmark
+## 9. Benchmarks
 
-`art/swords/test_blade.json` is the reference. Polished steel blade with a lit
-upper-left edge, two specular glints, a shaded lower-right edge and a deep
-shadow band; a blued-steel cross-guard with a set gem; a leather-wrapped grip
-with visible banding and a shaded underside; a brass pommel with a highlight;
-and a full dark outline.
+Two references, and they are references for different reasons.
 
-Its measured profile — 16 colours, 38% coverage, luminance spread 241 — is the
-floor for the collection, not the ceiling.
+**`art/swords/inferno_sword.json` — material and light.** Cold charcoal iron
+with a molten seam running the blade's length and a white-hot core at the
+fuller; obsidian guard, brass pommel, scorched leather grip. It is the reference
+for how a *material story* should read: the steel is genuinely cold-toned so
+the heat has something to sit against.
+
+**`art/swords/ember_blade.json` — restraint and silhouette.** A slim,
+straight blade of cold-polished steel holding forge heat only in its lower
+third and fading to a keen grey point; a compact steel guard with one live ember
+between the quillons; wire-wrapped grip with a single highlight; small brass
+pommel. It is the reference for **how two swords in the same theme stay
+distinct**: both are fire swords, and neither is a recolour of the other.
+
+Set side by side they differ in silhouette (slim versus broad), in where the
+heat sits (a band at the ricasso versus a full-length seam), and in colour
+weighting (mostly cool steel versus mostly dark iron). That comparison is the
+standard every future themed pair must meet — the fifth fire sword must still
+be tellable from the first four at hotbar scale.
+
+| Reference | Colours | Coverage | Luminance spread |
+|---|---:|---:|---:|
+| Inferno Sword | 14 | 36% | 218 |
+| Ember Blade | 13 | 31% | 225 |
+
+Those numbers are the floor for the collection, not the ceiling.

@@ -5,19 +5,20 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.11.0 — fourteen swords, all craftable.**
-> Solar ☀️, Gravity 🪐 and Poison 🧪 join Crystal 🔮, Void 🕳️, Shadow 🌑,
-> Ember Blade 🔥 and the seven Elemental Collection blades: Inferno 🔥,
-> Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿. See
-> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
+> **Status: v0.12.0 — the roster is complete at sixteen swords, all craftable.**
+> Time ⏳ and Storm 🌩️ close it out, joining Solar ☀️, Gravity 🪐, Poison 🧪,
+> Crystal 🔮, Void 🕳️, Shadow 🌑, Ember Blade 🔥 and the seven Elemental
+> Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨,
+> Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster and its crafting
+> progression, and `ROADMAP.md` for what remains.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Everything after v0.5.2 — Ember Blade, Frost, Thunder, Shadow, Crystal, Void,
-> Solar, Gravity and Poison — has **not** been client-tested.
+> Everything after v0.5.2 — eleven of the sixteen swords — has **not** been
+> client-tested.
 
 ---
 
@@ -61,6 +62,8 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:solar_sword       strong at noon, weak at night, no use in the Nether
 /give @s custom_swords:gravity_sword     drags things down; hits airborne targets hardest
 /give @s custom_swords:poison_sword      work venom into one target, then burst it
+/give @s custom_swords:time_sword        worth more the longer you do not use it
+/give @s custom_swords:storm_sword       worth nothing at all standing still
 ```
 
 Every sword is craftable at a crafting table — `SWORD_CATALOG.md` shows each
@@ -157,7 +160,11 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **14 of 20–25 swords.** The remaining 6–11 arrive in milestones 7, 9 and 10.
+- **Sixteen swords, and the roster is closed.** The original plan said 20–25;
+  sixteen distinct designs is where the axes ran out. Every sword answers a
+  question no other one asks — see the table in `ARCHITECTURE.md` §9 — and a
+  seventeenth would have had to repeat one. Milestones 9 and 10 are retired
+  rather than unfinished.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No loot tables or trades.** Every sword is craftable at a table, but none

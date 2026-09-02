@@ -107,7 +107,8 @@ profile:
 
 ```js
 visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember
-                       // shadow | crystal | void | solar | gravity | venom | arcane
+                       // shadow | crystal | void | solar | gravity | venom
+                       // chrono | tempest | arcane
 ```
 
 That supplies the caster particle, the target particle, the trail used for arcs
@@ -205,6 +206,28 @@ Two rules for the ability itself:
 
 Ember Blade is the worked example — see `swords/ember_blade.js` and both
 `abilities/builtin/ember_*.js`.
+
+### State that must survive death
+
+`mark`/`sinceMark` are life-scoped by default, so a combo window cannot outlast
+the death that ended it. Some clocks must not be:
+
+```js
+// A charge that belongs to the SWORD, not the body carrying it.
+services.state.mark(ctx.playerId, 'temporal_charge', ctx.currentTick, { lifeScoped: false });
+const waited = services.state.sinceMark(ctx.playerId, 'temporal_charge', ctx.currentTick, {
+    lifeScoped: false,
+});
+```
+
+The rule to apply: **anything a player would benefit from resetting must not be
+life-scoped.** A life-scoped charge clock is cleared on death, `sinceMark` then
+reports `Infinity` — "has been waiting forever", a full meter — and dying
+becomes a way to reload the weapon. It is the same reasoning that keeps
+cooldowns out of the life scope.
+
+Pass the same `lifeScoped` value to both calls, or the read looks in a different
+key and reports `Infinity`.
 
 ### State that belongs to the target, not the player
 
@@ -464,6 +487,22 @@ vocabulary used in balance work. It grants no combat bonus.
 The colour is applied as a section code on the generated display name rather
 than via `minecraft:rarity`, which only supports four tiers and escalates on
 enchant. See `docs/API_NOTES.md`.
+
+## Crafting cost
+
+Recipes carry a **cost tier** as well as ingredients.
+`tools/data/ingredient_tiers.json` gives every vanilla item an acquisition tier
+(0 = starting materials, 4 = a boss drop) and every rarity a floor. `npm run
+validate` warns when a sword's rarest ingredient sits below the floor its rarity
+implies, and `SWORD_CATALOG.md` publishes the whole curve.
+
+It is a warning rather than an error on purpose: costing less than your tier
+suggests is a balance judgement, not a defect, and the fix belongs to whoever is
+doing a balance pass. But take it seriously when adding a sword — Storm Sword
+was drafted as a Legendary and shipped as an Epic because the audit pointed out
+that every one of its ingredients was a trial chamber away, not an End away.
+
+If a new ingredient is not in the tier file, it defaults to tier 0. Add it.
 
 ## Checklist
 

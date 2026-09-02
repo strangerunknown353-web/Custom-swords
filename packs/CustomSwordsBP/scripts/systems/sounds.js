@@ -118,6 +118,20 @@ export const SOUND_LIBRARY = Object.freeze({
     venom_cast: { id: 'mob.witch.throw', volume: 0.9, pitch: 0.9 },
     venom_impact: { id: 'random.potion.brewed', volume: 0.6, pitch: 1.2 },
 
+    // Chrono: a vault mechanism engaging for the hold, a clean note-block chime
+    // as each target stops, and the escapement tick the passive makes when a hit
+    // winds the sword a little further.
+    chrono_cast: { id: 'vault.activate', volume: 0.9, pitch: 1.1 },
+    chrono_impact: { id: 'note.chime', volume: 0.6, pitch: 1.6 },
+    chrono_wind: { id: 'block.click', volume: 0.4, pitch: 1.8 },
+
+    // Tempest: the weather itself. Thunder Sword took `item.trident.thunder`
+    // and `ambient.weather.lightning.impact`; this takes the two the game uses
+    // for an actual storm, which is the distinction the swords make too.
+    tempest_cast: { id: 'ambient.weather.thunder', volume: 0.9, pitch: 1.2 },
+    tempest_impact: { id: 'ambient.weather.rain', volume: 0.7, pitch: 1.3 },
+    tempest_gust: { id: 'wind_charge.burst', volume: 0.5, pitch: 1.4 },
+
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },

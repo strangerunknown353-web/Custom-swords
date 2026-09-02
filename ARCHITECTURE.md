@@ -27,7 +27,7 @@ code path.**
 │               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
 │ SYSTEMS       targeting  damage  combat  effects  particles          │
-│               sounds     feedback  movement  environment             │
+│               sounds  feedback  movement  environment                │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -114,11 +114,12 @@ A sword is **pure data**: no code, no conditionals, no engine calls. This is
 Ember Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
 
-Fourteen swords are registered today, all shipped: the seven Elemental
-Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus
-Ember Blade, Shadow, Crystal, Void, Solar, Gravity and Poison. The project no longer ships a diagnostic item — the
+Sixteen swords are registered today, and the roster is closed: the seven
+Elemental Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal,
+Nature) plus Ember Blade, Shadow, Crystal, Void, Solar, Gravity, Poison, Time
+and Storm. The project no longer ships a diagnostic item — the
 former Test Blade became Ember Blade — though `isTestItem` remains in the data
-model for future use. Not one of the fourteen required a new engine call:
+model for future use. Not one of the sixteen required a new engine call:
 everything a sword can do is expressed as a binding envelope over an ability,
 and every ability goes through the same combat pipeline. `SWORD_CATALOG.md` is
 generated from those definitions by `tools/catalog.mjs`, so the published stats
@@ -763,6 +764,17 @@ question, which is the test a new ability has to pass to justify existing:
 | `crush` | how far **above** the caster the target is | Gravity |
 | `weigh` | the target's **maximum** health, as mass | Gravity |
 | `rupture` | venom the target is already carrying | Poison |
+| `stasis` | **how long the caster has waited** | Time |
+| `surge` | **how fast the caster is moving** | Storm |
+
+Sixteen swords, and every row of that table is a different question. That is
+also why the roster closed there: the collection's rule has always been that a
+sword must ask something no other sword asks, and by sixteen the axes a Bedrock
+add-on can cheaply and reliably read — distance, angle, crowd size, caster
+health, target health, target category, target mass, altitude, reach, world
+time, banked charge, banked venom, waiting, motion — were used up. A
+seventeenth would have had to repeat one, and a repeated axis is a recolour with
+a different particle.
 
 None of these reads ever throws — `getEffect` and `getComponent` both raise on a
 dead handle, and they run inside combat resolution where a throw would abandon
@@ -879,6 +891,45 @@ source of the same effect feeds the meter — a witch's poison counts as venom.
 That is recorded in `TODO.md` as a question for play rather than reasoning; it
 is arguably correct and arguably an exploit, and it is not the sort of thing
 static analysis settles.
+
+### Waiting as a resource, and the second mark scope
+
+Time Sword's `stasis` is the only ability whose output depends on **how long it
+has been since it last ran**. That needed no new machinery — `sinceMark` already
+answers it — but it did need a second scope.
+
+Marks are life-scoped by default so a combo window cannot outlast the death that
+ended it. A charge clock must not be: a life-scoped clock is *cleared* on death,
+`sinceMark` then reports `Infinity`, and `Infinity` means "has been waiting
+forever", which is a **full meter**. Dying would recharge the sword. So
+`mark`/`sinceMark` take `{ lifeScoped: false }`, storing under a `mark:` prefix
+that survives respawning and is dropped on disconnect like everything else.
+
+| Scope | Key prefix | Cleared on | Use for |
+|---|---|---|---|
+| Life | `life:` | death, respawn, disconnect | combo windows, charge levels |
+| **Mark** | `mark:` | **disconnect only** | clocks that belong to the item, not the body |
+| Player | anything else | disconnect | anything that should survive a respawn |
+
+It is the same reasoning that keeps cooldowns out of the life scope, and it is
+worth stating as a rule: **anything a player would benefit from resetting must
+not be life-scoped.**
+
+`Infinity` for an unwritten mark is load-bearing rather than incidental here — a
+sword picked up and never fired has, correctly, been waiting forever, and
+arrives fully wound with no special case in the ability.
+
+### Reading the caster's motion
+
+`MovementService.momentumOf` is the last of the conditional reads, and the only
+one about what the caster is *doing* rather than what they are.
+
+It is built from `isSprinting` and `isOnGround`/`isFalling` — booleans — rather
+than from `getVelocity()`, which would give a nicer scalar. Server-side player
+velocity in Bedrock is jittery and can report near-zero for a player who is
+plainly running, and a sword's headline mechanic cannot rest on a reading like
+that. Two reliable booleans beat one unreliable float; `TODO.md` records the
+trade so it can be revisited with client evidence rather than by argument.
 
 ### Acting where the caster is not
 
@@ -1180,9 +1231,9 @@ and the action bar and catalogue both show the label. Without this the choice
 was between reusable abilities and evocative names; there is no reason to lose
 either.
 
-Fifteen profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
-`grove`, `ember`, `shadow`, `crystal`, `void`, `solar`, `gravity`, `venom`, and
-`arcane` as the framework's neutral default. A test asserts no two share a caster particle or a cast sound,
+Seventeen profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
+`grove`, `ember`, `shadow`, `crystal`, `void`, `solar`, `gravity`, `venom`,
+`chrono`, `tempest`, and `arcane` as the framework's neutral default. A test asserts no two share a caster particle or a cast sound,
 so "distinct look per theme" is enforced rather than intended — which is what
 keeps `ember` and `fire` from converging as more fire-themed swords arrive.
 
@@ -1197,6 +1248,8 @@ temptation is to reach for the same vocabulary at a different brightness:
 | `fire` / `ember` / `solar` | the third warm theme takes the one warm vocabulary neither of the first two uses — totem sparkle and a pale spike, never flame or spatter |
 | `void` / `gravity` | cosmic and bright against dark versus entirely achromatic dust and debris |
 | `grove` / `venom` | villager-happy motes and blossom, unmistakably benign, versus a thrown toxic puff and a sour pulse |
+| `storm` / `tempest` | a single white arc between two points versus the whole sky — cloud, rain and a pale discharge |
+| `gale` / `tempest` | a shockwave and drifting motes versus weather that lands on its targets |
 
 ### Why this layer exists
 

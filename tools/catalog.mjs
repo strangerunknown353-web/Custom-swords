@@ -16,6 +16,42 @@ import path from 'node:path';
 
 import { PATHS, MODULES } from './lib/project.mjs';
 
+/**
+ * Ingredient acquisition tiers, so the published catalogue can show the cost
+ * curve rather than assert one. Shares its data file with `tools/validate.mjs`,
+ * which fails a warning when a sword sits below the tier its rarity implies.
+ */
+const TIER_DATA = JSON.parse(
+    fs.readFileSync(path.join(PATHS.root, 'tools', 'data', 'ingredient_tiers.json'), 'utf8'),
+);
+/** @type {Map<string, number>} vanilla item -> tier */
+const INGREDIENT_TIER = new Map();
+/** @type {Map<number, string>} tier -> label */
+const TIER_LABEL = new Map([[0, 'starting materials']]);
+for (const group of TIER_DATA.tiers ?? []) {
+    TIER_LABEL.set(group.tier, group.label);
+    for (const item of group.items ?? []) INGREDIENT_TIER.set(item, group.tier);
+}
+
+/**
+ * The rarest ingredient a recipe demands, and its tier.
+ *
+ * @param {any} sword
+ * @returns {{ tier: number, item: string }}
+ */
+function costOf(sword) {
+    let tier = 0;
+    let item = '—';
+    for (const value of Object.values(sword.recipe?.key ?? {})) {
+        const itemTier = INGREDIENT_TIER.get(value) ?? 0;
+        if (itemTier >= tier) {
+            tier = itemTier;
+            item = value;
+        }
+    }
+    return { tier, item };
+}
+
 const CHECK_ONLY = process.argv.includes('--check');
 const OUTPUT = path.join(PATHS.root, 'SWORD_CATALOG.md');
 
@@ -158,6 +194,30 @@ if (diagnostics.length > 0) {
     }
     lines.push('');
 }
+
+lines.push('## Crafting progression', '');
+lines.push(
+    'What each rarity actually costs to make, by the rarest ingredient its recipe',
+    'demands. Tiers come from `tools/data/ingredient_tiers.json`; `npm run validate`',
+    'warns when a sword sits below the tier its rarity implies, so the curve is',
+    'checked rather than asserted.',
+    '',
+);
+lines.push('| Rarity | Sword | Gated behind | Tier |');
+lines.push('|---|---|---|---:|');
+const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+for (const rarity of rarityOrder) {
+    const group = shipped.filter((s) => s.rarity === rarity);
+    if (group.length === 0) continue;
+    group.sort((a, b) => costOf(a).tier - costOf(b).tier);
+    for (const sword of group) {
+        const { tier, item } = costOf(sword);
+        lines.push(
+            `| ${rarity} | ${sword.name} | \`${item.replace('minecraft:', '')}\` — ${TIER_LABEL.get(tier)} | ${tier} |`,
+        );
+    }
+}
+lines.push('');
 
 lines.push('## Abilities', '');
 lines.push('| Ability | Used by | Behaviour |');

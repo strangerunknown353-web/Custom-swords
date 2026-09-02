@@ -43,6 +43,12 @@
     },
     "poison_sword": {
       "textures": "textures/items/custom_swords/swords/poison_sword"
+    },
+    "time_sword": {
+      "textures": "textures/items/custom_swords/swords/time_sword"
+    },
+    "storm_sword": {
+      "textures": "textures/items/custom_swords/swords/storm_sword"
     }
   }
 }

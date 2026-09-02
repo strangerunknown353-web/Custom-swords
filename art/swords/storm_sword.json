@@ -1,0 +1,36 @@
+{
+  "name": "Storm Sword",
+  "description": "A broad, blunt-shouldered blade of dark storm-slate with rain-pale streaks alternating down its length instead of one bright cutting edge — weather on the metal rather than a bolt drawn along it. Swept copper wings raked back like a weather vane, a plain grip, and a copper cap for a pommel. Deliberately cold and blue where Thunder is dark iron and gold, and heavy where Wind is slim.",
+  "palette": {
+    "o": "#060a10",
+    "R": "#e8f2fb",
+    "H": "#6f89a4",
+    "B": "#4d6076",
+    "S": "#2e3c4c",
+    "D": "#1a2430",
+    "G": "#d98a4a",
+    "g": "#8f5426",
+    "C": "#e8a66a",
+    "c": "#a06430",
+    "W": "#7a7266",
+    "k": "#423c33"
+  },
+  "pixels": [
+    ".............o..",
+    "............oRo.",
+    "...........oRBo.",
+    "..........oHRBo.",
+    ".........oRHBSo.",
+    "...oo...oHRBSDo.",
+    "..oGgo..oRHBSDo.",
+    "...oGgooHRBSDo..",
+    "....oGgGRHBSo...",
+    "....oWogGooo....",
+    "...oWkoogo......",
+    "..oWko..o.......",
+    ".oCcCo..........",
+    ".occCo..........",
+    "..ooo...........",
+    "................"
+  ]
+}

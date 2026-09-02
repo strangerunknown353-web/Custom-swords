@@ -424,6 +424,12 @@ export class MockPlayer extends MockEntity {
         };
         /** @type {string[]} */
         this.chatMessages = [];
+        // Motion state, as the engine exposes it on Player. Defaults describe a
+        // player standing still on flat ground, which is the case a test that
+        // does not care about motion should get.
+        this.isSprinting = false;
+        this.isFalling = false;
+        this.isOnGround = true;
         /** @type {Record<string, MockItemStack | undefined>} */
         this.equipment = {};
         this.components['minecraft:equippable'] = {

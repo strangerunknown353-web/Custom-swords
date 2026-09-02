@@ -1,0 +1,35 @@
+{
+  "name": "Time Sword",
+  "description": "A warm brass blade with a seam of cyan temporal light set one pixel in from the cutting edge and broken by bright graduation marks, like a measuring instrument that happens to have a point. The guard is an hourglass stood on its end — wide, pinched at the waist where the sand shows through, wide again — the only guard in the collection with a waist. Dark leather grip and a small clock-face pommel with a cyan centre.",
+  "palette": {
+    "o": "#0c1018",
+    "X": "#fff6d8",
+    "T": "#6ff0e0",
+    "H": "#f0d48a",
+    "B": "#c49a3e",
+    "S": "#8a6620",
+    "D": "#4f3a10",
+    "G": "#dfe8f0",
+    "g": "#8d9aa8",
+    "W": "#9a8560",
+    "k": "#574a34"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHBo",
+    "..........oHTBSo",
+    ".........oXHBSDo",
+    "........oHTBSDo.",
+    "...oooooXHBSDo..",
+    "..oGgggGHTBSo...",
+    "...oogTooooo....",
+    "..oGgggGo.......",
+    "...oWkoo........",
+    "..oWko..........",
+    ".oGTGo..........",
+    ".oggGo..........",
+    "..ooo..........."
+  ]
+}

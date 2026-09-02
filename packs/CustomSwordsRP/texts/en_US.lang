@@ -72,3 +72,13 @@ item.custom_swords:gravity_sword.description=Everything it touches remembers whi
 item.custom_swords:poison_sword=§9Poison Sword§r
 item.custom_swords:poison_sword.name=§9Poison Sword§r
 item.custom_swords:poison_sword.description=The wound is the smaller half of what it leaves behind.
+
+## custom_swords:time_sword - Mythic
+item.custom_swords:time_sword=§cTime Sword§r
+item.custom_swords:time_sword.name=§cTime Sword§r
+item.custom_swords:time_sword.description=It keeps what you do not spend, and spends what you have kept.
+
+## custom_swords:storm_sword - Epic
+item.custom_swords:storm_sword=§dStorm Sword§r
+item.custom_swords:storm_sword.name=§dStorm Sword§r
+item.custom_swords:storm_sword.description=It brings the weather with it, and only as fast as you do.

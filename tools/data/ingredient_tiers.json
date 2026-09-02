@@ -1,0 +1,87 @@
+{
+  "note": "Acquisition tiers for crafting ingredients, used by tools/validate.mjs and tools/catalog.mjs to check that the recipe cost curve matches the rarity curve. Build-time only; not shipped. An item not listed here is tier 0 — something a new player can get in their first hour.",
+  "tiers": [
+    {
+      "tier": 1,
+      "label": "deep overworld",
+      "why": "needs a mine, a biome hunt, or a mob that does not spawn everywhere",
+      "items": [
+        "minecraft:iron_ingot",
+        "minecraft:iron_block",
+        "minecraft:gold_ingot",
+        "minecraft:gold_block",
+        "minecraft:copper_ingot",
+        "minecraft:copper_block",
+        "minecraft:packed_ice",
+        "minecraft:moss_block",
+        "minecraft:deepslate",
+        "minecraft:amethyst_shard",
+        "minecraft:amethyst_block",
+        "minecraft:obsidian",
+        "minecraft:cactus",
+        "minecraft:pufferfish",
+        "minecraft:spider_eye",
+        "minecraft:clock",
+        "minecraft:prismarine_shard",
+        "minecraft:prismarine_crystals",
+        "minecraft:phantom_membrane"
+      ]
+    },
+    {
+      "tier": 2,
+      "label": "nether, ocean monument or trial chamber",
+      "why": "needs a dimension change or a generated structure",
+      "items": [
+        "minecraft:blaze_rod",
+        "minecraft:magma_cream",
+        "minecraft:glowstone",
+        "minecraft:glowstone_dust",
+        "minecraft:quartz",
+        "minecraft:diamond",
+        "minecraft:emerald",
+        "minecraft:fermented_spider_eye",
+        "minecraft:lightning_rod",
+        "minecraft:breeze_rod",
+        "minecraft:ender_pearl"
+      ]
+    },
+    {
+      "tier": 3,
+      "label": "end, ancient city or deep nether",
+      "why": "needs the End, an ancient city, or ancient debris",
+      "items": [
+        "minecraft:ender_eye",
+        "minecraft:end_rod",
+        "minecraft:ancient_debris",
+        "minecraft:netherite_ingot",
+        "minecraft:netherite_scrap",
+        "minecraft:echo_shard",
+        "minecraft:shulker_shell",
+        "minecraft:heart_of_the_sea",
+        "minecraft:popped_chorus_fruit",
+        "minecraft:end_stone"
+      ]
+    },
+    {
+      "tier": 4,
+      "label": "boss or raid",
+      "why": "needs a dragon, a wither or an evoker put down",
+      "items": [
+        "minecraft:dragon_breath",
+        "minecraft:nether_star",
+        "minecraft:totem_of_undying",
+        "minecraft:end_crystal",
+        "minecraft:elytra"
+      ]
+    }
+  ],
+  "expected": {
+    "note": "The lowest ingredient tier a recipe of each rarity should require. A recipe whose rarest ingredient falls below its floor is cheaper than its tier implies; one far above is a wall.",
+    "common": 0,
+    "uncommon": 1,
+    "rare": 1,
+    "epic": 2,
+    "legendary": 3,
+    "mythic": 4
+  }
+}

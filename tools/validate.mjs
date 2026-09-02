@@ -814,6 +814,78 @@ function validateRecipes(swords) {
     }
 
     note(`${swords.length} recipe(s), ${ingredientsChecked} ingredient/repair item(s) verified against ${vanillaItems.size} vanilla items.`);
+
+    validateCraftingProgression(swords);
+}
+
+/**
+ * The crafting cost curve against the rarity curve.
+ *
+ * A collection where a Rare costs a diamond and an Epic costs a stick does not
+ * feel intentional, and nothing else in the toolchain can see it: every such
+ * recipe is individually valid, and the problem only exists in the comparison.
+ *
+ * Ingredients carry an acquisition tier (`tools/data/ingredient_tiers.json`) and
+ * each rarity declares the lowest tier its recipes should demand. A sword whose
+ * rarest ingredient falls below its floor is **cheaper than its tier claims**,
+ * which is reported as a warning rather than an error: it is a balance
+ * judgement, not a defect, and the fix belongs to whoever is doing the balance
+ * pass rather than to whoever is adding a sword.
+ *
+ * @param {readonly any[]} swords
+ */
+function validateCraftingProgression(swords) {
+    const tierFile = path.join(PATHS.root, 'tools', 'data', 'ingredient_tiers.json');
+    if (!fs.existsSync(tierFile)) {
+        warn('tools/data/ingredient_tiers.json is missing — the crafting cost curve cannot be checked.');
+        return;
+    }
+    const data = readJson(tierFile);
+    if (data === undefined) return;
+
+    /** @type {Map<string, number>} item -> acquisition tier */
+    const tierOf = new Map();
+    /** @type {Map<number, string>} tier -> label */
+    const labelOf = new Map([[0, 'starting materials']]);
+    for (const group of data.tiers ?? []) {
+        labelOf.set(group.tier, group.label);
+        for (const item of group.items ?? []) tierOf.set(item, group.tier);
+    }
+
+    /** @type {{ rarity: string, id: string, tier: number, floor: number, rarest: string }[]} */
+    const rows = [];
+    for (const sword of swords) {
+        const floor = data.expected?.[sword.rarity];
+        if (typeof floor !== 'number') continue;
+
+        let tier = 0;
+        let rarest = '(starting materials)';
+        for (const item of Object.values(sword.recipe?.key ?? {})) {
+            const itemTier = tierOf.get(item) ?? 0;
+            if (itemTier > tier) {
+                tier = itemTier;
+                rarest = item;
+            }
+        }
+        rows.push({ rarity: sword.rarity, id: sword.id, tier, floor, rarest });
+    }
+
+    for (const row of rows.sort((a, b) => a.tier - b.tier)) {
+        if (row.tier >= row.floor) continue;
+        warn(
+            `${row.id} is ${row.rarity} but its costliest ingredient is '${row.rarest}' ` +
+                `(tier ${row.tier}, ${labelOf.get(row.tier)}), below the tier-${row.floor} floor its rarity implies. ` +
+                'Cheaper than its rarity claims — a balance judgement, not a defect.',
+        );
+    }
+
+    const byTier = new Map();
+    for (const row of rows) byTier.set(row.tier, (byTier.get(row.tier) ?? 0) + 1);
+    const spread = [...byTier.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([tier, count]) => `${count}x tier ${tier} (${labelOf.get(tier)})`)
+        .join(', ');
+    note(`crafting cost curve: ${spread}.`);
 }
 
 // ---------------------------------------------------------------------------

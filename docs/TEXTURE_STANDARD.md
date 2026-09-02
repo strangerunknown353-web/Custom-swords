@@ -69,7 +69,13 @@ same outline discipline — but each sword carries its own theme:
 | Solar | white-gold light, not heat — pale steel against warm gold fittings | Solar — bright tapering blade, a solid gold sun-disc guard, the only round guard in the set |
 | Gravity | achromatic gunmetal and dust, industrial rather than cosmic | Gravity — heavy chisel-ended slab, a plain bronze bar straight across, a counterweight pommel |
 | Poison | sickly yellow-green venom sitting *on* bruised violet-grey steel | Poison — the narrowest blade in the set, corroded bronze fangs, a venom bead in the pommel |
-| Dragon | ancient bronze and bone, scaled guard, warm patina | *(not yet)* |
+| Time | warm brass and cyan, clockwork rather than magic | Time — graduated blade, an hourglass guard with a pinched waist, a clock-face pommel |
+| Storm | cold slate and copper, weather rather than a bolt | Storm — rain-pale banding down a broad blade, swept copper wings, a copper cap |
+
+The roster closed at sixteen, so the table above is the finished set. It was
+drawn up when there were seven swords and every later theme had to find a gap in
+it; the last two took the two that were left — clockwork, which nothing else
+used, and *weather* as distinct from Thunder's bolt and Wind's gust.
 
 **Two swords must never be distinguishable only by hue.** Every sword in the
 table above differs from every other in silhouette *and* palette. This is the
@@ -234,6 +240,8 @@ Reach for that before reaching for the colour picker.
 |---|---:|---:|---:|
 | Void Sword | 12 | 39% | 240 |
 | Crystal Sword | 13 | 37% | 238 |
+| Time Sword | 11 | 36% | 230 |
+| Storm Sword | 12 | 36% | 231 |
 
 **A fourth rule, learned the hard way in v0.11.0: a dark hilt disappears.**
 
@@ -251,3 +259,11 @@ cannot run:
 > Render the icon at hotbar scale, on a dark ground, and **cover the blade with
 > your thumb**. If what is left is not recognisably a hilt, the hilt is not
 > finished.
+
+**And a fifth, from the last two: the guard is where a crowded theme finds
+room.** By sixteen swords every blade shape was close to something. Time and
+Storm are separated from their neighbours less by their blades than by their
+guards — an hourglass with a visible waist, and a pair of swept wings, neither
+of which any other sword has. Blade silhouettes run out long before hilt
+silhouettes do; when a new sword reads as an existing one, redesign the guard
+before reaching for the colour picker.

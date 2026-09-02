@@ -130,3 +130,30 @@ export function taper(t, edgeFactor) {
 export function round1(value) {
     return String(Math.round(value * 10) / 10);
 }
+
+/**
+ * A knockback spec with both components scaled by one factor.
+ *
+ * Storm Sword's two abilities both scale their push by the wielder's motion,
+ * and both were written with their own copy of the same three lines. Sharing it
+ * matters less for the arithmetic than for the two properties that are easy to
+ * lose in a second copy: an absent spec stays absent (a sword that binds the
+ * ability without knockback is not handed one), and the fields the caller set —
+ * `mode`, `pull`, `from`, `direction` — survive untouched.
+ *
+ * The result still passes through `config.combat.maxKnockback*` in the damage
+ * layer, so a factor above 1 cannot launch anything out of the world.
+ *
+ * @param {import('../core/types.js').KnockbackSpec | undefined} spec
+ * @param {number} factor
+ * @returns {import('../core/types.js').KnockbackSpec | undefined}
+ */
+export function scaleKnockback(spec, factor) {
+    if (spec === undefined) return undefined;
+    const safe = Number.isFinite(factor) ? Math.max(0, factor) : 0;
+    return {
+        ...spec,
+        horizontal: (spec.horizontal ?? 0) * safe,
+        vertical: (spec.vertical ?? 0) * safe,
+    };
+}

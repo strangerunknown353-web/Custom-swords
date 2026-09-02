@@ -30,6 +30,43 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in Time and Storm — the roster closes (v0.12.0)
+
+- [x] Time Sword (the collection's only Mythic) and Storm Sword, at sixteen.
+- [x] Four abilities on the last two axes: waiting (`stasis`, `tempo`) and the
+      caster's motion (`surge`, `momentum`).
+- [x] A non-life mark scope on `PlayerStateStore`, so a charge clock survives
+      death instead of reading as absent and refilling itself.
+- [x] `MovementService.momentumOf`, and `scaleKnockback` shared out of the two
+      Storm abilities.
+- [x] **Crafting progression audit** — ingredient tiers, a floor per rarity, a
+      validator warning when a sword costs less than its rarity implies, and the
+      whole curve published in `SWORD_CATALOG.md`.
+- [x] Storm Sword reclassified Epic after the audit disagreed with its draft
+      Legendary tier.
+- [x] Fixed a filter bypass in Time Freeze: the first draft held targets the
+      combat layer had refused to damage.
+
+### Still open from this milestone
+
+- [ ] **Thunder Sword is Legendary on tier-2 materials** — the one standing
+      validator warning. Pre-existing and shipped, so it is left for the balance
+      pass rather than redesigned alongside two new swords. Either the recipe
+      gains an End-tier ingredient or the sword becomes an Epic; both are
+      defensible and neither should be decided while adding content.
+- [ ] **Nothing here has been in a client.** Time Sword's charge is the mechanic
+      most at risk: the action bar reports the meter on every cast, and whether a
+      player connects "I waited" to "it held longer" without being told is
+      exactly what static validation cannot answer.
+- [ ] `momentumOf` reads `isSprinting` and `isOnGround`/`isFalling` rather than
+      velocity. If those report reliably in a client, a scalar from
+      `getVelocity()` would read better than two booleans — worth revisiting
+      once there is evidence either way.
+- [ ] Time Sword's two bindings must agree on `chargeKey` and `fullChargeTicks`.
+      `npm run validate` checks each ability's own parameters but has no way to
+      know that two bindings on one sword are meant to match. A cross-binding
+      consistency check is the obvious next validator gate.
+
 ## Completed in Solar, Gravity and Poison (v0.11.0)
 
 - [x] Three swords, taking the collection to fourteen.

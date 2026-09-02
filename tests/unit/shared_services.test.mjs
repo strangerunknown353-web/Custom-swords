@@ -1,17 +1,21 @@
 /**
- * The shared layer added and consolidated in v0.11.0.
+ * The shared layer the last five swords needed.
  *
- * Three new sword mechanics needed four new reads and one new service. Each is
- * shared rather than inlined, so each is tested here once rather than through
- * whichever sword happens to exercise it — and in particular the **failure**
- * direction of each read is asserted, because every one of them runs inside
- * combat resolution where a throw abandons the remaining targets.
+ * Solar, Gravity and Poison brought four new reads and one new service in
+ * v0.11.0; Time and Storm brought a second mark scope and a motion read in
+ * v0.12.0. Each is shared rather than inlined, so each is tested here once
+ * rather than through whichever sword happens to exercise it — and in
+ * particular the **failure** direction of every read is asserted, because they
+ * all run inside combat resolution, where a throw abandons the remaining
+ * targets.
  */
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { MockDimension, MockEntity, MockPlayer } from '../mocks/minecraft_server.mjs';
+import { MovementService } from '../../packs/CustomSwordsBP/scripts/systems/movement.js';
+import { PlayerStateStore } from '../../packs/CustomSwordsBP/scripts/core/player_state.js';
 import { EffectService } from '../../packs/CustomSwordsBP/scripts/systems/effects.js';
 import { EnvironmentService } from '../../packs/CustomSwordsBP/scripts/systems/environment.js';
 import { TargetingService } from '../../packs/CustomSwordsBP/scripts/systems/targeting.js';
@@ -28,6 +32,7 @@ import {
 
 const effects = new EffectService(log);
 const targeting = new TargetingService(CONFIG, log);
+const movement = new MovementService(CONFIG, log);
 
 /** A world clock stuck at one time of day. */
 const clockAt = (time) => ({ getTimeOfDay: () => time });
@@ -205,5 +210,92 @@ describe('abilities/support — the measurement five abilities used to each own'
         assert.equal(round1(1.7000000000000002), '1.7');
         assert.equal(round1(3), '3');
         assert.equal(round1(4.25), '4.3');
+    });
+});
+
+describe('PlayerStateStore marks — the two scopes', () => {
+    it('clears a life-scoped mark on death, and keeps a persistent one', () => {
+        const store = new PlayerStateStore();
+        store.mark('p', 'combo', 100);
+        store.mark('p', 'charge', 100, { lifeScoped: false });
+
+        store.clearLifeScope('p');
+
+        assert.equal(store.sinceMark('p', 'combo', 200), Number.POSITIVE_INFINITY, 'the combo window died with the player');
+        assert.equal(store.sinceMark('p', 'charge', 200, { lifeScoped: false }), 100, 'the charge did not');
+    });
+
+    it('keeps the two scopes in separate keys under the same name', () => {
+        const store = new PlayerStateStore();
+        store.mark('p', 'both', 100);
+        store.mark('p', 'both', 400, { lifeScoped: false });
+
+        assert.equal(store.sinceMark('p', 'both', 500), 400, 'the life-scoped mark is unchanged');
+        assert.equal(store.sinceMark('p', 'both', 500, { lifeScoped: false }), 100);
+    });
+
+    it('drops both scopes when the player disconnects', () => {
+        const store = new PlayerStateStore();
+        store.mark('p', 'charge', 100, { lifeScoped: false });
+        store.clearPlayer('p');
+        assert.equal(store.sinceMark('p', 'charge', 200, { lifeScoped: false }), Number.POSITIVE_INFINITY);
+    });
+
+    it('reports Infinity for a mark that was never written, in either scope', () => {
+        // Time Sword relies on this: a sword never fired reads as having waited
+        // forever, and so arrives fully wound.
+        const store = new PlayerStateStore();
+        assert.equal(store.sinceMark('p', 'nothing', 10), Number.POSITIVE_INFINITY);
+        assert.equal(store.sinceMark('p', 'nothing', 10, { lifeScoped: false }), Number.POSITIVE_INFINITY);
+    });
+
+    it('keeps one player’s persistent mark out of another’s', () => {
+        const store = new PlayerStateStore();
+        store.mark('a', 'charge', 100, { lifeScoped: false });
+        assert.equal(store.sinceMark('b', 'charge', 200, { lifeScoped: false }), Number.POSITIVE_INFINITY);
+    });
+});
+
+describe('MovementService.momentumOf', () => {
+    /** @param {object} state */
+    function player(state = {}) {
+        const p = new MockPlayer({ id: 'p', location: { x: 0, y: 64, z: 0 } });
+        return Object.assign(p, state);
+    }
+
+    it('reports nothing for a player standing still on the ground', () => {
+        assert.equal(momentumOfDefault(), 0);
+    });
+
+    function momentumOfDefault() {
+        return movement.momentumOf(player({ isSprinting: false, isFalling: false, isOnGround: true }));
+    }
+
+    it('counts sprinting and being airborne as one point each', () => {
+        assert.equal(movement.momentumOf(player({ isSprinting: true, isOnGround: true })), 0.5);
+        assert.equal(movement.momentumOf(player({ isSprinting: false, isOnGround: false })), 0.5);
+        assert.equal(movement.momentumOf(player({ isSprinting: false, isFalling: true, isOnGround: true })), 0.5);
+    });
+
+    it('reaches 1 only when both are true, and never exceeds it', () => {
+        assert.equal(movement.momentumOf(player({ isSprinting: true, isFalling: true, isOnGround: false })), 1);
+    });
+
+    it('reports 0 rather than throwing for an unreadable player', () => {
+        const removed = player({ isSprinting: true, isOnGround: false });
+        removed.isValid = false;
+        assert.equal(movement.momentumOf(removed), 0);
+        assert.equal(movement.momentumOf(undefined), 0);
+        assert.equal(movement.momentumOf(null), 0);
+    });
+
+    it('reports 0 when the motion properties are absent entirely', () => {
+        // An older client, or a future API change. The sword should work at its
+        // floor rather than not at all.
+        const bare = new MockPlayer({ id: 'bare', location: { x: 0, y: 64, z: 0 } });
+        delete bare.isSprinting;
+        delete bare.isFalling;
+        delete bare.isOnGround;
+        assert.equal(movement.momentumOf(bare), 0);
     });
 });

@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 492 unit + integration tests against a mocked @minecraft/server
+npm test            # 529 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -174,8 +174,9 @@ the item-and-presentation layer on that basis.
 
 What is **not** ticked is per-sword ability behaviour: the client test exercised
 the add-on, not each sword's individual actives and passives. Ember Blade
-(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0) and Solar, Gravity and
-Poison (v0.11.0) have not been in a client at all.
+(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0), Solar, Gravity and Poison
+(v0.11.0) and Time and Storm (v0.12.0) have not been in a client at all —
+eleven of the sixteen.
 
 The other columns record what is verified *statically*.
 
@@ -195,6 +196,8 @@ The other columns record what is verified *statically*.
 | Solar ☀️ | `custom_swords:solar_sword` | 9 | Solar Flare — 120° cone at 6 m, 3 damage at midnight rising to 11 at noon, blinds only in daylight (8.5 s) | Solar Radiance — +6 against undead at noon, +1.5 at midnight, nothing against the living | ✅ | ✅ | ✅ | ☐ |
 | Gravity 🪐 | `custom_swords:gravity_sword` | 10 | Gravity Crush — 6 m well, pulls in and presses down, 5 damage on the floor rising to 12 five blocks up (10 s) | Heavy Force — pins straight down, +up to 3 scaled by the target's maximum health | ✅ | ✅ | ✅ | ☐ |
 | Poison 🧪 | `custom_swords:poison_sword` | 6 | Venom Burst — 4 m ring, 4 damage +3 per venom tier the target carries, to 13; spends the venom (6.5 s) | Venomous Edge — deepens the target's poison one tier per hit, to Poison III | ✅ | ✅ | ✅ | ☐ |
+| Time ⏳ | `custom_swords:time_sword` | 9 | Time Freeze — 4 m hold, 2 s spent on cooldown rising to 8 s at a full charge banked by waiting (12 s) | Temporal Edge — every hit winds the charge 3 s, plus a brief drag on the target | ✅ | ✅ | ✅ | ☐ |
+| Storm 🌩️ | `custom_swords:storm_sword` | 9 | Storm Surge — 130° cone at 6 m, 4 damage standing still rising to 11 at a full sprint through the air (7.5 s) | Storm Momentum — Speed to the wielder, and knockback that scales with their motion | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
 
@@ -582,6 +585,57 @@ standing on a two-block pillar all work.
       it, then burst. If the sword pays out for poison it did not apply, note
       it — that is a known open question, not a surprise
 
+### F8. Time Sword — the sword you are not supposed to use
+
+The only sword in the collection where holding the button is the wrong play, so
+this section needs a stopwatch more than it needs mobs.
+
+**Time Freeze (`use`, 12 s):**
+
+- [ ] A freshly given sword, fired once, holds for the **full** eight seconds —
+      a sword never fired has been waiting forever
+- [ ] Fire it again the instant the cooldown lifts: the hold is about **two**
+      seconds
+- [ ] Wait a full minute and fire: the hold is eight seconds again
+- [ ] The action bar reports the charge percentage on every cast. **If you cannot
+      tell from playing that waiting matters, that is a finding**, not a nitpick
+- [ ] Fire it at empty air on a full charge, then immediately at a mob — the mob
+      still gets the full hold. Losing a banked minute to a mistimed click would
+      feel terrible
+- [ ] Die on a full charge, respawn, fire: the hold is **short**. Dying must not
+      be a way to reload
+- [ ] Held mobs stop moving, then recover on their own. Nothing stays slowed
+- [ ] Held mobs are not shoved anywhere
+- [ ] Reload the world mid-freeze: nothing is left frozen, and no errors appear
+
+**Temporal Edge (`attack`):**
+
+- [ ] Landing twenty hits and then firing gives roughly a full-charge hold
+- [ ] Every hit leaves a brief drag on the target — every hit, not some
+
+### F9. Storm Sword — never stand still
+
+**Storm Surge (`use`, 7.5 s):**
+
+- [ ] Standing still, the surge is a shove — about 4 damage
+- [ ] **Sprinting** into the group, it is noticeably harder
+- [ ] Sprinting **and falling** into them, it is hardest — about 11
+- [ ] The knockback grows with your speed too, not just the damage
+- [ ] Everything caught is slowed as well as thrown
+- [ ] **No lightning bolt appears.** Surge into dry grass, a wooden build and a
+      creeper: nothing ignites, nothing is charged, no block changes
+- [ ] The weather does not change
+
+**Storm Momentum (`attack`):**
+
+- [ ] **You** get Speed on a landed hit. The mob does not
+- [ ] Hitting while sprinting throws the target further than hitting still
+- [ ] The loop works: hit, gain speed, sprint, surge harder
+
+**If the surge feels identical whatever you are doing**, `isSprinting` /
+`isFalling` are not reporting the way this sword assumes. That is the single most
+valuable thing this checklist can find.
+
 ### G. Combat safety layer
 
 - [ ] Spam-clicking any sword as fast as possible produces refusals, never
@@ -661,6 +715,68 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.12.0 — Time and Storm, the roster complete, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | 0 errors, **1 warning** (see below) |
+| `npm test` | **529 passed**, 0 failed |
+| Recipes | 16 recipes, 68 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 16 swords, 28 abilities, none orphaned |
+| Textures | 16 sources, 0 errors, 0 warnings; Time 11 colours / 36 % / spread 230, Storm 12 / 36 % / 231 |
+| Sounds | 42 presets verified against 1824 vanilla sound events |
+| Cost curve | 10× tier 2, 3× tier 3, 3× tier 4 — published in `SWORD_CATALOG.md` |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, seven swords ago |
+
+**The one warning is deliberate.** Thunder Sword is Legendary but its costliest
+ingredient is a lightning rod (tier 2), below the floor its rarity implies. It
+is a pre-existing shipped recipe and a balance judgement rather than a defect,
+so it is recorded for the balance pass rather than redesigned alongside two new
+swords.
+
+**Two defects were caught before shipping, both by work done in this milestone
+rather than by the existing gates:**
+
+1. **Time Freeze held targets the combat layer had refused.** The first draft
+   struck the whole target list in one call, then applied the hold to every
+   target in a second pass — so a target outside the binding's allowed
+   categories, or inside another player's hit-protection window, would have been
+   frozen by an ability that never touched it. A filter bypass, found by the
+   optimization pass, fixed by striking one at a time.
+2. **Storm Sword was drafted a Legendary on entirely tier-2 materials.** The new
+   crafting-progression audit caught it on its first run. Fixed by accepting the
+   tier its ingredients actually describe, not by re-tiering the ingredients.
+
+**Two things are new in kind, and each has a failure mode no check here can
+see:**
+
+1. **Time Sword is the first sword where not pressing the button is a play.**
+   The tests prove the hold scales with the wait. Nothing proves a player
+   *notices* — the action bar reports the charge percentage on every cast for
+   exactly that reason, and whether it lands is a client question.
+2. **Storm Sword reads the wielder's motion.** `isSprinting` and
+   `isOnGround`/`isFalling` were chosen over `getVelocity()` because server-side
+   player velocity in Bedrock is unreliable. Whether *these* report reliably
+   mid-combat is the single most important thing to check: if they do not, the
+   sword silently works at its floor and never feels like anything.
+
+Specifically to check:
+
+- [ ] Time Freeze held straight off cooldown is noticeably shorter than one held
+      after a minute of carrying the sword
+- [ ] The action bar names the charge percentage, and it reads as a mechanic
+- [ ] Firing into empty air does **not** empty the charge
+- [ ] Dying does **not** refill the charge
+- [ ] Held mobs recover on their own with no lingering slowness
+- [ ] Twenty landed hits get you roughly the same charge as a minute of waiting
+- [ ] Storm Surge sprinting is visibly stronger than standing still
+- [ ] Storm Surge while falling into a group is stronger again
+- [ ] **No lightning bolt is ever spawned** — surge into dry grass and a wooden
+      build and confirm nothing catches fire and no creeper is charged
+- [ ] Storm Momentum gives *you* Speed, never the mob
+- [ ] Both new recipes work in survival and produce exactly one sword
+- [ ] The Mythic name colour (red) renders for Time Sword
 
 ### v0.11.0 — Solar, Gravity and Poison, not yet tested in Minecraft
 

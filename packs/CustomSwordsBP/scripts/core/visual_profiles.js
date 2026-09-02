@@ -208,6 +208,41 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'venom_impact',
     }),
 
+    /**
+     * Chrono: clockwork, not magic. Repeater dust ticks at the hand — the
+     * game's own timing device, which is the most honest thing in the block
+     * palette to make a time sword out of — and a slow water-clock drip lands
+     * on whatever has been stopped.
+     *
+     * Nothing here is bright or fast, deliberately. Every other profile is an
+     * event; this one is a mechanism.
+     */
+    chrono: Object.freeze({
+        caster: 'minecraft:redstone_repeater_dust_particle',
+        target: 'minecraft:stalactite_water_drip_particle',
+        trail: 'minecraft:redstone_repeater_dust_particle',
+        castSound: 'chrono_cast',
+        impactSound: 'chrono_impact',
+    }),
+
+    /**
+     * Tempest: weather, not a bolt. A rolling column of dark cloud at the
+     * wielder, rain landing on each target, and a pale blue discharge drawn
+     * along the front.
+     *
+     * `storm` — Thunder Sword's profile — is the one it must never be confused
+     * with, and the split is the same one the abilities make: Thunder is a
+     * single white arc between two points, Storm is the whole sky arriving. The
+     * two share no identifier.
+     */
+    tempest: Object.freeze({
+        caster: 'minecraft:campfire_tall_smoke_particle',
+        target: 'minecraft:water_drip_particle',
+        trail: 'minecraft:blue_flame_particle',
+        castSound: 'tempest_cast',
+        impactSound: 'tempest_impact',
+    }),
+
     /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',

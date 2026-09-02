@@ -11,8 +11,10 @@
     "poison_sword.item.json",
     "shadow_sword.item.json",
     "solar_sword.item.json",
+    "storm_sword.item.json",
     "thunder_sword.item.json",
     "tidal_sword.item.json",
+    "time_sword.item.json",
     "void_sword.item.json",
     "wind_sword.item.json"
   ],
@@ -27,8 +29,10 @@
     "poison_sword.recipe.json",
     "shadow_sword.recipe.json",
     "solar_sword.recipe.json",
+    "storm_sword.recipe.json",
     "thunder_sword.recipe.json",
     "tidal_sword.recipe.json",
+    "time_sword.recipe.json",
     "void_sword.recipe.json",
     "wind_sword.recipe.json"
   ]

@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.11.0.mcaddon` | **Fourteen swords**, all craftable at a crafting table — see `SWORD_CATALOG.md` for each recipe grid. Adds Solar Sword ☀️ (strong at noon, weak at night, no use at all in the Nether, and it never sets anything on fire), Gravity Sword 🪐 (a well that drags things in and presses them down, hitting airborne targets hardest) and Poison Sword 🧪 (work venom one tier deeper into a target with every swing, then burst it). Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
+| `CustomSwords-v0.12.0.mcaddon` | **Sixteen swords — the complete roster**, all craftable at a crafting table; see `SWORD_CATALOG.md` for each recipe grid and the cost progression. Adds Time Sword ⏳ (the collection's only Mythic: a freeze that is longer the longer you have gone without using it) and Storm Sword 🌩️ (a cone of weather that is only as strong as the wielder is fast). Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -39,6 +39,8 @@ toggles are needed.
    /give @s custom_swords:solar_sword
    /give @s custom_swords:gravity_sword
    /give @s custom_swords:poison_sword
+   /give @s custom_swords:time_sword
+   /give @s custom_swords:storm_sword
    ```
 
 5. Every sword has an active on right-click and a passive that fires on a melee
@@ -63,6 +65,6 @@ Then work through the checklist in `../docs/TESTING.md`, starting with section
 and v0.5.2 builds fixed. Results are recorded in that file, honestly, including
 the failure.
 
-**Nothing in v0.11.0 has been in a client.** Solar, Gravity and Poison pass
-every check this repository can run without a game, which v0.5.0 proved is not
-the same thing as working.
+**Nothing in v0.12.0 has been in a client**, and eleven of the sixteen swords
+have never been in one at all. Everything passes every check this repository can
+run without a game, which v0.5.0 proved is not the same thing as working.

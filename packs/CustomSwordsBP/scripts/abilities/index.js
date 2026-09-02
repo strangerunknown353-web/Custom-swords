@@ -36,6 +36,10 @@ import { crush } from './builtin/crush.js';
 import { weigh } from './builtin/weigh.js';
 import { rupture } from './builtin/rupture.js';
 import { envenom } from './builtin/envenom.js';
+import { stasis } from './builtin/stasis.js';
+import { tempo } from './builtin/tempo.js';
+import { surge } from './builtin/surge.js';
+import { momentum } from './builtin/momentum.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -63,4 +67,8 @@ export const ABILITIES = Object.freeze([
     weigh,
     rupture,
     envenom,
+    stasis,
+    tempo,
+    surge,
+    momentum,
 ]);

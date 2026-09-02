@@ -13,6 +13,102 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.12.0] — 2026-09-02
+
+**Time Sword and Storm Sword complete the roster at sixteen.** They are the last
+two swords the collection takes, and they are deliberately opposites: one is
+worth more the longer you have not used it, the other is worth nothing at all
+standing still.
+
+### Added
+
+- **Time Sword ⏳** (`custom_swords:time_sword`, **Mythic** — the first and only
+  one — 9 melee, 1800 durability, the highest in the collection).
+  - **Time Freeze** (`custom_swords:stasis`, 12 s): holds everything within four
+    blocks, and *how long* it holds depends entirely on how long the sword has
+    been carried without firing. Two seconds spent on cooldown, eight at a full
+    meter. Every other active here is worth the same whenever you press it; this
+    is the only sword where **not** pressing the button is a play.
+  - **Temporal Edge** (`custom_swords:tempo`): each landed hit advances the
+    charge clock, so fighting winds the sword faster than waiting does — a
+    patient *fighter* rather than a patient bystander.
+  - **No timers and nothing to restore.** The hold is a vanilla `slowness` VI
+    the engine expires on its own. The charge is one number under one key per
+    player. The addon still schedules exactly one interval in total, and it is
+    the memory sweep that has existed since v0.1.0.
+  - It never touches the world clock, never moves the wielder or a target, and
+    never stops an entity's AI — `world.setTimeOfDay` is a global mutation on a
+    shared world, and there is no supported API for the other two.
+- **Storm Sword 🌩️** (`custom_swords:storm_sword`, Epic, 9 melee, 1250
+  durability).
+  - **Storm Surge** (`custom_swords:surge`, 7.5 s): a 130° cone of weather —
+    wind that hurls, rain that slows, a discharge drawn across the front — whose
+    damage *and* knockback scale with **the wielder's own motion**. 4 from a
+    standstill, 11 sprinting through the air. The last scaling axis the
+    framework was missing.
+  - **Storm Momentum** (`custom_swords:momentum`): a landed hit grants the
+    wielder Speed and throws the target harder the faster the wielder was
+    already going, so the sword supplies exactly the currency its own active
+    spends.
+  - **No lightning entity is ever spawned.** A real bolt starts fires, charges
+    creepers, transforms pigs and villagers, hurts the caster, and does all of
+    it outside the combat layer's rules. The lightning here is a particle line.
+- **`PlayerStateStore.mark`/`sinceMark` take an optional non-life scope.** Time
+  Sword's charge clock belongs to the sword rather than to the body carrying it:
+  a life-scoped clock would read as *absent* after a death and hand back a full
+  meter, making dying a way to reload.
+- **`MovementService.momentumOf`** — the caster's motion state as 0..1, built
+  from `isSprinting` and `isOnGround`/`isFalling` rather than `getVelocity()`,
+  because server-side player velocity in Bedrock is jittery enough that a
+  headline mechanic should not rest on it.
+- **Two visual profiles** (`chrono`, `tempest`) and **six sound presets**, each
+  verified against the vanilla sound event list.
+- **A crafting-progression audit.** `tools/data/ingredient_tiers.json` gives
+  every ingredient an acquisition tier and every rarity a floor;
+  `npm run validate` warns when a sword costs less than its rarity implies, and
+  `SWORD_CATALOG.md` now publishes the whole curve. The cost progression is
+  checked rather than asserted.
+- **`tests/unit/time_storm.test.mjs`** (25 tests) and ten more in
+  `shared_services.test.mjs`: charge accumulation and spend, a whiffed cast
+  keeping its charge, the charge surviving death, the hold expiring on its own,
+  motion scaling on both Storm abilities, and per-player isolation throughout.
+
+### Changed
+
+- **Storm Sword is Epic, not Legendary.** It was drafted Legendary and the new
+  progression audit disagreed: every ingredient in its recipe is tier 2, while
+  the other Legendaries are gated behind the End, an ancient city or a boss.
+  Epic is also the better design — it leaves Thunder as the one Legendary bolt
+  and keeps a sixteen-sword roster from going top-heavy. The final spread is
+  1 Uncommon, 4 Rare, 7 Epic, 3 Legendary, 1 Mythic.
+- **`abilities/support.js` gained `scaleKnockback`.** Both Storm abilities had
+  written their own copy of the same knockback scaling; the shared version also
+  preserves `mode`, `pull`, `from` and `direction`, which a second copy is
+  liable to drop.
+- The mock gained `MockPlayer` motion properties.
+
+### Fixed
+
+- **Time Freeze held targets the combat layer had refused.** The first draft
+  struck the whole target list in one call and then applied the hold to every
+  target in a second pass — so a target outside the binding's allowed
+  categories, or inside another player's hit-protection window, would have been
+  frozen by an ability that never touched it. That is a filter bypass, and the
+  combat layer exists to prevent exactly it. Now struck one at a time, holding
+  only what was actually damaged, matching the shape `nova` established.
+
+### Known, and deferred to the balance pass
+
+- `npm run validate` reports **one warning**: Thunder Sword is Legendary but its
+  costliest ingredient is a lightning rod (tier 2). It is a pre-existing,
+  shipped recipe and a balance judgement rather than a defect, so it is left for
+  the balance pass rather than redesigned here.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and none of it has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
 ## [0.11.0] — 2026-09-02
 
 **Solar, Gravity and Poison Swords**, taking the collection to fourteen. Each is

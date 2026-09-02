@@ -47,6 +47,7 @@ export const MODULES = Object.freeze({
     rarity: `file://${path.join(PATHS.coreDir, 'rarity.js')}`,
     swordStats: `file://${path.join(PATHS.coreDir, 'sword_stats.js')}`,
     definitionValidator: `file://${path.join(PATHS.coreDir, 'definition_validator.js')}`,
+    config: `file://${path.join(PATHS.bpScripts, 'config.js')}`,
 });
 
 /**

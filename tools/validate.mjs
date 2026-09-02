@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 import { PATHS, MODULES, artFile, resourceFile } from './lib/project.mjs';
 import { verifyPng } from './lib/png.mjs';
-import { inspectQuality, validateSource } from './lib/texture.mjs';
+import { inspectQuality, renderPixels, validateSource } from './lib/texture.mjs';
 
 const {
     NAMESPACE,
@@ -40,6 +40,8 @@ const {
 } =
     await import(MODULES.identifiers);
 const { RARITIES } = await import(MODULES.rarity);
+const { CONFIG } = await import(MODULES.config);
+const CONFIG_PARTICLE_CAP = CONFIG.particles.maxPerEmit;
 const { describeAll } = await import(MODULES.swordStats);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -426,6 +428,84 @@ function validateItemsAndResources(swords) {
  *
  * @param {readonly any[]} swords
  */
+/**
+ * How confusable two 16×16 icons are, as the mean per-pixel colour distance
+ * over the pixels both of them paint.
+ *
+ * Silhouette is deliberately not weighted: every icon in the collection is a
+ * sword pointing the same way, so shape overlap runs 78–99% for every pair and
+ * separates nothing. Colour is what a player actually picks a hotbar slot by,
+ * and the number below is what "these two look alike" reduces to.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} a
+ * @param {Uint8ClampedArray | Uint8Array} b
+ * @returns {number} 0 for identical; the collection's median sits near 135.
+ */
+function iconDistance(a, b) {
+    let sum = 0;
+    let counted = 0;
+    for (let pixel = 0; pixel < 16 * 16; pixel++) {
+        const offset = pixel * 4;
+        if (a[offset + 3] === 0 || b[offset + 3] === 0) continue;
+        const dr = a[offset] - b[offset];
+        const dg = a[offset + 1] - b[offset + 1];
+        const db = a[offset + 2] - b[offset + 2];
+        sum += Math.sqrt(dr * dr + dg * dg + db * db);
+        counted++;
+    }
+    return counted === 0 ? 0 : sum / counted;
+}
+
+/**
+ * No two swords may be hard to tell apart in a hotbar slot.
+ *
+ * Every other texture rule in this file grades an icon on its own — colour
+ * count, coverage, luminance spread — and a collection can pass all of them
+ * while containing two icons nobody can distinguish at 16 pixels. This is the
+ * only check that looks at a texture *relative to the others*, which is the
+ * form the problem actually takes: Earth and Nature scored 47 against a median
+ * of 135 and read as the same brown-hilted green-bladed sword on the bar.
+ *
+ * @param {any[]} swords
+ */
+function validateIconDistinctness(swords) {
+    /** Below this, two icons are close enough to be worth looking at. */
+    const FLOOR = 50;
+
+    const icons = [];
+    for (const sword of swords) {
+        const file = artFile(sword.texture ?? localNameOf(sword.id));
+        if (!fs.existsSync(file)) continue;
+        try {
+            icons.push({ id: sword.id, pixels: renderPixels(readJson(file)) });
+        } catch {
+            // A texture that will not render is already an error elsewhere.
+        }
+    }
+
+    let closest = Number.POSITIVE_INFINITY;
+    let closestPair = 'none';
+    for (let i = 0; i < icons.length; i++) {
+        for (let j = i + 1; j < icons.length; j++) {
+            const distance = iconDistance(icons[i].pixels, icons[j].pixels);
+            if (distance < closest) {
+                closest = distance;
+                closestPair = `${icons[i].id} / ${icons[j].id}`;
+            }
+            if (distance < FLOOR) {
+                warn(
+                    `${icons[i].id} and ${icons[j].id} score ${distance.toFixed(1)} on icon distance ` +
+                        `(floor ${FLOOR}). They will be hard to tell apart in a hotbar slot.`,
+                );
+            }
+        }
+    }
+
+    if (icons.length > 1) {
+        note(`icon distinctness: closest pair is ${closestPair} at ${closest.toFixed(1)} (floor ${FLOOR}).`);
+    }
+}
+
 function validateTextures(swords) {
     /** @type {Map<string, string>} Signature -> the sword that used it first. */
     const signatures = new Map();
@@ -670,9 +750,108 @@ function validateSharedState(swords, abilities) {
     note(`${owners.size} shared state key(s), ${pairs} cross-binding pairing(s) agreed.`);
 }
 
+/**
+ * The per-activation particle budget.
+ *
+ * `config.particles.maxPerEmit` caps a single `emit`, `ring` or `line` call at
+ * 64 — but an ability makes several of those calls, and the ones marked
+ * `at: 'target'` are made once per target. A binding drawing 20 particles at
+ * each of 12 targets is inside every individual cap and still asks the client
+ * for 240 in one frame, which is what a low-end device notices.
+ *
+ * Nothing in the collection is close to that today; the point of counting it
+ * here is that the ceiling is invisible from any one definition, so the number
+ * has to be assembled from the whole binding to be seen at all.
+ *
+ * @param {any[]} swords
+ * @param {any[]} abilities
+ */
+function validateVisualBudget(swords, abilities) {
+    /** Above this, one activation is worth a second look on a low-end device. */
+    const BUDGET = 120;
+    /** How the geometry each ability draws scales: once per cast, or per target. */
+    const GEOMETRY = {
+        ringPoints: 'once',
+        arcPoints: 'once',
+        tetherPoints: 'once',
+        trailPoints: 'perTarget',
+        dischargeParticleCount: 'perTarget',
+        empoweredParticleCount: 'perTarget',
+        smiteParticleCount: 'perTarget',
+    };
+
+    let worst = 0;
+    let worstLabel = 'none';
+
+    for (const sword of swords) {
+        for (const binding of sword.abilities ?? []) {
+            const ability = abilities.find((/** @type {any} */ a) => a.id === binding.abilityId);
+            const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+            const targeting = binding.targeting ?? { type: 'self' };
+
+            // The most entities this binding can reach. `self` and `point`
+            // resolve no entities, so their ability's own params carry the cap.
+            const maxTargets =
+                targeting.type === 'self'
+                    ? params.arrivalMaxTargets ?? 0
+                    : targeting.type === 'point'
+                      ? params.maxTargets ?? 1
+                      : targeting.type === 'single' || targeting.type === 'ray'
+                        ? 1 + (params.maxJumps ?? 0)
+                        : targeting.maxTargets ?? 1;
+
+            const cap = CONFIG_PARTICLE_CAP;
+            let total = 0;
+            for (const particle of binding.particles ?? []) {
+                const count = Math.min(particle.count ?? 1, cap);
+                total += (particle.at ?? 'caster') === 'target' ? count * maxTargets : count;
+            }
+            for (const [name, mode] of Object.entries(GEOMETRY)) {
+                const points = params[name];
+                if (typeof points !== 'number' || points <= 0) continue;
+                total += Math.min(points, cap) * (mode === 'perTarget' ? maxTargets : 1);
+            }
+
+            if (total > worst) {
+                worst = total;
+                worstLabel = `${sword.id}.${binding.activation}`;
+            }
+            if (total > BUDGET) {
+                warn(
+                    `${sword.id}.${binding.activation} can draw ${total} particles in one activation ` +
+                        `(budget ${BUDGET}). Every individual call is inside its own cap; the total is not.`,
+                );
+            }
+        }
+    }
+
+    note(`particle budget: worst single activation is ${worst} (${worstLabel}), budget ${BUDGET}.`);
+}
+
 // ---------------------------------------------------------------------------
 // 5. Architecture rules
 // ---------------------------------------------------------------------------
+
+/**
+ * Source with comments and string literals blanked out, so a scan for a banned
+ * API does not trip over the doc comments explaining why it was never called.
+ * Several definitions discuss `spawnEntity` and `setTimeOfDay` at length for
+ * exactly that reason.
+ *
+ * Crude but adequate: it only has to be right about whether an identifier
+ * appears in executable position, and it errs toward blanking.
+ *
+ * @param {string} source
+ * @returns {string}
+ */
+function stripCommentsAndStrings(source) {
+    return source
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/\/\/[^\n]*/g, ' ')
+        .replace(/'(?:[^'\\\n]|\\.)*'/g, "''")
+        .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+        .replace(/`(?:[^`\\]|\\.)*`/g, '``');
+}
 
 function validateArchitecture() {
     const scriptFiles = filesMatching(PATHS.bpScripts, /\.js$/);
@@ -697,6 +876,43 @@ function validateArchitecture() {
         for (const banned of ['setTimeout(', 'setInterval(', 'requestAnimationFrame(']) {
             if (source.includes(banned)) {
                 error(`scripts/${path.relative(PATHS.bpScripts, file)}: uses '${banned}', which does not exist in Bedrock scripting.`);
+            }
+        }
+    }
+
+    // 5b-ii. Terrain and world safety. The addon reads blocks — the dash needs
+    //     to know where the ground is — but it never writes one, never spawns
+    //     an entity, never touches the clock or the weather, and never shells
+    //     out to a command. That is what makes every sword safe to hand to a
+    //     stranger on a shared world, and it has been true only by convention
+    //     since v0.1.0. A ban list is how a convention becomes a guarantee.
+    //
+    //     Several sword and ability docs discuss these APIs at length to
+    //     explain why they were not used, so the check looks at code with
+    //     comments and strings stripped rather than at raw source.
+    const WORLD_MUTATION = [
+        ['setType', 'places a block'],
+        ['setPermutation', 'changes a block'],
+        ['fillBlocks', 'rewrites terrain'],
+        ['setBlockPermutation', 'changes a block'],
+        ['spawnEntity', 'spawns an entity'],
+        ['spawnItem', 'drops an item'],
+        ['createExplosion', 'destroys terrain'],
+        ['setTimeOfDay', "changes everyone's sky"],
+        ['setWeather', "changes everyone's weather"],
+        ['setGameRule', 'changes the world rules'],
+        ['runCommand', 'escapes every safety rule in this framework'],
+        ['runCommandAsync', 'escapes every safety rule in this framework'],
+    ];
+    for (const file of scriptFiles) {
+        const relative = path.relative(PATHS.bpScripts, file);
+        const code = stripCommentsAndStrings(fs.readFileSync(file, 'utf8'));
+        for (const [api, why] of WORLD_MUTATION) {
+            if (new RegExp(`\\.${api}\\s*\\(`).test(code)) {
+                error(
+                    `scripts/${relative}: calls '${api}()', which ${why}. Custom Swords does not modify the ` +
+                        'world — it reads blocks and applies damage, effects and knockback, and nothing else.',
+                );
             }
         }
     }
@@ -1057,11 +1273,14 @@ async function main() {
     validateManifests();
     validateAllJson();
     const swords = await validateDefinitions();
-    validateSharedState(swords, (await import(MODULES.abilities)).ABILITIES);
+    const { ABILITIES } = await import(MODULES.abilities);
+    validateSharedState(swords, ABILITIES);
+    validateVisualBudget(swords, ABILITIES);
     validateUniqueness(swords);
     validateRecipes(swords);
     validateItemsAndResources(swords);
     validateTextures(swords);
+    validateIconDistinctness(swords);
     await validateSoundLibrary();
     validateArchitecture();
 

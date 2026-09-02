@@ -1,20 +1,20 @@
 {
   "name": "Earth Sword",
-  "description": "A squat slab of banded deepslate with a blunt chisel end and crystal veins in the fuller; iron-shod guard and a stone-weighted pommel.",
+  "description": "A squat slab of banded deepslate with a blunt chisel end and an emerald vein in the fuller; iron-shod guard and a pale stone pommel.",
   "palette": {
     "o": "#0e0d10",
-    "H": "#9aa39c",
-    "B": "#6e766f",
-    "S": "#4a514c",
-    "D": "#2e3431",
+    "H": "#8b90a0",
+    "B": "#575c6b",
+    "S": "#393d49",
+    "D": "#22242e",
     "M": "#6fe0a8",
-    "G": "#7b6a4e",
-    "g": "#4f4331",
-    "e": "#2c2519",
-    "W": "#5c5346",
-    "k": "#221f19",
-    "P": "#c3b184",
-    "p": "#7d6c45"
+    "G": "#9ba0a8",
+    "g": "#686d76",
+    "e": "#2b2f37",
+    "W": "#4b4239",
+    "k": "#231e18",
+    "P": "#c6c9d1",
+    "p": "#878b94"
   },
   "pixels": [
     "............ooo.",

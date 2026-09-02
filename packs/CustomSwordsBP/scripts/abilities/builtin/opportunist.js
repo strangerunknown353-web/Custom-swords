@@ -1,3 +1,5 @@
+import { locationOf } from '../support.js';
+
 /**
  * Opportunist — a strike that hits far harder inside a window opened by
  * something else.
@@ -96,11 +98,16 @@ export const opportunist = {
         if (!empowered) return { ok: true, message: 'strike' };
 
         if (params.lifesteal > 0) services.effects.heal(ctx.player, params.lifesteal);
-        services.particles.emit(
-            ctx.dimension,
-            { id: ctx.visual?.target ?? 'minecraft:basic_smoke_particle', count: params.empoweredParticleCount, spread: 0.5 },
-            target.location,
-        );
+        // Guarded: an ambush that kills outright is the common case, and the
+        // target's handle may already be gone by the time the flourish is drawn.
+        const at = locationOf(target);
+        if (at !== undefined) {
+            services.particles.emit(
+                ctx.dimension,
+                { id: ctx.visual?.target ?? 'minecraft:basic_smoke_particle', count: params.empoweredParticleCount, spread: 0.5 },
+                at,
+            );
+        }
 
         return { ok: true, message: 'from the dark' };
     },

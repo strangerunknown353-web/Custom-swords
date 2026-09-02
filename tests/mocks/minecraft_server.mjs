@@ -232,6 +232,8 @@ export class MockEntity {
         this.location = location;
         this.dimension = dimension ?? new MockDimension();
         this.isValid = true;
+        /** When true, `applyDamage` releases the handle, as a lethal hit does. */
+        this.releaseOnDamage = false;
         this.isSneaking = false;
         this.isOnGround = true;
         this.isInWater = false;
@@ -256,7 +258,29 @@ export class MockEntity {
     applyDamage(amount, options) {
         if (!this.isValid) throw new Error('Entity is not valid.');
         this.damageTaken.push({ amount, options });
+        // Models a blow that kills outright and takes the handle with it. The
+        // engine does this often — it is what every lethal hit looks like from
+        // script — and code that reads the corpse's position afterwards has to
+        // survive it.
+        if (this.releaseOnDamage) this.release();
         return true;
+    }
+
+    /**
+     * Models the engine releasing this entity's handle.
+     *
+     * After release, `isValid` reads false and every other property access
+     * throws, which is how a removed entity actually behaves. Tests use it to
+     * prove that a mob dying mid-sweep does not abort the rest of an ability.
+     */
+    release() {
+        this.isValid = false;
+        const dead = () => {
+            throw new Error('Entity is not valid.');
+        };
+        for (const property of ['location', 'typeId', 'dimension']) {
+            Object.defineProperty(this, property, { get: dead, configurable: true });
+        }
     }
 
     /** @param {any} horizontal @param {number} vertical */

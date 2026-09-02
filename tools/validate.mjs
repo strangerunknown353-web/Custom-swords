@@ -497,6 +497,10 @@ async function validateDefinitions() {
 
     /** @type {Set<string>} */
     const swordIds = new Set();
+    // Counted and reported below. A gate that silently checks nothing looks
+    // exactly like a gate that passes, which is how the previous version of
+    // this loop went unnoticed; the count makes "it ran" visible on every build.
+    let checked = 0;
     for (const sword of SWORDS) {
         for (const problem of validateSwordDefinition(sword, (/** @type {string} */ id) => abilityIds.has(id))) {
             error(`sword: ${problem}`);
@@ -506,17 +510,29 @@ async function validateDefinitions() {
 
         // Ability-specific parameter validation, using the same merge the
         // executor performs at runtime.
-        for (const [trigger, binding] of [
-            ['active', sword.active],
-            ['passive', sword.passive],
-        ]) {
-            if (binding === undefined) continue;
+        //
+        // This reads `sword.abilities`, which is where bindings actually live.
+        // An earlier version read `sword.active` and `sword.passive` — fields no
+        // definition has ever carried — so the loop found `undefined` every
+        // time and skipped silently. The effect was that every ability's
+        // `validateParams` was dead code: a mis-authored parameter would have
+        // sailed through the build and failed in-game, which is the exact
+        // failure mode this gate exists to prevent. Iterate the real shape, and
+        // fail loudly if it is ever missing.
+        if (!Array.isArray(sword.abilities)) {
+            error(`sword: ${sword.id} has no 'abilities' array; parameter validation cannot run.`);
+            continue;
+        }
+        for (const binding of sword.abilities) {
+            if (binding === undefined || binding === null) continue;
+            const trigger = binding.activation ?? 'unknown';
             const ability = ABILITIES.find((/** @type {any} */ a) => a.id === binding.abilityId);
             if (ability?.validateParams === undefined) continue;
             const merged = { ...(ability.defaults ?? {}), ...(binding.params ?? {}) };
             for (const problem of ability.validateParams(merged)) {
                 error(`sword: ${sword.id}.${trigger} -> ${ability.id}: ${problem}`);
             }
+            checked++;
         }
     }
 
@@ -526,6 +542,11 @@ async function validateDefinitions() {
             `${testItems.length} diagnostic (${testItems.map((/** @type {any} */ s) => s.id).join(', ') || 'none'}).`,
     );
     note(`${ABILITIES.length} ability definition(s): ${[...abilityIds].join(', ')}.`);
+    if (checked === 0) {
+        error('No ability parameters were validated. The binding shape changed and this gate is not reading it.');
+    } else {
+        note(`${checked} binding(s) passed their ability's own parameter validation.`);
+    }
 
     // A compact roster, so balance outliers are visible on every build rather
     // than only when someone goes looking. Uses the same resolver the runtime
@@ -548,6 +569,87 @@ async function validateDefinitions() {
     }
 
     return SWORDS;
+}
+
+/**
+ * Cross-binding agreement on shared state.
+ *
+ * A sword's two bindings often talk to each other through the player-state
+ * store: Time Sword's passive banks charge that its active spends, Ember
+ * Blade's edge builds the heat its burst releases, Shadow Sword's step opens
+ * the window its edge exploits. All three are held together by nothing but two
+ * string literals in different files matching, and several of the definitions
+ * carry a comment saying so — which is not a gate.
+ *
+ * When they stop matching nothing errors, nothing logs, and nothing looks
+ * broken. The passive charges a meter no one reads and the active reads a meter
+ * no one fills, so the sword just quietly never pays out. That is the exact
+ * failure the ability-parameter gate above was supposed to catch and could not,
+ * because each binding's params are individually valid — it is the *pairing*
+ * that is wrong, and only the sword can see it.
+ *
+ * Two rules:
+ *
+ *  - **Within a sword**, every `*Key` and `*ChargeTicks` parameter that appears
+ *    in more than one binding must carry the same value. These name a shared
+ *    clock; disagreeing about it is always a bug.
+ *  - **Across swords**, a state key value must be unique. Keys are scoped to
+ *    the *player*, not the sword, so two swords sharing `'charge'` would fight
+ *    over one slot in the inventory of anyone carrying both.
+ *
+ * @param {any[]} swords
+ * @param {any[]} abilities
+ */
+function validateSharedState(swords, abilities) {
+    /** Params that name a shared store or clock rather than a local tuning value. */
+    const SHARED = /(Key|ChargeTicks)$/;
+
+    /** @type {Map<string, string>} key value -> the sword that claimed it */
+    const owners = new Map();
+    let pairs = 0;
+
+    for (const sword of swords) {
+        /** @type {Map<string, { value: unknown, where: string }>} */
+        const seen = new Map();
+
+        for (const binding of sword.abilities ?? []) {
+            const ability = abilities.find((/** @type {any} */ a) => a.id === binding.abilityId);
+            const merged = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+            const where = `${binding.activation} -> ${binding.abilityId}`;
+
+            for (const [name, value] of Object.entries(merged)) {
+                if (!SHARED.test(name)) continue;
+
+                const previous = seen.get(name);
+                if (previous === undefined) {
+                    seen.set(name, { value, where });
+                } else {
+                    pairs++;
+                    if (previous.value !== value) {
+                        error(
+                            `${sword.id}: '${name}' disagrees between bindings — ` +
+                                `${previous.where} says ${JSON.stringify(previous.value)} but ` +
+                                `${where} says ${JSON.stringify(value)}. They share one store; ` +
+                                'a mismatch makes the pairing silently never pay out.',
+                        );
+                    }
+                }
+
+                // Cross-sword uniqueness, for the keys that name a store.
+                if (!name.endsWith('Key') || typeof value !== 'string') continue;
+                const owner = owners.get(value);
+                if (owner === undefined) owners.set(value, sword.id);
+                else if (owner !== sword.id) {
+                    error(
+                        `state key '${value}' is claimed by both ${owner} and ${sword.id}. ` +
+                            'Keys are scoped to the player, so both swords would share one slot.',
+                    );
+                }
+            }
+        }
+    }
+
+    note(`${owners.size} shared state key(s), ${pairs} cross-binding pairing(s) agreed.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -937,6 +1039,7 @@ async function main() {
     validateManifests();
     validateAllJson();
     const swords = await validateDefinitions();
+    validateSharedState(swords, (await import(MODULES.abilities)).ABILITIES);
     validateUniqueness(swords);
     validateRecipes(swords);
     validateItemsAndResources(swords);

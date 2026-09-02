@@ -1,3 +1,5 @@
+import { locationOf } from '../support.js';
+
 /**
  * Radiance — sunlight against the things that hide from it.
  *
@@ -107,21 +109,27 @@ export const radiance = {
         if (!report.damaged) return { ok: false, message: 'The blow glanced off.' };
         if (!smites) return { ok: true, message: 'strike' };
 
-        services.particles.emit(
-            ctx.dimension,
-            {
-                id: ctx.visual?.target ?? 'minecraft:evocation_fang_particle',
-                count: params.smiteParticleCount,
-                spread: 0.5,
-            },
-            target.location,
-        );
+        // Guarded: a smite against the undead is exactly the hit most likely
+        // to be lethal, so the target's handle may be gone before the flare is
+        // drawn. An unreadable position costs the flourish, not the ability.
+        const at = locationOf(target);
+        if (at !== undefined) {
+            services.particles.emit(
+                ctx.dimension,
+                {
+                    id: ctx.visual?.target ?? 'minecraft:evocation_fang_particle',
+                    count: params.smiteParticleCount,
+                    spread: 0.5,
+                },
+                at,
+            );
+        }
         // The binding's `cast` slot is this ability's smite cue rather than an
         // activation sound — `attack` bindings get no action-bar feedback, so a
         // distinct note is the only way the bonus is legible. The ordinary
         // impact sound has already played for every hit, smiting or not.
-        if (ctx.sounds.cast !== undefined) {
-            services.sounds.playAt(ctx.dimension, ctx.sounds.cast, target.location);
+        if (ctx.sounds.cast !== undefined && at !== undefined) {
+            services.sounds.playAt(ctx.dimension, ctx.sounds.cast, at);
         }
 
         return { ok: true, message: 'radiance' };

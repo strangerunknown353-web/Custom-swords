@@ -182,13 +182,23 @@ export class CombatSystem {
 
             // Particles and sound at the target's current position, before any
             // knockback moves it out from under them.
-            if (spec.applyBindingParticles !== false) {
-                for (const particle of ctx.particles) {
-                    if (particle.at === 'target') this.particles.emit(ctx.dimension, particle, target.location);
+            //
+            // Read once, and guarded, because the damage above may have just
+            // killed this target: `Entity.location` throws on a handle the
+            // engine has already released, and a throw here escapes `strike`
+            // entirely, abandoning every target still in the list. Drawing the
+            // blow that killed something is the most common moment in the game,
+            // so this is the worst possible place to read bare.
+            const at = this.positionOf(target);
+            if (at !== undefined) {
+                if (spec.applyBindingParticles !== false) {
+                    for (const particle of ctx.particles) {
+                        if (particle.at === 'target') this.particles.emit(ctx.dimension, particle, at);
+                    }
                 }
-            }
-            if (spec.playImpactSound !== false && ctx.sounds.impact !== undefined) {
-                this.sounds.playAt(ctx.dimension, ctx.sounds.impact, target.location);
+                if (spec.playImpactSound !== false && ctx.sounds.impact !== undefined) {
+                    this.sounds.playAt(ctx.dimension, ctx.sounds.impact, at);
+                }
             }
 
             if (spec.applyBindingEffects !== false && ctx.effects.length > 0) {
@@ -234,6 +244,29 @@ export class CombatSystem {
     resolveKnockback(ctx, spec) {
         if (spec.mode !== 'forward' || spec.direction !== undefined) return spec;
         return { ...spec, direction: ctx.viewDirection };
+    }
+
+    /**
+     * An entity's position, or `undefined` when the handle can no longer be
+     * read — which is what a target that died a moment ago looks like.
+     *
+     * The systems-layer twin of `abilities/support.js`'s `locationOf`. They are
+     * deliberately not shared: `abilities/` sits above `systems/` in the
+     * dependency order, and inverting that arrow to save six lines would cost
+     * the layering rule `tools/validate.mjs` enforces.
+     *
+     * @private
+     * @param {Entity} entity
+     * @returns {import('../util/vec3.js').Vec3 | undefined}
+     */
+    positionOf(entity) {
+        try {
+            const { x, y, z } = entity.location;
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return undefined;
+            return { x, y, z };
+        } catch {
+            return undefined;
+        }
     }
 
     /**

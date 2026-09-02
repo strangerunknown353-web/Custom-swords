@@ -19,6 +19,7 @@ import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
 import { TARGET_CATEGORY_IDS, isTargetCategory } from './target_categories.js';
 import { isVanillaEffect, suggestEffect } from './effect_catalogue.js';
 import { explainParticle } from './particle_catalogue.js';
+import { isVanillaDamageCause, suggestDamageCause } from './damage_cause_catalogue.js';
 import { isVisualProfile, PROFILE_NAMES } from './visual_profiles.js';
 import { SOUND_PRESETS } from '../systems/sounds.js';
 
@@ -73,6 +74,11 @@ export function validateAbilityDefinition(ability) {
     }
     if (ability.defaults !== undefined && !isPlainObject(ability.defaults)) {
         problems.push(`${label}: 'defaults' must be an object when present.`);
+    } else if (ability.defaults !== undefined) {
+        // Both halves of the merge are checked: a binding that overrides
+        // `cause` above, and the default it would otherwise inherit here.
+        // Checking only one leaves the other free to be wrong.
+        problems.push(...validateDamageCause(ability.defaults.cause, `${label}.defaults`));
     }
     if (ability.validateParams !== undefined && typeof ability.validateParams !== 'function') {
         problems.push(`${label}: 'validateParams' must be a function when present.`);
@@ -201,6 +207,31 @@ export function validateParticles(particles, label) {
         }
     });
     return problems;
+}
+
+/**
+ * A damage cause the engine will actually recognise.
+ *
+ * Bedrock accepts an unknown cause without complaint and applies the damage
+ * anyway, so a typo here is invisible in play: the hit lands, but every
+ * cause-specific mitigation and message stops matching it. See
+ * `core/damage_cause_catalogue.js` for why this is the fourth gate of its kind.
+ *
+ * @param {unknown} cause
+ * @param {string} label
+ * @returns {string[]}
+ */
+export function validateDamageCause(cause, label) {
+    if (cause === undefined) return [];
+    if (typeof cause !== 'string') {
+        return [`${label}: 'params.cause' must be a string when present.`];
+    }
+    if (isVanillaDamageCause(cause)) return [];
+    const suggestion = suggestDamageCause(cause);
+    return [
+        `${label}: 'params.cause' is '${cause}', which is not an EntityDamageCause` +
+            `${suggestion === undefined ? '.' : ` — did you mean '${suggestion}'?`}`,
+    ];
 }
 
 /**
@@ -367,6 +398,13 @@ export function validateBinding(binding, label, abilityExists) {
     }
     if (binding.params !== undefined && !isPlainObject(binding.params)) {
         problems.push(`${label}: 'params' must be an object when present.`);
+    } else if (binding.params !== undefined) {
+        // `params.cause` is the one parameter the framework itself consumes:
+        // the damage layer hands it straight to `applyDamage`. Checked here
+        // rather than in each ability's own `validateParams` because every
+        // ability that deals damage takes it, and 25 copies of the same check
+        // is 25 chances to leave one out.
+        problems.push(...validateDamageCause(binding.params.cause, label));
     }
 
     problems.push(...validateTargeting(binding.targeting, label));

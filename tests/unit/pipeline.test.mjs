@@ -21,8 +21,25 @@ import {
 import { createFramework } from '../../packs/CustomSwordsBP/scripts/core/bootstrap.js';
 import { SWORD_COMPONENT_ID } from '../../packs/CustomSwordsBP/scripts/core/input_router.js';
 import { AbilityExecutor } from '../../packs/CustomSwordsBP/scripts/core/ability_executor.js';
+import { SWORDS } from '../../packs/CustomSwordsBP/scripts/swords/index.js';
 
 const TEST_SWORD_ID = 'custom_swords:ember_blade';
+
+/**
+ * The exemplar sword's own `use` cooldown, in ticks.
+ *
+ * These tests exercise the cooldown machinery through a real sword, which is
+ * the point — but the machinery is not the balance, and a re-priced ability
+ * should not read as a regression here.
+ *
+ * @returns {number}
+ */
+function testSwordCooldown() {
+    const sword = SWORDS.find((s) => s.id === TEST_SWORD_ID);
+    const binding = sword?.abilities.find((b) => b.activation === 'use');
+    assert.ok(binding?.cooldownTicks, `${TEST_SWORD_ID} must declare a use cooldown`);
+    return binding.cooldownTicks;
+}
 
 /** Deterministic clock shared by the framework under test. */
 let tick = 0;
@@ -426,7 +443,11 @@ describe('cooldown behaviour through the executor', () => {
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 1, 'second use should be refused while on cooldown');
 
-        tick += 60;
+        // Read from the definition rather than hardcoded: this suite measures
+        // the cooldown *mechanism*, and pinning it to whatever number the
+        // exemplar sword currently carries makes every balance change look
+        // like a broken executor.
+        tick += testSwordCooldown();
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 2, 'use should be allowed once the cooldown elapses');
     });
@@ -513,7 +534,9 @@ describe('cooldown behaviour through the executor', () => {
         const registry = install(createFramework({ clock }));
         const { player } = makeWorld(1);
         use(registry, player);
-        assert.deepEqual(player.itemCooldowns, [{ category: 'custom_swords_ember_blade', ticks: 70 }]);
+        assert.deepEqual(player.itemCooldowns, [
+            { category: 'custom_swords_ember_blade', ticks: testSwordCooldown() },
+        ]);
     });
 
     it('contains a throwing ability instead of letting it escape the handler', () => {

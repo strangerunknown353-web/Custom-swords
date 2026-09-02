@@ -10,8 +10,8 @@ are not part of the collection.
 
 | Sword | Rarity | Melee | Durability | Active | Cooldown | Passive |
 |---|---|---:|---:|---|---:|---|
-| Ember Blade | Uncommon | 6 | 500 | Ember Burst | 3.5s | Ember Edge |
-| Inferno Sword | Epic | 9 | 1100 | Cleave | 7s | Brand |
+| Ember Blade | Uncommon | 6 | 500 | Ember Burst | 4.5s | Ember Edge |
+| Inferno Sword | Epic | 9 | 1100 | Infernal Cleave | 7s | Searing Brand |
 | Thunder Sword | Legendary | 9 | 1400 | Thunder Strike | 10s | Static Charge |
 | Frost Sword | Rare | 7 | 900 | Frost Nova | 6s | Frostbite |
 | Wind Sword | Rare | 6 | 800 | Wind Burst | 5s | Wind Momentum |
@@ -58,7 +58,7 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Ember Burst | 3.5s | mob, player | 4-11.5 ability damage (scales with banked charges) · knockback 0.5 · ignite 2s | redstone_torch_dust_particle, candle_flame_particle | cast: ember_cast, impact: ember_impact |
+| Use (right-click / long-press) | Ember Burst | 4.5s | mob, player | 4-10 ability damage (scales with banked charges) · knockback 0.5 · ignite 2s | redstone_torch_dust_particle, candle_flame_particle | cast: ember_cast, impact: ember_impact |
 | Melee hit | Ember Edge | 0.6s | mob, player | 1 ability damage · ignite 1s | redstone_torch_dust_particle | cast: ember_cast, impact: ember_impact |
 
 ### Inferno Sword
@@ -91,8 +91,8 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Cleave | 7s | mob, player | 7 ability damage · knockback 0.6 · ignite 6s · weakness 4.0s | basic_flame_particle, campfire_smoke_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
-| Melee hit | Brand | 3s | mob, player | ignite 3s | basic_flame_particle | cast: inferno_cast, impact: inferno_impact |
+| Use (right-click / long-press) | Infernal Cleave | 7s | mob, player | 7 ability damage · knockback 0.6 · ignite 6s · weakness 4.0s | basic_flame_particle, campfire_smoke_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
+| Melee hit | Searing Brand | 3s | mob, player | ignite 3s | basic_flame_particle | cast: inferno_cast, impact: inferno_impact |
 
 ### Thunder Sword
 
@@ -119,7 +119,7 @@ are not part of the collection.
 
   L = lightning_rod
   C = copper_ingot
-  D = diamond
+  D = netherite_ingot
   I = blaze_rod
 ```
 
@@ -322,7 +322,7 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Shadow Step | 7s | mob, player | knockback 0.4 | mob_portal | cast: shadow_cast, impact: shadow_impact |
+| Use (right-click / long-press) | Shadow Step | 7s | mob, player | 4 ability damage on arrival · knockback 0.4 | mob_portal | cast: shadow_cast, impact: shadow_impact |
 | Melee hit | Shadow Edge | 0.5s | mob, player | 1-7 ability damage (conditional) · weakness 4.0s | obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
 
 ### Crystal Sword
@@ -525,7 +525,7 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Time Freeze | 12s | mob, player | 3 ability damage · weakness 2.0s · mining_fatigue 2.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Time Freeze | 12s | mob, player | 3 ability damage · holds 2.0-8.0s (scales with charge) · weakness 2.0s · mining_fatigue 2.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
 | Melee hit | Temporal Edge | 0.5s | mob, player | 2 ability damage · slowness 1.5s | redstone_repeater_dust_particle | cast: chrono_cast, impact: chrono_wind |
 
 ### Storm Sword
@@ -559,7 +559,7 @@ are not part of the collection.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Storm Surge | 7.5s | mob, player | knockback 2.4 (wave) · slowness 3.5s | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
+| Use (right-click / long-press) | Storm Surge | 7.5s | mob, player | 4-11 ability damage (scales with the wielder’s speed) · knockback 2.4 (wave) · slowness 3.5s | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
 | Melee hit | Storm Momentum | 0.5s | mob, player | 1 ability damage · knockback 0.8 · speed 4.0s | campfire_tall_smoke_particle | cast: tempest_cast, impact: tempest_gust |
 
 ## Crafting progression
@@ -583,10 +583,43 @@ checked rather than asserted.
 | epic | Tidal Sword | `heart_of_the_sea` — end, ancient city or deep nether | 3 |
 | epic | Shadow Sword | `echo_shard` — end, ancient city or deep nether | 3 |
 | epic | Gravity Sword | `shulker_shell` — end, ancient city or deep nether | 3 |
-| legendary | Thunder Sword | `blaze_rod` — nether, ocean monument or trial chamber | 2 |
+| legendary | Thunder Sword | `netherite_ingot` — end, ancient city or deep nether | 3 |
 | legendary | Void Sword | `dragon_breath` — boss or raid | 4 |
 | legendary | Solar Sword | `nether_star` — boss or raid | 4 |
 | mythic | Time Sword | `totem_of_undying` — boss or raid | 4 |
+
+## Output curve
+
+Peak ability output per second, computed from the same figures the tables
+above publish: the top of each active's damage range, times the most
+targets its binding may reach, divided by its cooldown. It is a ceiling and
+not an average — most of these need setting up, and several are only
+reachable standing in the middle of a crowd — but it is the one number that
+makes a progression inversion visible, and the final pass found one: an
+Uncommon starter that out-damaged three Legendaries.
+
+Read it as a shape rather than a ranking. Rarity here buys reach, control
+and utility as much as damage, which is why the Legendaries sit mid-table
+and the Mythic sits last: Time Sword deals three damage and stops a fight.
+
+| Sword | Rarity | Peak active | Targets | Cooldown | Peak/sec |
+|---|---|---|---:|---:|---:|
+| Frost Sword | rare | 9 | 10 | 6s | 15.0 |
+| Earth Sword | epic | 11 | 12 | 9s | 14.7 |
+| Ember Blade | uncommon | 10 | 6 | 4.5s | 13.3 |
+| Poison Sword | rare | 13 | 6 | 6.5s | 12.0 |
+| Storm Sword | epic | 11 | 8 | 7.5s | 11.7 |
+| Solar Sword | legendary | 11 | 8 | 8.5s | 10.4 |
+| Gravity Sword | epic | 12 | 8 | 10s | 9.6 |
+| Crystal Sword | epic | 9.2 | 8 | 8s | 9.2 |
+| Inferno Sword | epic | 7 | 8 | 7s | 8.0 |
+| Tidal Sword | epic | 6 | 10 | 7.5s | 8.0 |
+| Void Sword | legendary | 9 | 6 | 9s | 6.0 |
+| Thunder Sword | legendary | 12 | 4 | 10s | 4.8 |
+| Wind Sword | rare | 2 | 12 | 5s | 4.8 |
+| Nature Sword | rare | 3 | 8 | 5.5s | 4.4 |
+| Shadow Sword | epic | 4 | 3 | 7s | 1.7 |
+| Time Sword | mythic | 3 | 6 | 12s | 1.5 |
 
 ## Abilities
 

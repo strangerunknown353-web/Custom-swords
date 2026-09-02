@@ -34,6 +34,7 @@ export const infernoSword = {
             // INFERNO SLASH — a sweeping arc of fire in front of the wielder.
             activation: 'use',
             visual: 'fire',
+            label: 'Infernal Cleave',
             abilityId: 'custom_swords:cleave',
             cooldownTicks: 140,
             hudCategory: 'custom_swords_inferno',
@@ -58,6 +59,7 @@ export const infernoSword = {
             // so it cannot proc on every swing of a fast attack.
             activation: 'attack',
             visual: 'fire',
+            label: 'Searing Brand',
             abilityId: 'custom_swords:brand',
             cooldownTicks: 60,
             targeting: { type: 'single', range: 4 },

@@ -64,7 +64,11 @@ export const tidalSword = {
             targeting: { type: 'self' },
             effects: [{ effect: 'water_breathing', durationTicks: 300 }],
             particles: [{ id: 'minecraft:water_splash_particle_manual', count: 4, spread: 0.4, at: 'caster' }],
-            params: { heal: 0, extinguish: false },
+            // Water puts fire out. `bolster` has always been able to do this
+            // and nothing asked it to, which left four swords sharing a passive
+            // that differed only in which buff it named. This one now does
+            // something the other three cannot.
+            params: { heal: 0, extinguish: true },
         },
     ],
 };

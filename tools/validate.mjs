@@ -497,6 +497,8 @@ async function validateDefinitions() {
 
     /** @type {Set<string>} */
     const swordIds = new Set();
+    /** @type {Map<string, string>} binding label -> the sword that uses it */
+    const labels = new Map();
     // Counted and reported below. A gate that silently checks nothing looks
     // exactly like a gate that passes, which is how the previous version of
     // this loop went unnoticed; the count makes "it ran" visible on every build.
@@ -526,6 +528,22 @@ async function validateDefinitions() {
         for (const binding of sword.abilities) {
             if (binding === undefined || binding === null) continue;
             const trigger = binding.activation ?? 'unknown';
+
+            // The label is what the player reads on the action bar when the
+            // ability fires. The framework falls back to the ability's own name
+            // when a binding omits one, which is why two swords shipped for
+            // eleven milestones announcing themselves as 'Cleave' and 'Brand'
+            // — correct, and anonymous. A shipped sword names its own moves.
+            if (typeof binding.label !== 'string' || binding.label.length === 0) {
+                error(`sword: ${sword.id}.${trigger} has no 'label'; the action bar would fall back to the ability name.`);
+            } else {
+                const owner = labels.get(binding.label);
+                if (owner !== undefined) {
+                    error(`sword: ability label '${binding.label}' is used by both ${owner} and ${sword.id}.`);
+                }
+                labels.set(binding.label, sword.id);
+            }
+
             const ability = ABILITIES.find((/** @type {any} */ a) => a.id === binding.abilityId);
             if (ability?.validateParams === undefined) continue;
             const merged = { ...(ability.defaults ?? {}), ...(binding.params ?? {}) };

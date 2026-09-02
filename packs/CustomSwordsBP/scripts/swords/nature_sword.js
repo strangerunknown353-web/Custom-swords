@@ -63,7 +63,10 @@ export const natureSword = {
             targeting: { type: 'self' },
             effects: [{ effect: 'regeneration', durationTicks: 80 }],
             particles: [{ id: 'minecraft:villager_happy', count: 4, spread: 0.4, at: 'caster' }],
-            params: { heal: 0, extinguish: false },
+            // A point of health on the hit, on top of the regeneration. Small
+            // — one HP against a 7s cooldown — but it is what separates
+            // "vitality" from the three other swords that also buff themselves.
+            params: { heal: 1, extinguish: false },
         },
     ],
 };

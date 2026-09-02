@@ -157,8 +157,30 @@ for (const sword of shipped) {
     for (const binding of sword.abilities) {
         const targeting = binding.targeting ?? { type: 'self' };
         const details = [];
-        const damage = describeDamage(binding.params ?? {}, sword);
+        // Merged the way the executor merges, so a value an ability supplies as
+        // a default is published as readily as one the binding states. Reading
+        // the binding alone would let a sword's numbers depend on whether its
+        // author happened to restate them.
+        const ability = ABILITIES.find((a) => a.id === binding.abilityId);
+        const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+        const damage = describeDamage(params, sword);
         if (damage !== undefined) details.push(damage);
+        else if (dealsDamage(params)) {
+            // A binding that damages but publishes nothing is a hole in this
+            // document, not a quirk of a sword. Storm Surge and Shadow Step
+            // both sat in it because their damage is not called `damage`.
+            throw new Error(
+                `${sword.id}.${binding.activation} deals damage that the catalogue cannot describe. ` +
+                    `Teach describeDamage about ${damageKeys(params).join(', ')}.`,
+            );
+        }
+        // Time Freeze's payload is the hold, and its length is the thing that
+        // varies; the binding's own effect durations are only its floor.
+        if (typeof params.minFreezeTicks === 'number' && typeof params.maxFreezeTicks === 'number') {
+            details.push(
+                `holds ${(params.minFreezeTicks / 20).toFixed(1)}-${(params.maxFreezeTicks / 20).toFixed(1)}s (scales with charge)`,
+            );
+        }
         if (binding.knockback?.horizontal) {
             details.push(`knockback ${binding.knockback.horizontal}${binding.knockback.mode === 'forward' ? ' (wave)' : ''}`);
         }
@@ -219,6 +241,59 @@ for (const rarity of rarityOrder) {
 }
 lines.push('');
 
+lines.push('## Output curve', '');
+lines.push(
+    'Peak ability output per second, computed from the same figures the tables',
+    'above publish: the top of each active\'s damage range, times the most',
+    'targets its binding may reach, divided by its cooldown. It is a ceiling and',
+    'not an average — most of these need setting up, and several are only',
+    'reachable standing in the middle of a crowd — but it is the one number that',
+    'makes a progression inversion visible, and the final pass found one: an',
+    'Uncommon starter that out-damaged three Legendaries.',
+    '',
+    'Read it as a shape rather than a ranking. Rarity here buys reach, control',
+    'and utility as much as damage, which is why the Legendaries sit mid-table',
+    'and the Mythic sits last: Time Sword deals three damage and stops a fight.',
+    '',
+);
+lines.push('| Sword | Rarity | Peak active | Targets | Cooldown | Peak/sec |');
+lines.push('|---|---|---|---:|---:|---:|');
+const curve = [];
+for (const sword of shipped) {
+    const binding = sword.abilities.find((b) => b.activation === 'use');
+    if (binding === undefined) continue;
+    const ability = ABILITIES.find((a) => a.id === binding.abilityId);
+    const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+    const described = describeDamage(params, sword);
+    const range = /([\d.]+)(?:-([\d.]+))?/.exec(described ?? '');
+    const peak = range === null ? 0 : Number(range[2] ?? range[1]);
+    const targeting = binding.targeting ?? { type: 'self' };
+    const targets =
+        targeting.type === 'self'
+            ? params.arrivalMaxTargets ?? 1
+            : targeting.type === 'point'
+              ? params.maxTargets ?? 1
+              : targeting.type === 'single' || targeting.type === 'ray'
+                ? 1 + (params.maxJumps ?? 0)
+                : targeting.maxTargets ?? 1;
+    const seconds = (binding.cooldownTicks ?? 0) / 20;
+    curve.push({
+        sword,
+        peak,
+        targets,
+        seconds,
+        rate: seconds > 0 ? (peak * targets) / seconds : 0,
+    });
+}
+curve.sort((a, b) => b.rate - a.rate);
+for (const row of curve) {
+    lines.push(
+        `| ${row.sword.name} | ${row.sword.rarity} | ${row.peak} | ${row.targets} | ${row.seconds}s | ` +
+            `${row.rate.toFixed(1)} |`,
+    );
+}
+lines.push('');
+
 lines.push('## Abilities', '');
 lines.push('| Ability | Used by | Behaviour |');
 lines.push('|---|---|---|');
@@ -255,6 +330,25 @@ if (existing === content) {
  *   ceiling declared by the passive that fills its meter.
  * @returns {string | undefined}
  */
+/** Parameter names that carry a positive damage figure. */
+function damageKeys(params) {
+    return Object.entries(params)
+        .filter(([name, value]) => /damage/i.test(name) && typeof value === 'number' && value > 0)
+        .map(([name]) => name);
+}
+
+/**
+ * Whether a binding deals damage at all, judged from its parameters rather than
+ * from whether {@link describeDamage} happens to recognise them. The gap between
+ * these two answers is precisely the bug this guards.
+ *
+ * @param {Record<string, any>} params
+ * @returns {boolean}
+ */
+function dealsDamage(params) {
+    return damageKeys(params).length > 0;
+}
+
 function describeDamage(params, sword) {
     const round = (n) => String(Math.round(n * 10) / 10);
 
@@ -265,12 +359,23 @@ function describeDamage(params, sword) {
         ['nearDamage', 'reachBonus', 'scales with reach'],
         ['nightDamage', 'sunBonus', 'scales with daylight'],
         ['groundDamage', 'heightBonus', 'scales with the target’s height'],
+        // Storm Surge. Without this pair the catalogue published the sword's
+        // headline ability as pure knockback, because its damage is not called
+        // `damage` — which is exactly the kind of thing a generated document is
+        // supposed to stop anyone having to notice by hand.
+        ['stillDamage', 'momentumBonus', 'scales with the wielder’s speed'],
     ]) {
         if (typeof params[floor] !== 'number') continue;
         const top = params[floor] + (params[bonus] ?? 0);
         return top > params[floor]
             ? `${round(params[floor])}-${round(top)} ability damage (${why})`
             : `${round(params[floor])} ability damage`;
+    }
+
+    // Shadow Step deals its damage on arrival rather than on the swing, so it
+    // names the parameter differently and was likewise publishing nothing.
+    if (typeof params.arrivalDamage === 'number' && params.arrivalDamage > 0) {
+        return `${round(params.arrivalDamage)} ability damage on arrival`;
     }
 
     if (typeof params.damage !== 'number' || params.damage <= 0) return undefined;

@@ -134,6 +134,15 @@ export function validateTargeting(targeting, label) {
  * @param {string} label
  * @returns {string[]}
  */
+/**
+ * The longest a sword may leave anything on an entity, in ticks (30 seconds).
+ *
+ * The collection's real maximum is 300 — Ocean Sword's water breathing, on its
+ * own wielder — so this is a guard rail rather than a constraint anyone is
+ * working against.
+ */
+const MAX_EFFECT_TICKS = 600;
+
 export function validateEffects(effects, label) {
     if (effects === undefined) return [];
     if (!Array.isArray(effects)) return [`${label}.effects: must be an array.`];
@@ -159,6 +168,16 @@ export function validateEffects(effects, label) {
         }
         if (!isPositiveNumber(effect.durationTicks)) {
             problems.push(`${where}: 'durationTicks' must be a positive number.`);
+        } else if (Number(effect.durationTicks) > MAX_EFFECT_TICKS) {
+            // Nothing a sword does should outlive the fight it was used in.
+            // There is no API to hand a player a permanent effect by accident,
+            // but a definition asking for twenty minutes of Slowness IV is the
+            // same thing from the receiving end.
+            problems.push(
+                `${where}: 'durationTicks' is ${effect.durationTicks} ` +
+                    `(${Number(effect.durationTicks) / 20}s). The ceiling is ${MAX_EFFECT_TICKS / 20}s — ` +
+                    'an effect that outlasts the fight is a curse, not an ability.',
+            );
         }
         if (effect.amplifier !== undefined && (!Number.isInteger(effect.amplifier) || Number(effect.amplifier) < 0)) {
             problems.push(`${where}: 'amplifier' must be a non-negative integer when present.`);

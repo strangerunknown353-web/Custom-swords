@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 540 unit + integration tests against a mocked @minecraft/server
+npm test            # 543 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -750,6 +750,48 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v1.1.0 — the art pass, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed |
+| Textures | 16 redrawn; closest colour pair Frost/Wind at 60.0 (floor 50); widest silhouette overlap Thunder/Ocean at 93% (ceiling 95%) |
+| Registration | verified **on the built archives**: 16 unique identifiers, all in the equipment/sword category, every display name resolving through `.lang`, every icon wired to the atlas |
+| Recipes | 16, one per item, all `crafting_table`, every pattern within 3×3, every key used, every result one of our items |
+| Vanilla safety | the resource pack contains 16 namespaced PNGs, one additive atlas file and one `.lang` whose every key is `item.custom_swords:*` or `pack.*` — nothing vanilla is overridden |
+| Manifests | both format_version 2, both `[1,1,0]`, min engine `[1,21,120]`, BP→RP dependency resolving to the RP's real UUID, `@minecraft/server` 2.0.0 |
+| Sounds | worst case cut from 13 in one frame to 4 |
+| Effects | 27 applications, all finite, longest 15 s, ceiling now 30 s |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — unchanged since v0.9.0 |
+
+**Three things were re-audited and found correct**, and are recorded here
+because "we checked and there was nothing wrong" is a result:
+
+1. **No re-entrancy path exists for ability damage.** `applyDamage` does not
+   re-fire the item component — that fires on a player's melee swing, not on
+   scripted damage — and the addon subscribes to no damage event at all, so
+   there is no signal an ability could feed back into itself.
+2. **No unused imports** anywhere in the behaviour pack.
+3. **Nothing permanent.** Every one of the 27 effect applications carries a
+   finite duration; the longest is Ocean Sword's 15-second water breathing, on
+   its own wielder.
+
+**One test in this release was wrong before it was right.** The sound-cap
+regression asserted `impacts.length <= CONFIG.combat.maxImpactSoundsPerStrike` —
+comparing the cap against itself, which passes at any setting. Rewritten against
+a literal and against the number of targets actually struck, it fails with 12
+sounds when the cap is lifted. A regression test that cannot fail is worse than
+no test, because it reports safety.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. Not the sixteen new textures, not the renamed Ocean Sword, not the
+sound cap. Every number above comes from static validation, from unit tests
+against a mocked engine, or from unzipping the built packages and reading them.
+The icons were rendered and looked at, at both enlarged and hotbar scale, which
+is the closest this environment gets to seeing them in a hotbar — and it is not
+the same thing.
 
 ### v1.0.0 — the final engineering pass, not tested in Minecraft
 

@@ -13,6 +13,82 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [1.1.0] — 2026-09-02
+
+**The art pass.** No new swords, no removed swords, no reworked abilities. All
+sixteen icons are redrawn, sword #8 takes the name the roster always gave it,
+and three more things the project asserted are now things it checks.
+
+### Changed — art
+
+- **All sixteen textures replaced.** The collection had drifted into one
+  silhouette painted sixteen ways: the same diagonal blade, the same straight
+  crossguard, the same round pommel. Every one passed the texture gate, because
+  the only shape rule was "no two pixel grids are identical" — which catches a
+  copy-paste and nothing else.
+
+  The blade is the identity now, and there are sixteen profiles: a broad forge
+  wedge, a stubby chopped cleaver, a needle icicle, a forked prong, a curved
+  sickle, a guardless needle, a blunt chisel with no point at all, a scalloped
+  wave front, a branch still in leaf, a faceted shard widest two-thirds up, a
+  blade with a seam you can see through, a widening flare, a top-heavy head on
+  a thin neck, a barbed fang, a chrono needle, and a bolt kinked twice.
+
+- **Six hilt forms** — standard, heavy, slim, cross, ring and short — spread
+  across the set, because varying blades alone was not enough. Silhouette
+  overlap between the closest pair fell from 98% to 93%; mean colour distance
+  across all 120 pairs rose from 97 to 122.
+
+- **Four pairs were retuned** after the first render tripped the colour floor.
+  Ember is a banked coal against Inferno's open flame, Earth is warm stone
+  against Gravity's cold indigo, Ocean is sea glass against Storm's steel, and
+  Time is brass against every other pale blade.
+
+### Changed — naming
+
+- **Sword #8 is Ocean Sword.** It shipped as Tidal Sword from v0.7.0 and the
+  roster has always called it Ocean. Its **identifier does not move**: an item
+  id is a save-file key, and changing it would orphan every copy already
+  crafted, in every world, with no migration path. Its ability keeps the name
+  Tidal Wave, which is what the wave is called.
+
+### Changed — performance
+
+- **Impact sounds are capped at four per strike.** They were played per target,
+  which is right for one or two and waste for twelve: Earth Shock and Wind Burst
+  were each firing thirteen sounds into a single frame at positions a few blocks
+  apart. Past about four the ear hears one crack either way. Damage, effects and
+  knockback are untouched — this caps the noise, not the hit.
+
+### Added — gates
+
+- **Silhouette overlap.** Measured as intersection over union of the two opaque
+  masks, so the empty background does not drown the signal; the naive version
+  (share of all 256 pixels that agree) reads above 90% for every pair here and
+  separates nothing. Above 95% is a warning.
+- **An effect-duration ceiling** of 30 seconds. There is no API for handing a
+  player a permanent effect by accident, but a definition asking for twenty
+  minutes of Slowness IV is the same thing from the receiving end. The
+  collection's real maximum is 15 seconds.
+
+### Verified, not changed
+
+Re-audited and found correct, so left alone: no re-entrancy path exists for
+ability damage (`applyDamage` does not re-fire the item component, and the addon
+subscribes to no damage event); no unused imports anywhere in the behaviour
+pack; every one of the 27 effect applications is finite; the resource pack
+overrides no vanilla texture or string; all 16 items carry exactly one
+crafting-table recipe; and no player ever sees a raw identifier.
+
+### Testing
+
+543 unit tests, all passing. The sound cap and the effect ceiling each have a
+regression test confirmed to fail without the fix — the first version of the
+sound test asserted the cap against the config value the code reads, which
+passes at any setting, and was rewritten against a literal.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
 ## [1.0.0] — 2026-09-02
 
 **The final engineering pass.** No new swords — the roster closed at sixteen in

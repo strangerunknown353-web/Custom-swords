@@ -28,6 +28,7 @@ import {
 import { createFramework } from '../../packs/CustomSwordsBP/scripts/core/bootstrap.js';
 import { SWORD_COMPONENT_ID } from '../../packs/CustomSwordsBP/scripts/core/input_router.js';
 import { SWORDS } from '../../packs/CustomSwordsBP/scripts/swords/index.js';
+import { SOUND_LIBRARY } from '../../packs/CustomSwordsBP/scripts/systems/sounds.js';
 import { validateDamageCause } from '../../packs/CustomSwordsBP/scripts/core/definition_validator.js';
 import { ABILITIES } from '../../packs/CustomSwordsBP/scripts/abilities/index.js';
 
@@ -280,5 +281,84 @@ describe('paired bindings agree about the state they share', () => {
         }
 
         assert.ok(pairings >= 4, 'the swords that pair a passive with an active must be reached');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Release-pass guards
+// ---------------------------------------------------------------------------
+
+describe('one strike does not flood the frame with sound', () => {
+    beforeEach(() => {
+        resetMocks();
+        tick = 0;
+    });
+
+    it('caps impact sounds however many targets are hit', () => {
+        const dimension = new MockDimension();
+        const component = install();
+        const player = wielder(dimension, 'custom_swords:wind_sword');
+        // Wind Burst reaches twelve, and was playing twelve impact sounds into
+        // a single frame at positions a few blocks apart.
+        for (let n = 0; n < 12; n++) {
+            mob(dimension, `m${n}`, { x: (n % 4) - 2, z: Math.floor(n / 4) - 1 });
+        }
+
+        tick += 400;
+        component.onUse({ source: player, itemStack: new MockItemStack('custom_swords:wind_sword') });
+
+        // Presets resolve to vanilla event ids before they reach the engine, so
+        // the assertion is on what the engine actually received.
+        const impactId = SOUND_LIBRARY.wind_impact.id;
+        const impacts = dimension.sounds.filter((s) => s.id === impactId);
+        const struck = dimension.entities.filter((e) => e.damageTaken?.length > 0).length;
+
+        // Asserted against a literal, not against the config value the code
+        // reads: comparing a cap to itself passes whatever the cap is set to,
+        // which is a test that cannot fail. The point is that more targets were
+        // hit than sounds were played.
+        assert.ok(impacts.length > 0, 'the ability should still be audible');
+        assert.ok(struck > 4, `the crowd must exceed the cap for this to prove anything (struck ${struck})`);
+        assert.ok(impacts.length <= 4, `expected at most 4 impact sounds, got ${impacts.length}`);
+        assert.ok(
+            impacts.length < struck,
+            `${struck} targets struck but ${impacts.length} sounds played — the cap did nothing`,
+        );
+    });
+
+    it('still damages every target it reached', () => {
+        const dimension = new MockDimension();
+        const component = install();
+        const player = wielder(dimension, 'custom_swords:wind_sword');
+        const crowd = [];
+        for (let n = 0; n < 8; n++) crowd.push(mob(dimension, `m${n}`, { x: (n % 4) - 2, z: Math.floor(n / 4) }));
+
+        tick += 400;
+        component.onUse({ source: player, itemStack: new MockItemStack('custom_swords:wind_sword') });
+
+        // The cap is on the noise, not the hit: capping one must never quietly
+        // cap the other.
+        const hit = crowd.filter((m) => m.damageTaken.length > 0).length;
+        assert.ok(hit >= 6, `the cap must not reduce how many targets are struck (hit ${hit})`);
+    });
+});
+
+describe('no ability leaves anything permanent behind', () => {
+    it('every declared effect has a finite, bounded duration', () => {
+        for (const sword of SWORDS) {
+            for (const binding of sword.abilities) {
+                for (const effect of binding.effects ?? []) {
+                    assert.ok(
+                        Number.isInteger(effect.durationTicks) && effect.durationTicks > 0,
+                        `${sword.id}.${binding.activation}: '${effect.effect}' needs a positive duration`,
+                    );
+                    assert.ok(
+                        effect.durationTicks <= 600,
+                        `${sword.id}.${binding.activation}: '${effect.effect}' lasts ` +
+                            `${effect.durationTicks / 20}s — nothing here should outlive a fight`,
+                    );
+                }
+            }
+        }
     });
 });

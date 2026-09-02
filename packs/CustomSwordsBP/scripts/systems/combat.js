@@ -140,6 +140,9 @@ export class CombatSystem {
         /** @type {Set<string>} */
         const struck = new Set();
         let index = -1;
+        // Impact sounds are capped per strike rather than per target; see
+        // `config.combat.maxImpactSoundsPerStrike`.
+        let impactsPlayed = 0;
 
         for (const target of targets) {
             index++;
@@ -196,8 +199,13 @@ export class CombatSystem {
                         if (particle.at === 'target') this.particles.emit(ctx.dimension, particle, at);
                     }
                 }
-                if (spec.playImpactSound !== false && ctx.sounds.impact !== undefined) {
+                if (
+                    spec.playImpactSound !== false &&
+                    ctx.sounds.impact !== undefined &&
+                    impactsPlayed < this.config.combat.maxImpactSoundsPerStrike
+                ) {
                     this.sounds.playAt(ctx.dimension, ctx.sounds.impact, at);
+                    impactsPlayed++;
                 }
             }
 

@@ -6,9 +6,25 @@ straight from the repository without running the toolchain.
 Only the current build is kept; older ones are available from the git history
 and from CI artifacts.
 
-| File | Milestone |
+| File | What it is |
 |---|---|
-| `CustomSwords-v0.12.0.mcaddon` | **Sixteen swords — the complete roster**, all craftable at a crafting table; see `SWORD_CATALOG.md` for each recipe grid and the cost progression. Adds Time Sword ⏳ (the collection's only Mythic: a freeze that is longer the longer you have gone without using it) and Storm Sword 🌩️ (a cone of weather that is only as strong as the wielder is fast). Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
+| `CustomSwords-v1.1.0.mcaddon` | **The one to install.** Both packs in a single file — open it and Minecraft imports the behaviour pack and the resource pack together. |
+| `CustomSwordsBP-v1.1.0.mcpack` | Behaviour pack alone: the sixteen item definitions, their recipes and the whole script framework. Needs the resource pack alongside it, or the swords have no icons or names. |
+| `CustomSwordsRP-v1.1.0.mcpack` | Resource pack alone: the sixteen icons, the atlas entry and the English strings. |
+
+**v1.1.0 — the art pass.** All sixteen icons redrawn so each is its own weapon
+rather than the same blade in a different colour: sixteen blade profiles across
+six hilt forms. Sword #8 is named Ocean Sword (its identifier is unchanged, so
+copies already crafted are unaffected). Impact sounds are capped at four per
+strike, down from thirteen in a single frame on the widest abilities.
+
+**v1.0.0 before it — the engineering pass.** The build gate that had been
+silently validating nothing now validates; a lethal hit no longer abandons the
+rest of an ability; the collection is priced so the cheapest sword is not the
+strongest.
+
+Sixteen swords, all craftable at a crafting table — see `SWORD_CATALOG.md` for
+each recipe grid, the cost progression and the output curve.
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -21,7 +37,11 @@ toggles are needed.
 
 1. Download the `.mcaddon` onto a device with Minecraft installed.
 2. Open it — Minecraft imports both the behaviour pack and the resource pack.
+   (The two `.mcpack` files are the same content split apart, for servers and
+   realms that install packs separately. Install both, or the swords load with
+   no icons and no names.)
 3. Create a **new** world, enable both packs, and turn on Creative plus cheats.
+   The behaviour pack needs **Beta APIs** off and no other experimental toggle.
 4. Give yourself a sword and right-click (or long-press) with mobs nearby:
 
    ```
@@ -31,7 +51,7 @@ toggles are needed.
    /give @s custom_swords:frost_sword
    /give @s custom_swords:wind_sword
    /give @s custom_swords:earth_sword
-   /give @s custom_swords:tidal_sword
+   /give @s custom_swords:tidal_sword   # Ocean Sword
    /give @s custom_swords:nature_sword
    /give @s custom_swords:shadow_sword
    /give @s custom_swords:crystal_sword
@@ -65,6 +85,7 @@ Then work through the checklist in `../docs/TESTING.md`, starting with section
 and v0.5.2 builds fixed. Results are recorded in that file, honestly, including
 the failure.
 
-**Nothing in v0.12.0 has been in a client**, and eleven of the sixteen swords
-have never been in one at all. Everything passes every check this repository can
-run without a game, which v0.5.0 proved is not the same thing as working.
+**Nothing in v1.1.0 has been in a client** — not the sixteen new icons, not the
+renamed Ocean Sword, not the sound cap — and eleven of the sixteen swords have
+never been in one at all. Everything passes every check this repository can run
+without a game, which v0.5.0 proved is not the same thing as working.

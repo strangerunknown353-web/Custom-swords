@@ -15,7 +15,7 @@ export const CONFIG = Object.freeze({
     namespace: 'custom_swords',
 
     /** Semantic version of the framework. Kept in sync by `tools/set-version.mjs`. */
-    version: '1.0.0',
+    version: '1.1.0',
 
     debug: Object.freeze({
         /** Emit lifecycle + dispatch logs to the content log. */
@@ -53,6 +53,18 @@ export const CONFIG = Object.freeze({
          * on and is not affected by this.
          */
         hitProtectionTicks: 10,
+
+        /**
+         * How many targets in one strike may play the binding's impact sound.
+         *
+         * The sound is per target, which is right for one or two and waste for
+         * twelve: Earth Shock and Wind Burst were each firing thirteen sounds
+         * into a single frame at positions a few blocks apart. Past about four
+         * the ear hears one crack either way, so the rest are cost with no
+         * audible return. Damage, effects and knockback are unaffected — this
+         * caps the noise, not the hit.
+         */
+        maxImpactSoundsPerStrike: 4,
 
         /**
          * Minimum ticks between two ability activations by the same player.

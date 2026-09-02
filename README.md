@@ -12,11 +12,14 @@ sounds and cooldowns.
 > Earth 🪨, Ocean 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
 > crafting progression and its output curve.
 >
-> v1.0.0 is the final engineering pass rather than new content: the build gates
-> that were silently checking nothing now check, the collection is priced so the
-> cheapest sword is not the strongest, and the properties this addon has always
-> claimed — it never modifies the world, no two icons look alike, every damage
-> cause is real — are gates instead of conventions. `CHANGELOG.md` has the list.
+> v1.1.0 is the art pass: all sixteen icons redrawn so that each is its own
+> weapon rather than the same blade in a different colour, across six hilt forms
+> and sixteen blade profiles. v1.0.0 before it was the engineering pass — the
+> build gates that were silently checking nothing now check, the collection is
+> priced so the cheapest sword is not the strongest, and the properties this
+> addon has always claimed (it never modifies the world, no two icons look
+> alike, every damage cause is real) are gates instead of conventions.
+> `CHANGELOG.md` has the list.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
@@ -25,7 +28,7 @@ sounds and cooldowns.
 >
 > **Everything after v0.5.2 — eleven of the sixteen swords, and every change in
 > this release — has not been client-tested.** What has been done to it is
-> automated: 540 unit tests against a mocked engine, and a validator that
+> automated: 543 unit tests against a mocked engine, and a validator that
 > checks the packs, the data and the architecture. Neither is a substitute for
 > launching the game, and this README will not pretend otherwise.
 
@@ -46,11 +49,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v1.0.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v1.0.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v1.0.0.mcpack` | resource pack alone |
+| `CustomSwords-v1.1.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v1.1.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v1.1.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v1.0.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v1.1.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with

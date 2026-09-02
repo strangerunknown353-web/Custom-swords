@@ -5,20 +5,29 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.12.0 — the roster is complete at sixteen swords, all craftable.**
-> Time ⏳ and Storm 🌩️ close it out, joining Solar ☀️, Gravity 🪐, Poison 🧪,
-> Crystal 🔮, Void 🕳️, Shadow 🌑, Ember Blade 🔥 and the seven Elemental
-> Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨,
-> Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster and its crafting
-> progression, and `ROADMAP.md` for what remains.
+> **Status: v1.0.0 — sixteen swords, all craftable, all distinct.**
+> Time ⏳ and Storm 🌩️ close out the roster, joining Solar ☀️, Gravity 🪐,
+> Poison 🧪, Crystal 🔮, Void 🕳️, Shadow 🌑, Ember Blade 🔥 and the seven
+> Elemental Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️,
+> Earth 🪨, Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
+> crafting progression and its output curve.
+>
+> v1.0.0 is the final engineering pass rather than new content: the build gates
+> that were silently checking nothing now check, the collection is priced so the
+> cheapest sword is not the strongest, and the properties this addon has always
+> claimed — it never modifies the world, no two icons look alike, every damage
+> cause is real — are gates instead of conventions. `CHANGELOG.md` has the list.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Everything after v0.5.2 — eleven of the sixteen swords — has **not** been
-> client-tested.
+> **Everything after v0.5.2 — eleven of the sixteen swords, and every change in
+> this release — has not been client-tested.** What has been done to it is
+> automated: 540 unit tests against a mocked engine, and a validator that
+> checks the packs, the data and the architecture. Neither is a substitute for
+> launching the game, and this README will not pretend otherwise.
 
 ---
 
@@ -37,11 +46,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.9.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.9.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.9.0.mcpack` | resource pack alone |
+| `CustomSwords-v1.0.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v1.0.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v1.0.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.9.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v1.0.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with

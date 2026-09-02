@@ -613,6 +613,29 @@ Searches happen only when an ability runs. Range is clamped to
 (64) on every path, so no definition can ask the engine for a thousand-block
 sweep or act on an unbounded crowd.
 
+### The gates that watch the gates
+
+Four properties of this project were true only because everyone kept being
+careful, and one gate had stopped working without anyone noticing. v1.0.0 turned
+all five into build failures. They are grouped here because they share a shape:
+**each describes something no single file can see.**
+
+| Gate | What it sees that a file cannot |
+|---|---|
+| ability parameters | that `validateParams` reached a real binding at all — it reports the count for exactly this reason |
+| shared state | that two bindings on one sword name the same clock, and that two swords do not |
+| world mutation | that no script anywhere calls an API that writes to the world |
+| particle budget | that a binding's *total* draw is bounded, not just each call |
+| icon distinctness | that no two icons look alike, which no icon knows on its own |
+
+The first is the reason the others exist. `tools/validate.mjs` had been calling
+each ability's `validateParams` against `sword.active` and `sword.passive` —
+fields no definition has ever carried — so the loop found `undefined` every time
+and skipped. Twenty-five abilities' worth of constraints were dead for eleven
+milestones while the build reported a clean pass, because **a gate that
+validates nothing is indistinguishable from a gate that passes.** Every gate
+added since prints how much work it did.
+
 ### Status effects (`core/effect_catalogue.js`)
 
 Effect ids in definitions are free-form strings, so a typo would load fine and
@@ -1270,7 +1293,7 @@ is only as good as the catalogue it was checked against.**
 
 ### The catalogues
 
-Three now, all the same pattern — a transcribed snapshot, checked at build
+Five now, all the same pattern — a transcribed snapshot, checked at build
 time, failing towards a build error rather than a silent no-op in someone's
 world:
 
@@ -1278,8 +1301,19 @@ world:
 |---|---|---|
 | `core/effect_catalogue.js` | 37 status effects | `@minecraft/vanilla-data` 1.26.44 |
 | `core/particle_catalogue.js` | usable particles, plus Molang-dependent ones mapped to their usable sibling | Bedrock Wiki vanilla particle list |
+| `core/damage_cause_catalogue.js` | 36 damage causes | `@minecraft/server`'s `EntityDamageCause` |
 | `tools/data/vanilla_sound_events.json` | 1824 sound events | the vanilla resource pack's `sound_definitions.json` |
 | `tools/data/vanilla_items.json` | 1607 item identifiers | Mojang's `bedrock-samples` metadata |
+
+The damage-cause catalogue (v1.0.0) is the last of them and the most insidious
+failure of the five, because it is the only one where the ability still *works*.
+A misspelled effect does nothing, a misspelled particle draws nothing, a
+misspelled sound plays nothing — all visible. A misspelled damage cause deals
+the damage anyway, and only its classification is wrong: `fire_resistance` and
+the other cause-specific mitigations stop matching, the death message is wrong,
+and any pack reading the `entityHurt` payload sees something it does not expect.
+Nothing on screen says so. Both halves of the params merge are checked, since
+a binding may override the cause its ability declares as a default.
 
 The particle catalogue encodes the distinction that caused the bug. An
 identifier fails for one of two reasons, and the error says which:

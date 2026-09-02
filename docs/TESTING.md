@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 529 unit + integration tests against a mocked @minecraft/server
+npm test            # 540 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -86,10 +86,43 @@ npm run all         # check + build
   `@minecraft/server`; no `setTimeout` / `setInterval`; exactly one
   `system.runInterval`, and only in `core/bootstrap.js`; every engine event
   subscribed exactly once and only from the bootstrap; no orphaned script
-  modules.
+  modules;
+- **the world-mutation ban list** (v1.0.0): no script may call `setType`,
+  `setPermutation`, `fillBlocks`, `spawnEntity`, `spawnItem`, `createExplosion`,
+  `setTimeOfDay`, `setWeather`, `setGameRule` or `runCommand`. The addon reads
+  blocks — the dash needs to know where the ground is — and applies damage,
+  effects and knockback, and does nothing else to the world. Several definitions
+  argue at length for *not* using these APIs, so the scan blanks comments and
+  strings before looking;
+- **every damage cause is a real `EntityDamageCause`** (v1.0.0), checked against
+  `core/damage_cause_catalogue.js`. This is the fourth catalogue of its kind and
+  the most insidious of the four: Bedrock applies damage with an unrecognised
+  cause rather than complaining, so the hit lands and only its classification is
+  wrong. Both the binding's params and the ability's defaults are checked;
+- **paired bindings agree about shared state** (v1.0.0). Ember, Shadow and Time
+  each hold a passive and an active together with two matching string literals
+  in different files; a mismatch would leave the passive filling a meter nothing
+  reads, with nothing to see in game. State keys must also be unique across
+  swords, since they are scoped to the player rather than the sword;
+- **the per-activation particle budget** (v1.0.0). `maxPerEmit` caps a single
+  call, but a binding drawing at each of twelve targets is inside every
+  individual cap and still asks the client for hundreds in one frame;
+- **icon distinctness** (v1.0.0). Every other texture rule grades an icon on its
+  own, so a collection can pass all of them and still contain two nobody can
+  tell apart in a hotbar slot;
+- **every binding carries a label**, and **every binding that deals damage is
+  describable by the catalogue** (both v1.0.0).
 
 It also prints a roster of every sword — rarity, effective damage, durability,
-targeting and cooldown — so balance outliers are visible on every build.
+targeting and cooldown — so balance outliers are visible on every build, plus
+the crafting cost curve, the worst particle activation, the closest icon pair,
+and the number of bindings that passed their ability's own parameter validation.
+
+> That last count exists because of the bug that produced this milestone. The
+> gate had been reading a field no sword definition carries, so it validated
+> **zero** bindings while reporting a clean build for eleven milestones. A gate
+> that checks nothing is indistinguishable from a gate that passes unless it
+> says how much it checked.
 
 ### What the tests cover
 
@@ -176,7 +209,9 @@ What is **not** ticked is per-sword ability behaviour: the client test exercised
 the add-on, not each sword's individual actives and passives. Ember Blade
 (v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0), Solar, Gravity and Poison
 (v0.11.0) and Time and Storm (v0.12.0) have not been in a client at all —
-eleven of the sixteen.
+eleven of the sixteen. The v1.0.0 engineering pass changed code in all sixteen
+and was likewise never launched, so no tick below has been re-earned since
+v0.5.2.
 
 The other columns record what is verified *statically*.
 
@@ -715,6 +750,61 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v1.0.0 — the final engineering pass, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** — the first release with a completely clean validate |
+| `npm test` | **540 passed**, 0 failed |
+| Ability parameters | **32 of 32 bindings validated** — previously 0, see below |
+| Recipes | 16 recipes, 69 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 16 swords, 28 abilities, none orphaned |
+| Shared state | 5 state keys, 4 cross-binding pairings agreed, no collisions between swords |
+| Textures | 16 sources, 0 errors, 0 warnings; closest icon pair Frost/Tidal at 62.3 against a floor of 50 |
+| Particles | worst single activation 72, median 28, budget 120 |
+| Cost curve | 9× tier 2, 4× tier 3, 3× tier 4 |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, seven swords ago |
+| World mutation | **0 call sites** across the whole behaviour pack, now enforced |
+
+**The defect that defined this milestone was in the testing itself.**
+`tools/validate.mjs` ran each ability's `validateParams` against `sword.active`
+and `sword.passive` — fields no sword definition has ever carried, since all
+sixteen keep their bindings in `sword.abilities`. The loop found `undefined`
+every time and skipped, so twenty-five abilities' worth of parameter constraints
+had never once run against real sword data. Every build reported a clean pass
+for it.
+
+Wiring it up correctly turned up **no** hidden violations: all 32 bindings pass.
+That is a good outcome and a slightly uncomfortable one — the gate was dead for
+eleven milestones and nothing went wrong in the meantime, which is precisely why
+nobody noticed. The gate now reports how many bindings it checked, so the
+silence has a number attached to it.
+
+**A second defect was found by reading rather than by any check.**
+`CombatSystem.strike` read `target.location` for the impact particles and sound
+immediately after `damage.apply` may have killed that target. `Entity.location`
+throws on a handle the engine has already released, and a throw there escaped
+`strike` entirely — abandoning every target still in the list. Drawing the blow
+that killed something is the most common moment in the game, so this was the
+worst possible place in the codebase to read without a guard. The same pattern
+appeared in three passives.
+
+Both fixes are covered by tests that were confirmed to **fail without them**,
+which is the only way to know a regression test is doing anything. The mock now
+models the engine releasing a handle on a lethal hit; that fidelity is what made
+the combat case testable at all.
+
+**What this release did not do, and cannot claim:**
+
+- Nothing was tested in Minecraft. Not the fixes, not the re-priced Ember Blade,
+  not the repainted Earth Sword, not one of the sixteen swords.
+- The icon-distinctness floor (50) and the particle budget (120) were chosen
+  from the collection as it stands rather than from any measurement of what a
+  low-end device actually struggles with. They are calibrated guesses that will
+  catch a regression and should not be mistaken for device testing.
+- The balance table is arithmetic on declared values. Whether Ember Blade *feels*
+  right at 4.5 seconds is a question only play answers.
 
 ### v0.12.0 — Time and Storm, the roster complete, not yet tested in Minecraft
 

@@ -35,6 +35,7 @@ export const PATHS = Object.freeze({
     abilitiesIndex: path.join(BP, 'scripts', 'abilities', 'index.js'),
     coreDir: path.join(BP, 'scripts', 'core'),
     packageJson: path.join(ROOT, 'package.json'),
+    readme: path.join(ROOT, 'README.md'),
     /** Records which item JSON files the generator owns, so stale ones can be pruned. */
     generatedManifest: path.join(BP, 'items', '.generated.json'),
 });

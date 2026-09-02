@@ -504,12 +504,44 @@ that every one of its ingredients was a trial chamber away, not an End away.
 
 If a new ingredient is not in the tier file, it defaults to tier 0. Add it.
 
+## What the build will refuse
+
+Most of these you will never meet, because the shapes they forbid are ones you
+would not naturally write. They are listed because each exists in response to
+something that actually happened, and knowing which is which saves you arguing
+with an error message.
+
+| The build fails if | Because |
+|---|---|
+| a binding has no `label` | the action bar falls back to the ability's generic name, and two swords shipped for eleven milestones announcing themselves as 'Cleave' and 'Brand' |
+| two bindings share a label | the player cannot tell which sword fired |
+| `params.cause` is not a real `EntityDamageCause` | Bedrock applies the damage anyway and only its classification is wrong — invisible in play |
+| a binding deals damage the catalogue cannot describe | `SWORD_CATALOG.md` would publish your sword as dealing none, which happened twice |
+| your sword's two bindings disagree about a `*Key` or `*ChargeTicks` | they share one store; a mismatch leaves the passive filling a meter nothing reads |
+| a state key you chose is already used by another sword | keys are scoped to the player, so both swords would collide in one inventory |
+| any script calls `setType`, `spawnEntity`, `runCommand` or the like | the addon reads the world and never writes it, and that is what makes it safe on a shared server |
+| your icon scores under 50 on distance to any existing icon | it will be indistinguishable in a hotbar slot |
+
+Two more are warnings rather than errors, because they are judgements:
+
+- **Your recipe costs less than your rarity implies.** Tiers live in
+  `tools/data/ingredient_tiers.json`. Raise the recipe or lower the rarity —
+  both have been the right answer at least once.
+- **One activation draws more than 120 particles.** `maxPerEmit` caps each call,
+  but a binding drawing at each of twelve targets is inside every individual cap
+  and still asks the client for hundreds in a frame. The collection's worst is
+  72.
+
 ## Checklist
 
 - [ ] Definition file created and exported from `swords/index.js`
+- [ ] Both bindings carry a `label` — the name the player reads when it fires
 - [ ] Ability reused, or new ability added to `abilities/index.js`
-- [ ] `npm run all` is green
+- [ ] `npm run all` is green, with **zero warnings** as well as zero errors
 - [ ] Texture source authored in `art/swords/`, rendered, inspected and passing
       the quality gate with zero errors and zero warnings
+- [ ] Looked at the icon next to its nearest neighbours at hotbar scale — the
+      distance score is a floor, not a substitute for looking
+- [ ] Checked where the sword lands on the output curve in `SWORD_CATALOG.md`
 - [ ] Tested in-game and the result recorded
 - [ ] `CHANGELOG.md` updated

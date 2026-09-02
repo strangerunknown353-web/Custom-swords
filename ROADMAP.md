@@ -200,6 +200,31 @@ are retired.
 ### 7b. Swords 15–16 — **done**
 Time and Storm, delivered in the interlude above.
 
+### Interlude — the final engineering pass (v1.0.0) — **done**
+No new content. The last milestone of the plan was an audit, and the audit's
+main finding was about the audits: several of the things this project believed
+were checked were not being checked.
+
+The ability parameter gate had read `sword.active` and `sword.passive` since
+the binding shape changed — fields no definition has ever carried — so
+twenty-five abilities' worth of constraints sat dead while every build reported
+a clean pass. `CombatSystem.strike` read a target's position straight after the
+blow that may have killed it, and the throw abandoned the rest of the sweep.
+
+Both are now fixed and both are covered by tests that fail without the fix. The
+more durable outcome is five new gates: a damage-cause catalogue, cross-binding
+agreement on shared state, a world-mutation ban list, a per-activation particle
+budget, and icon distinctness. Each closes a hole a green build could hide, and
+three of them describe properties that were previously true only because
+everyone kept being careful.
+
+The balance pass found the cheapest sword in the collection out-damaging three
+Legendaries, and the art pass found the two closest icons were a pair the brief
+had specifically asked to keep apart. Both are corrected, and both are measured
+on every build now rather than noticed by eye.
+
+**This completes the fifteen-milestone plan.**
+
 ### 8. Ability library — exotic and ultimates (planned)
 The **multi-stage pattern** — wind-up, then impact, with cancellation on death,
 disconnect or dimension change. It is the one ability shape the framework still

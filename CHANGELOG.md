@@ -13,6 +13,113 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [1.0.0] — 2026-09-02
+
+**The final engineering pass.** No new swords — the roster closed at sixteen in
+v0.12.0 and stays there. This release is about the difference between a project
+that works and a project that can be shown to work, and the audit that produced
+it found that several of the things this one claimed were checked were not
+being checked at all.
+
+### Fixed
+
+- **Every ability's parameter validator had never run.** `tools/validate.mjs`
+  called `validateParams` against `sword.active` and `sword.passive` — fields no
+  definition has ever carried, since all sixteen swords keep their bindings in
+  `sword.abilities`. The loop found `undefined` every time and skipped, so
+  twenty-five abilities' worth of constraints sat dead while the build reported
+  a clean pass. The gate reads the real shape now, checks all 32 bindings, and
+  **reports the count**, because a gate that validates nothing looks exactly
+  like a gate that passes.
+- **A lethal hit could abandon the rest of an ability.** `CombatSystem.strike`
+  read `target.location` for particles and the impact sound directly after
+  `damage.apply` may have killed that target. `Entity.location` throws on a
+  handle the engine has released, and the throw escaped `strike` entirely,
+  leaving every target still in the list unstruck. Guarded here and in the three
+  passives that draw a flourish at something they have just hit.
+- **`particles.ring` did not screen its centre**, the only drawing primitive
+  that did not, so a centre computed from an entity that had gone away would
+  have asked the engine for a ring of NaN.
+- **The catalogue under-reported two swords.** Storm Surge published as pure
+  knockback and Shadow Step as dealing no damage at all, because neither calls
+  its damage `damage`. It also read each binding's params without the ability's
+  defaults, which is not the merge the executor performs.
+- **Ember Blade and Inferno Sword carried no ability labels**, so they announced
+  themselves on the action bar by their ability's generic name — 'Cleave',
+  'Brand' — while the other fourteen swords named their own moves.
+
+### Changed — balance
+
+- **Ember Blade re-priced** (cooldown 3.5 s → 4.5 s, 1.5 → 1.2 damage per
+  charge). It produced more sustained damage across a crowd than anything else
+  in the collection, including three Legendaries, while being the cheapest thing
+  in it to craft — and the ceiling was genuinely reachable, since five landed
+  hits at the passive's own cadence is three seconds. It is still the fastest
+  active in the collection.
+- **Thunder Sword's core is netherite** rather than diamond. It was the only
+  sword priced below the ingredient tier its rarity implies: a Legendary
+  buildable without leaving the Nether, while Void and Solar both ask for a boss
+  drop. This clears the last standing validator warning.
+- **Tidal and Nature's passives are no longer the same shape as Wind's and
+  Earth's.** Four swords bind `bolster` and differed only in which effect they
+  named; two of them now reach for the `heal` and `extinguish` parameters the
+  ability always exposed and nothing used, so water puts the wielder's fire out
+  and vitality restores a point outright. Wind and Earth stay pure on purpose.
+
+### Changed — art
+
+- **Earth Sword is cold stone.** It and Nature scored 47 on icon distance
+  against a collection median of 135 — the closest pair by a wide margin, both
+  reading as a brown-hilted, green-bladed sword in a hotbar slot. Earth is now a
+  dark deepslate blade, a bright iron guard, a bound leather grip and a pale
+  stone pommel, with the emerald vein as its one accent, which is what its own
+  description always claimed. The pair now scores 64.
+
+### Added — gates
+
+Five new build-time checks, each closing a hole that a green build could hide:
+
+- **A damage-cause catalogue**, the fourth of its kind. Bedrock accepts an
+  unrecognised `EntityDamageCause` without complaint and applies the damage
+  anyway, so a typo is invisible in play: the hit lands, only its classification
+  is wrong. Both halves of the params merge are checked, and a mistyped cause is
+  told what it probably meant.
+- **Cross-binding agreement on shared state.** Ember, Shadow and Time each hold
+  a passive and an active together with nothing but two matching string literals
+  in different files, and several definitions carried a comment saying they must
+  match. A comment is not a gate. State keys must also be unique across swords,
+  since they are scoped to the player rather than the sword.
+- **A world-mutation ban list.** The addon reads blocks but never writes one,
+  never spawns an entity, never touches the clock or the weather, and never
+  shells out to a command. That has been true by convention since v0.1.0.
+- **A per-activation particle budget.** `maxPerEmit` caps a single call at 64,
+  but a binding drawing at each of twelve targets is inside every individual cap
+  and still asks the client for hundreds in one frame. The worst activation in
+  the collection draws 72; the median draws 28.
+- **Icon distinctness.** Every other texture rule grades an icon on its own, so
+  a collection can pass all of them and still contain two nobody can tell apart
+  at sixteen pixels.
+
+Also: a binding with no label, and a binding that deals damage the catalogue
+cannot describe, are both build failures now.
+
+### Added — documentation
+
+- **An output curve** in `SWORD_CATALOG.md`: peak ability damage per second for
+  every sword, ranked. It is what made the Ember Blade inversion visible.
+- `bolster` and `repulse` — the two abilities more than one sword binds — each
+  carry a table showing how the swords that bind them differ.
+- `tools/set-version.mjs` now rewrites the artefact filenames in `README.md`,
+  which had drifted three milestones behind.
+
+### Testing
+
+540 unit tests, all passing, against a mocked `@minecraft/server`. The mock now
+models the engine releasing an entity handle on a lethal hit, which is what let
+the combat regression be written as a test that fails without the fix.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
 ## [0.12.0] — 2026-09-02
 
 **Time Sword and Storm Sword complete the roster at sixteen.** They are the last

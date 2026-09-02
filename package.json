@@ -1,6 +1,6 @@
 {
   "name": "custom-swords",
-  "version": "0.12.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Custom Swords - a data-driven custom sword framework for Minecraft Bedrock Edition.",
   "type": "module",

@@ -30,6 +30,58 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in the final engineering pass (v1.0.0)
+
+- [x] **The ability parameter gate was dead and is now live.** It read
+      `sword.active` and `sword.passive`, which no definition has ever carried,
+      so it validated nothing while reporting a clean build. It reads
+      `sword.abilities`, checks all 32 bindings, and reports the count.
+- [x] Guarded the post-damage `location` reads in `CombatSystem.strike` and in
+      the three passives that draw a flourish at a target they have just hit. A
+      lethal blow released the handle and the throw abandoned the rest of the
+      target list.
+- [x] **Cross-binding consistency gate** — the item this list called "the
+      obvious next validator gate". Keys and charge clocks must agree between a
+      sword's bindings, and must not collide between swords.
+- [x] **Damage-cause catalogue**, the fourth build-time gate against Bedrock's
+      silent failures. Both halves of the params merge are checked.
+- [x] **World-mutation ban list** — the addon's strongest safety property was
+      true only by convention since v0.1.0.
+- [x] **Per-activation particle budget** and **icon distinctness**, both of them
+      properties invisible from any single definition.
+- [x] **Thunder Sword is Legendary on tier-3 materials.** Resolved by raising
+      the recipe rather than lowering the sword: its core is netherite, which
+      also reads better against "storm-iron". No validator warnings remain.
+- [x] Ember Blade re-priced — it out-damaged three Legendaries while being the
+      cheapest sword to craft.
+- [x] Tidal and Nature's passives differentiated from Wind's and Earth's, using
+      parameters `bolster` already exposed.
+- [x] Earth Sword repainted as cold stone; it and Nature were the closest icon
+      pair in the collection by a wide margin.
+- [x] `describeDamage` taught about Storm Surge and Shadow Step, which were both
+      publishing as dealing no damage, and an output curve added to the
+      catalogue.
+- [x] `set-version` now rewrites the README's artefact filenames, which had
+      drifted three milestones behind.
+
+### Still open after this pass
+
+- [ ] **Client testing.** Everything above is reasoning, unit tests against a
+      mocked engine, and static validation. Not one line of it has run in
+      Minecraft. This is the single largest gap in the project and no amount of
+      further automated work will close it.
+- [ ] The **multi-stage ability pattern** (wind-up then impact, cancelled on
+      death, disconnect or dimension change) remains the one shape the framework
+      cannot express. Gravity Crush and Time Freeze both wanted it. See
+      `ROADMAP.md` step 8.
+- [ ] `config.debug` ships enabled at `info`. Audited and deliberate — the only
+      `info` sites are one component registration, one world-load summary and
+      the diagnostics command's replies, and every `log.debug` sits in a catch
+      block — but a creator running a large server may still want it at `warn`.
+- [ ] The icon-distinctness floor (50) and particle budget (120) were both set
+      from the collection as it stands. If the roster ever reopens, they are
+      guesses that should be revisited with evidence rather than defended.
+
 ## Completed in Time and Storm — the roster closes (v0.12.0)
 
 - [x] Time Sword (the collection's only Mythic) and Storm Sword, at sixteen.
@@ -49,11 +101,6 @@ Only items actually finished are ticked.
 
 ### Still open from this milestone
 
-- [ ] **Thunder Sword is Legendary on tier-2 materials** — the one standing
-      validator warning. Pre-existing and shipped, so it is left for the balance
-      pass rather than redesigned alongside two new swords. Either the recipe
-      gains an End-tier ingredient or the sword becomes an Epic; both are
-      defensible and neither should be decided while adding content.
 - [ ] **Nothing here has been in a client.** Time Sword's charge is the mechanic
       most at risk: the action bar reports the meter on every cast, and whether a
       player connects "I waited" to "it held longer" without being told is
@@ -62,10 +109,6 @@ Only items actually finished are ticked.
       velocity. If those report reliably in a client, a scalar from
       `getVelocity()` would read better than two booleans — worth revisiting
       once there is evidence either way.
-- [ ] Time Sword's two bindings must agree on `chargeKey` and `fullChargeTicks`.
-      `npm run validate` checks each ability's own parameters but has no way to
-      know that two bindings on one sword are meant to match. A cross-binding
-      consistency check is the obvious next validator gate.
 
 ## Completed in Solar, Gravity and Poison (v0.11.0)
 

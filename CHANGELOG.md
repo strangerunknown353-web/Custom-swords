@@ -13,6 +13,50 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [1.3.0] — 2026-09-02
+
+**Back to the vanilla tilt.** v1.2.0 fixed the proportions by standing the
+swords upright, which read unmistakably as swords and did not look like
+Minecraft. All sixteen are redrawn on the diagonal, tip to the upper right,
+keeping the proportions that v1.2.0 earned.
+
+### Changed — art
+
+- **All sixteen icons redrawn tilted.** 67-80% blade, a crossguard wider than
+  the blade on every one, and the grip and pommel running down-left from the
+  guard the way vanilla's do.
+- The trick that makes a diagonal blade work, and that three earlier attempts
+  missed: a blade is a stack of **horizontal runs**, one per screen row, each
+  shifted one column left of the row above. Drawn as a true 45° lattice — one
+  step along the blade being `(-1,+1)` and one across it `(+1,+1)` — it only
+  reaches cells of one parity and comes out a checkerboard. Only the crossguard
+  is a real diagonal line, which is what makes it perpendicular to the blade.
+- Sixteen unique combinations of blade length, width, taper, tip, guard reach,
+  grip length and pommel. The first tilted render tripped 18 warnings; after
+  the differentiation pass, **zero**. Widest silhouette overlap 94%, closest
+  colour pair 63.2 — both better than the upright set managed.
+
+### Fixed — the proportion gate was measuring the wrong thing
+
+The blade-share rule added in v1.2.0 counted pixels per screen row and looked
+for the row where the icon suddenly got wider. That works for an upright sword
+and is nonsense for a tilted one, where every row is about equally wide and the
+guard is smeared across several. It now finds the weapon's own long axis from
+the principal axis of its opaque pixels and measures the cross-section
+perpendicular to it, so one rule grades both orientations.
+
+Its first version also oriented the sword by comparing which end looked
+narrower, which reads a blunt or broad blade backwards — Earth Sword measured
+33% blade that way. It orients by the widest slice now, since the crossguard is
+both the widest part of a sword and unambiguously at the hilt end.
+
+### Unchanged
+
+Abilities, passives, cooldowns, damage, targeting, recipes, item registration,
+manifests and dependencies are untouched. 543 tests pass exactly as before.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
 ## [1.2.0] — 2026-09-02
 
 **The silhouette correction.** No new swords, no changed abilities, no changed

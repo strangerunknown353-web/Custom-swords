@@ -751,6 +751,44 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
 
+### v1.3.0 — back to the vanilla tilt, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed — unchanged, no gameplay code touched |
+| Blade proportion | 67-80% across all sixteen, floor 65%; leanest is Ember Blade at 67% |
+| Crossguard | wider than its blade on every sword, measured perpendicular to each weapon's own axis |
+| Silhouette | worst overlap 94% (Ember/Storm), ceiling 95% |
+| Colour | closest pair Nature/Poison at 63.2, floor 50 — the best margin any set has had |
+| Recipes | all 16 re-listed and re-verified: one crafting-table recipe per sword, every pattern inside 3×3, every key used |
+| Packages | `.mcaddon` 141 entries, BP `.mcpack` 120, RP `.mcpack` 21 — CRC-clean, manifests `[1,3,0]` |
+
+**The proportion gate itself was the bug this time.** The rule added in v1.2.0
+counted pixels per screen row and looked for the row where the icon suddenly got
+wider — correct for an upright sword, meaningless for a tilted one, where every
+row is about equally wide and the crossguard is smeared across several. It
+measures along each weapon's own principal axis now, so one rule grades both
+orientations. Its first version also decided which end was the tip by comparing
+which end looked narrower, which reads a blunt blade backwards: Earth Sword
+measured 33% blade that way. Orienting by the widest slice — the crossguard,
+which is unambiguously at the hilt — fixed it.
+
+**Three geometric dead ends preceded the working diagonal**, and they are
+recorded because none was obvious in advance. Drawing the blade as a true 45°
+lattice, with one step along the blade being `(-1,+1)` and one across it
+`(+1,+1)`, only reaches cells of one parity and renders a checkerboard — half
+the pixels are unreachable. Pinning the blade's right edge while the left edge
+marched produced a wedge rather than a band. Centring each row's run on a moving
+centre line while the width was still growing made the left edge jump by one
+plus the taper step, which is the wobble that made earlier blades look bent. The
+blade is a stack of horizontal runs, each shifted one column left of the row
+above; only the guard is a real diagonal.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. The icons were rendered and looked at, at hotbar scale and enlarged,
+against each other. That is not the same as seeing them in an inventory.
+
 ### v1.2.0 — the silhouette correction, not tested in Minecraft
 
 | Check | Result |

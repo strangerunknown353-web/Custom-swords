@@ -1,6 +1,6 @@
 {
   "name": "Shadow Sword",
-  "description": "A long dark blade whose edge frays into smoke, on a guard swept back toward the hand.",
+  "description": "A long dark blade, broad at the middle and fraying into smoke at the edge.",
   "palette": {
     "o": "#08060d",
     "V": "#d6c6f0",
@@ -13,21 +13,21 @@
     "P": "#9b86bd"
   },
   "pixels": [
-    ".......oVo......",
-    "......oVpo......",
-    ".....oVvpdo.....",
+    "..............oV",
+    "............oVpo",
+    "..........oVvpo.",
+    "........oVvpdo..",
+    "......oVVvpdo...",
     ".....oVVvpdo....",
-    ".....oVVvpdo....",
-    ".....oVVvpdo....",
-    ".....oVVvpdo....",
-    ".....oVvpdo.....",
-    ".....oVvpdo.....",
-    ".....oVvpdo.....",
-    "..oooooVVVoooo..",
-    ".oAAAAAAAAAAAAo.",
-    "..oBBBBBBBBBBo..",
-    "......oKKo......",
-    "......oKKo......",
-    ".....oPPPo......"
+    "....oVVvpdo.....",
+    "...oVVvpdo......",
+    "...oVvpdo.......",
+    "oABVvpdo........",
+    ".oABpdo.........",
+    "..oABo..........",
+    ".oKKABo.........",
+    "oKKooABo........",
+    "PPo.............",
+    "oo.............."
   ]
 }

@@ -8,15 +8,18 @@ and from CI artifacts.
 
 | File | What it is |
 |---|---|
-| `CustomSwords-v1.2.0.mcaddon` | **The one to install.** Both packs in a single file — open it and Minecraft imports the behaviour pack and the resource pack together. |
-| `CustomSwordsBP-v1.2.0.mcpack` | Behaviour pack alone: the sixteen item definitions, their recipes and the whole script framework. Needs the resource pack alongside it, or the swords have no icons or names. |
-| `CustomSwordsRP-v1.2.0.mcpack` | Resource pack alone: the sixteen icons, the atlas entry and the English strings. |
+| `CustomSwords-v1.3.0.mcaddon` | **The one to install.** Both packs in a single file — open it and Minecraft imports the behaviour pack and the resource pack together. |
+| `CustomSwordsBP-v1.3.0.mcpack` | Behaviour pack alone: the sixteen item definitions, their recipes and the whole script framework. Needs the resource pack alongside it, or the swords have no icons or names. |
+| `CustomSwordsRP-v1.3.0.mcpack` | Resource pack alone: the sixteen icons, the atlas entry and the English strings. |
 
-**v1.2.0 — the silhouette correction.** All sixteen icons redrawn upright so
-every weapon unmistakably reads as a sword: a long blade over a crossguard
-wider than it, a short grip and a pommel. The previous set measured 36-50%
-blade — the handle was longer than the blade — and read as daggers. This one
-is 67-87% blade, and the build checks it.
+**v1.3.0 — the vanilla tilt.** All sixteen icons redrawn on the diagonal, tip
+to the upper right, the way Minecraft's own swords are drawn — keeping the
+proportions the previous release earned: 67-80% blade, with a crossguard wider
+than the blade on every one.
+
+**v1.2.0 before it — the silhouette correction.** The set before that measured
+36-50% blade: the handle was longer than the blade, and the icons read as
+daggers.
 
 **v1.1.0 before it — the art pass.** Each sword got its own weapon rather than
 the same blade in a different colour: sixteen blade profiles, six hilt forms.
@@ -89,7 +92,7 @@ Then work through the checklist in `../docs/TESTING.md`, starting with section
 and v0.5.2 builds fixed. Results are recorded in that file, honestly, including
 the failure.
 
-**Nothing in v1.2.0 has been in a client** — not the sixteen redrawn icons, not the
+**Nothing in v1.3.0 has been in a client** — not the sixteen redrawn icons, not the
 renamed Ocean Sword, not the sound cap — and eleven of the sixteen swords have
 never been in one at all. Everything passes every check this repository can run
 without a game, which v0.5.0 proved is not the same thing as working.

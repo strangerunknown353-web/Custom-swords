@@ -1,6 +1,6 @@
 {
   "name": "Thunder Sword",
-  "description": "A long storm-iron blade split into two prongs at the tip, with a live bolt down the fuller and studded quillons.",
+  "description": "A long storm-iron blade split into two prongs at the tip, with a live bolt down the fuller and long quillons.",
   "palette": {
     "o": "#0b0d16",
     "W": "#fff9d0",
@@ -13,21 +13,21 @@
     "P": "#d9c46a"
   },
   "pixels": [
-    ".......oWo......",
-    "......oWyo......",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    ".....oWWYybo....",
-    "..oooooYYYoooo..",
-    "..oAoAAAAAAoAo..",
-    "..oBBBBBBBBBBo..",
-    "......oKKo......",
-    ".....oPPPPo....."
+    "..............oW",
+    "............oWyo",
+    "..........oWYyo.",
+    "........oWYybo..",
+    ".......oWYybo...",
+    "......oWYybo....",
+    ".....oWYybo.....",
+    "oABooWYybo......",
+    ".oABWYybo.......",
+    "..oABybo........",
+    "...oABo.........",
+    "..oKKABo........",
+    "ooKKooABo.......",
+    "oPPo..oABo......",
+    ".oo.............",
+    "................"
   ]
 }

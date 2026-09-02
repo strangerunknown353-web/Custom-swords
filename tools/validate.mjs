@@ -460,46 +460,73 @@ function iconDistance(a, b) {
 const BLADE_FLOOR = 0.65;
 
 /**
- * How much of an icon is blade rather than hilt.
+ * How much of an icon is blade rather than hilt, without assuming which way the
+ * sword points.
  *
- * The crossguard is found as the row where the icon suddenly gets *wider* — not
- * the widest row, which on a sword with a slender guard and a heavy pommel
- * finds the pommel and reports the blade as half the weapon. Everything above
- * that row is blade.
+ * The first version counted pixels per screen row and looked for the row where
+ * the icon suddenly got wider. That works for an upright sword and is nonsense
+ * for a tilted one: on a diagonal blade every row is about equally wide and the
+ * crossguard is smeared across several rows rather than spiking any one of them.
  *
- * This exists because the v1.1.0 set measured 36-50%: the handle was longer
- * than the blade on twelve of the sixteen swords, and nothing in the pipeline
- * noticed. Every other texture rule grades colour, contrast or silhouette
- * *overlap*; none of them can tell a sword from a knife.
+ * So the weapon's own long axis is found first — the principal axis of its
+ * opaque pixels — and the cross-section perpendicular to that axis is measured
+ * along it. The crossguard is the widest slice, which also says which end is the
+ * hilt; orienting by "which end looks narrower" instead gets a blunt or broad
+ * blade backwards, which is exactly how a chisel-ended sword once measured 33%.
  *
  * @param {Uint8ClampedArray | Uint8Array} pixels
  * @returns {{ share: number, guard: number, blade: number }}
  */
 function bladeShare(pixels) {
-    const widths = [];
+    /** @type {[number, number][]} */
+    const points = [];
     for (let y = 0; y < 16; y++) {
-        let w = 0;
-        for (let x = 0; x < 16; x++) if (pixels[(y * 16 + x) * 4 + 3] > 0) w++;
-        widths.push(w);
+        for (let x = 0; x < 16; x++) if (pixels[(y * 16 + x) * 4 + 3] > 0) points.push([x, y]);
     }
-    const filled = widths.map((w, y) => ({ w, y })).filter((r) => r.w > 0);
-    if (filled.length < 3) return { share: 1, guard: 0, blade: 0 };
-    const top = filled[0].y;
-    const bottom = filled[filled.length - 1].y;
-    let waist = bottom;
-    let jump = -Infinity;
-    for (const { y } of filled) {
-        if (y <= top + (bottom - top) * 0.45) continue;
-        const delta = widths[y] - widths[y - 1];
-        if (delta > jump) {
-            jump = delta;
-            waist = y;
-        }
+    if (points.length < 8) return { share: 1, guard: 0, blade: 0 };
+
+    const n = points.length;
+    const mx = points.reduce((a, p) => a + p[0], 0) / n;
+    const my = points.reduce((a, p) => a + p[1], 0) / n;
+    let sxx = 0;
+    let syy = 0;
+    let sxy = 0;
+    for (const [x, y] of points) {
+        sxx += (x - mx) ** 2;
+        syy += (y - my) ** 2;
+        sxy += (x - mx) * (y - my);
     }
+    const theta = 0.5 * Math.atan2((2 * sxy) / n, (sxx - syy) / n);
+    const ax = Math.cos(theta);
+    const ay = Math.sin(theta);
+
+    const along = [];
+    const across = [];
+    for (const [x, y] of points) {
+        along.push((x - mx) * ax + (y - my) * ay);
+        across.push(-(x - mx) * ay + (y - my) * ax);
+    }
+    const lo = Math.min(...along);
+    const hi = Math.max(...along);
+    if (hi - lo < 1e-6) return { share: 1, guard: 0, blade: 0 };
+
+    const BINS = 16;
+    /** @type {number[][]} */
+    const slices = Array.from({ length: BINS }, () => []);
+    for (let i = 0; i < along.length; i++) {
+        const k = Math.min(BINS - 1, Math.floor(((along[i] - lo) / (hi - lo)) * BINS));
+        slices[k].push(across[i]);
+    }
+    let widths = slices.map((v) => (v.length === 0 ? 0 : Math.max(...v) - Math.min(...v) + 1));
+
+    // The widest slice is the crossguard, and it sits at the hilt end.
+    if (widths.indexOf(Math.max(...widths)) < BINS / 2) widths = widths.slice().reverse();
+    const guard = widths.indexOf(Math.max(...widths));
+
     return {
-        share: (waist - top) / (bottom - top),
-        guard: widths[waist],
-        blade: widths[Math.max(0, waist - 2)],
+        share: guard / (BINS - 1),
+        guard: widths[guard],
+        blade: widths[Math.max(0, guard - 2)],
     };
 }
 
@@ -575,10 +602,11 @@ function validateIconDistinctness(swords) {
                     'as a dagger — lengthen the blade or shorten the hilt.',
             );
         }
-        if (guard <= blade) {
+        if (guard <= blade + 0.5) {
             warn(
-                `${icon.id} has a crossguard ${guard} wide against a blade ${blade} wide. ` +
-                    'A guard no wider than its blade does not read as a guard at sixteen pixels.',
+                `${icon.id} has a crossguard ${guard.toFixed(1)} wide against a blade ` +
+                    `${blade.toFixed(1)} wide. A guard no wider than its blade does not read as a ` +
+                    'guard at sixteen pixels.',
             );
         }
     }

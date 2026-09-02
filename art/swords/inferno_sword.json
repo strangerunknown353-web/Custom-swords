@@ -13,21 +13,21 @@
     "P": "#e08820"
   },
   "pixels": [
-    ".......oWo......",
-    "......oWMo......",
+    "..............oW",
+    "............oWMo",
+    "..........oWFMo.",
+    "........oWFMRo..",
+    "......oWWFMRo...",
     ".....oWWFMRo....",
-    ".....oWWFMRo....",
-    ".....oWWFMRo....",
-    ".....oWWFMRo....",
-    "....oWWFMMRo....",
-    "....oWWFMMRo....",
-    "....oWWFMMRo....",
-    "....oWWFMMRo....",
-    "..oooooFFFoooo..",
-    "..oAAAAAAAAAAo..",
-    "..oBBBBBBBBBBo..",
-    "......oKKo......",
-    "......oKKo......",
-    ".....oPPPPo....."
+    "....oWWFMRo.....",
+    "oABoWWFMRo......",
+    ".oABWFMRo.......",
+    ".oWABMRo........",
+    "...oABo.........",
+    "..oKKABo........",
+    "ooKKooABo.......",
+    "PPPo..oABo......",
+    "PPPo............",
+    "ooo............."
   ]
 }

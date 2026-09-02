@@ -188,14 +188,22 @@ colour, contrast or silhouette *overlap* — none of them can tell a sword from
 a knife. `npm run validate` measures it now, finding the crossguard as the row
 where the icon suddenly gets wider and calling everything above it blade.
 
-The swords are drawn **upright** rather than on vanilla's diagonal. That was
-not a style preference; it is geometry. At 45° a ten-row blade reaches the far
-edge of a sixteen-pixel canvas with nothing left for a hilt, which is why
-vanilla's own blade stops at eight rows, and every compromise that buys the
-length back — pinning one edge, leaning harder — bends the blade into a shape
-that reads as a flame or a horn. Three attempts confirmed it. Upright leaves
-the whole canvas height for the blade, and a vertical blade above a horizontal
-crossguard is the most legible sword a sixteen-pixel icon can carry.
+The swords are drawn on the **vanilla diagonal**, tip to the upper right. The
+trick that makes it work — and that three earlier attempts missed — is that a
+blade is a stack of **horizontal runs**, one per screen row, each shifted one
+column left of the row above. Drawing it as a true 45° lattice instead (one
+step along the blade being `(-1,+1)`, one step across it `(+1,+1)`) only ever
+lands on cells of one parity and produces a checkerboard. Only the crossguard
+is a real diagonal line, because a guard is a line rather than a filled region,
+and a line running down-right is exactly perpendicular to a blade running
+down-left.
+
+Proportion is measured **without assuming which way the sword points**: the
+weapon's own long axis is found from the principal axis of its opaque pixels,
+and the cross-section perpendicular to that axis is walked along it. The
+crossguard is the widest slice, which also says which end is the hilt.
+Orienting by "which end looks narrower" gets a blunt or broad blade backwards —
+that is how a chisel-ended sword once measured 33%.
 
 The other half of the rule: **the crossguard must be wider than the blade**,
 also checked. A guard no wider than the blade it sits under does not read as a
@@ -206,14 +214,11 @@ guard, and without a guard an upright blade reads as a rod.
 Varying the blade alone is not enough to keep the silhouettes apart, so the
 collection has six hilts and every sword takes one:
 
-| Form | Reads as | Used by |
-|---|---|---|
-| `broad` | a wide bar, plainly forged | Inferno, Ocean, Solar |
-| `plain` | narrower, unadorned | Frost, Wind, Poison |
-| `swept` | flaring downward toward the hand | Shadow, Nature, Storm |
-| `ornate` | studded quillons | Thunder, Crystal |
-| `anvil` | the heaviest, with a slab pommel | Ember, Earth, Gravity |
-| `ring` | a pierced pommel — the only holes in the set | Void, Time |
+The hilt is built from four independent dials rather than named presets: how
+far the guard reaches either side (`arms`, 2 to 4), how long the grip is
+(2 or 3), the pommel shape (`round`, `heavy` or `ring`), and where the guard
+sits along the blade. Earth carries the widest guard in the set at `arms=4`;
+Void and Time are the only pierced pommels.
 
 Hilts alone are not enough to keep sixteen upright swords apart, so the blade
 carries a **taper** as well — `straight`, `leaf` (widest in the middle),

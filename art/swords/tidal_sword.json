@@ -13,21 +13,21 @@
     "P": "#8fd8b4"
   },
   "pixels": [
-    ".......oWo......",
-    "......oWTo......",
-    ".....oWCTto.....",
-    ".....oWWCTto....",
-    "....oCWWCTtCo...",
-    ".....oWWCTto....",
-    ".....oWWCTto....",
-    "....oCWCTtCo....",
-    ".....oWCTto.....",
-    ".....oWCTto.....",
-    "..oooooCCCoooo..",
-    "..oAAAAAAAAAAo..",
-    "..oBBBBBBBBBBo..",
-    "......oKKo......",
-    "......oKKo......",
-    ".....oPPPPo....."
+    "..............oW",
+    "............oWTo",
+    "..........oWCTo.",
+    ".......oCWCTto..",
+    "......oWWCTto...",
+    ".....oWWCTtCo...",
+    "....oWWCTto.....",
+    "oABoCWCTto......",
+    ".oABWCTto.......",
+    "..oABTtCo.......",
+    "...oABo.........",
+    "..oKKABo........",
+    "ooKKooABo.......",
+    "oPPo..oABo......",
+    ".oo.............",
+    "................"
   ]
 }

@@ -30,6 +30,41 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in Crystal and Void (v0.10.0)
+
+- [x] Crystal Sword and Void Sword, taking the collection to eleven.
+- [x] Four new abilities — `resonate`, `ward`, `rift`, `drain` — each answering
+      a question no existing ability asked.
+- [x] First consumer of `point` targeting (`rift`), which had been in
+      `TargetingService` unused since v0.4.0.
+- [x] `EffectService.healthFraction`, one shared health read with two opposite
+      consumers.
+- [x] `crystal` and `void` visual profiles, six new verified sound presets.
+- [x] Both textures authored to the standard; `void_sword.json` added to
+      `docs/TEXTURE_STANDARD.md` as the reference for a theme with no colour of
+      its own.
+- [x] Recipes for both, plus two new audit gates: no two swords may craft from
+      the same grid, and a recipe must produce exactly one sword.
+- [x] `MockDimension.getBlockFromRay` now marches the ray through the mock's own
+      block model, so `resolvePoint` is testable at all.
+
+### Still open from this milestone
+
+- [ ] **Nothing here has been in a client.** Crystal Guard in particular is the
+      first mechanic that reads the *wielder's* health mid-combat; whether the
+      guard forming is legible to the player — the `resonate.amethyst_block`
+      cue and the caster particles are the only signal, since `attack`
+      activations get no action bar — is exactly the kind of thing static
+      validation cannot answer.
+- [ ] Void Rift's reach ramp is tuned on paper (5 at the feet to 9 at ten
+      blocks). Whether ten blocks is *aimable* with Bedrock touch controls is a
+      client question, and if it is not, the answer is a shorter range rather
+      than a bigger number.
+- [ ] Decide whether `ward` should have a companion that pays out *above* a
+      health threshold (an execute-style aggressive passive). The
+      `healthFraction` default of 1-on-failure would need inverting for that,
+      and the guidance in `docs/ADDING_A_SWORD.md` says so.
+
 ## Completed in crafting + finalization (v0.9.0)
 
 - [x] Crafting recipes for all nine swords, generated from the definitions.
@@ -210,7 +245,9 @@ Only items actually finished are ticked.
       wired into CI. Skipped for now to keep the project dependency-free.
 - [ ] Texture preview command — render an art source enlarged, next to a 1:1
       copy, so a reviewer can judge it without importing the pack. Contact
-      sheets were rendered by hand again this milestone; it should be a script.
+      sheets were rendered by hand for a **third** milestone running, and both
+      v0.10.0 textures needed four revisions each that only the contact sheet
+      caught. This is the highest-value tooling item on the list.
 - [ ] Balance report beyond the catalogue. `tools/catalog.mjs` publishes the
       roster; a damage-per-second and cooldown-uptime comparison would make the
       milestone 13 tuning pass evidence-driven.

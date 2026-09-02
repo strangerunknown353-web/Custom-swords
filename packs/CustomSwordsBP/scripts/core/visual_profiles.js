@@ -125,6 +125,38 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'shadow_impact',
     }),
 
+    /**
+     * Crystal: a lattice ringing, not an element burning. Mystical motes gather
+     * at the hand and a bright mineral flare goes off where the resonance
+     * lands. Deliberately built from the one particle vocabulary no other
+     * profile touches — `frost` is the nearest theme by colour and it is
+     * snow and rime, never sparkle, so the two never read as one weapon.
+     */
+    crystal: Object.freeze({
+        caster: 'minecraft:lab_table_misc_mystical_particle',
+        target: 'minecraft:magnesium_salts_emitter',
+        trail: 'minecraft:lab_table_misc_mystical_particle',
+        castSound: 'crystal_cast',
+        impactSound: 'crystal_impact',
+    }),
+
+    /**
+     * Void: dimensional energy rather than darkness. Dragon-breath wisps where
+     * the rift is torn, dark tears where it closes on something, End-sparkle
+     * along its edge.
+     *
+     * `shadow` is the profile it must never be mistaken for, so the two share
+     * no identifier at all: shadow is portal motes marking a place the wielder
+     * has left, void is the breath of somewhere else arriving.
+     */
+    void: Object.freeze({
+        caster: 'minecraft:dragon_breath_trail',
+        target: 'minecraft:obsidian_tear_particle',
+        trail: 'minecraft:end_chest',
+        castSound: 'void_cast',
+        impactSound: 'void_impact',
+    }),
+
     /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',

@@ -8,7 +8,7 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.9.0.mcaddon` | Nine swords, **all craftable at a crafting table** — see `SWORD_CATALOG.md` for each recipe grid. Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
+| `CustomSwords-v0.10.0.mcaddon` | **Eleven swords**, all craftable at a crafting table — see `SWORD_CATALOG.md` for each recipe grid. Adds Crystal Sword 🔮 (an active that hits harder for every body in the crowd, a guard that forms only when its wielder is losing) and Void Sword 🕳️ (a collapse torn at the point you are looking at, and a drain paid out on how little the target has left). Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -34,6 +34,8 @@ toggles are needed.
    /give @s custom_swords:tidal_sword
    /give @s custom_swords:nature_sword
    /give @s custom_swords:shadow_sword
+   /give @s custom_swords:crystal_sword
+   /give @s custom_swords:void_sword
    ```
 
 5. Every sword has an active on right-click and a passive that fires on a melee
@@ -47,7 +49,16 @@ toggles are needed.
    /scriptevent custom_swords:abilities
    ```
 
+6b. The two new swords need a *situation* rather than a target dummy — Crystal
+   wants a crowd and a wounded wielder, Void wants something ten blocks away.
+   Sections **F3** and **F4** of `../docs/TESTING.md` say exactly what to set
+   up.
+
 Then work through the checklist in `../docs/TESTING.md`, starting with section
-**A2 (item registration)** — that is what failed in v0.5.0 and what this build
-is meant to fix. Results are recorded in that file, honestly, including the
-failure.
+**A2 (item registration)** — that is what failed in v0.5.0 and what the v0.5.1
+and v0.5.2 builds fixed. Results are recorded in that file, honestly, including
+the failure.
+
+**Nothing in v0.10.0 has been in a client.** Crystal and Void pass every check
+this repository can run without a game, which v0.5.0 proved is not the same
+thing as working.

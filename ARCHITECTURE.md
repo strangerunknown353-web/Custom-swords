@@ -114,16 +114,15 @@ A sword is **pure data**: no code, no conditionals, no engine calls. This is
 Ember Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
 
-Eight swords are registered today, all shipped: Ember Blade plus the seven
-Elemental Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal,
-Nature). The project no longer ships a diagnostic item — the former Test Blade
-became Ember Blade — though `isTestItem` remains in the data model for future
-use. All seven were added
-without a single new engine call — six of the seven reuse abilities the previous
-milestone already shipped, and the seventh, `cleave`, is generic enough that a
-future sword can bind it too. `SWORD_CATALOG.md` is generated from those
-definitions by `tools/catalog.mjs`, so the published stats cannot drift from the
-code.
+Eleven swords are registered today, all shipped: the seven Elemental Collection
+blades (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus Ember Blade,
+Shadow, Crystal and Void. The project no longer ships a diagnostic item — the
+former Test Blade became Ember Blade — though `isTestItem` remains in the data
+model for future use. Not one of the eleven required a new engine call:
+everything a sword can do is expressed as a binding envelope over an ability,
+and every ability goes through the same combat pipeline. `SWORD_CATALOG.md` is
+generated from those definitions by `tools/catalog.mjs`, so the published stats
+cannot drift from the code.
 
 Wind and Tidal are the clearest demonstration that behaviour comes from data:
 both bind the same `repulse` ability, but Wind's binding targets an area with
@@ -736,23 +735,40 @@ read half of the effect system, and they open an axis the framework did not
 have: an ability can branch on **what the target is already suffering**.
 
 That is what makes Frost Sword a sequence rather than a button. Its passive
-leaves slowness; its active deals bonus damage to anything already slowed. The
-three burst abilities now each ask a different question:
+leaves slowness; its active deals bonus damage to anything already slowed.
+
+`EffectService.healthFraction(entity)` (v0.10.0) is the third read, and the one
+with two opposite consumers: `ward` asks it about the **caster**, so a defensive
+guard forms only once its wielder is losing; `drain` asks it about the
+**target**, so the void pays out most for taking what is nearest to gone. One
+utility, because the failure handling — a health component that is absent, a
+handle that has gone invalid, a maximum of zero — is identical either way and is
+exactly the sort of thing that gets written twice and fixed once.
+
+Every area and on-hit ability in the collection now scales with a different
+question, which is the test a new ability has to pass to justify existing:
 
 | Ability | Scales with | Sword |
 |---|---|---|
 | `burst` | how far the target is from the centre | Earth |
 | `ember_burst` | how much heat the **caster** has banked | Ember Blade |
 | `nova` | what the **target** is already suffering | Frost |
+| `entangle` | how many were caught, paid to the caster | Nature |
+| `resonate` | how many were caught, paid to every target | Crystal |
+| `rift` | how far from the caster it was opened | Void |
+| `ward` | the **caster's** remaining health | Crystal |
+| `drain` | the **target's** remaining health | Void |
 
-Neither read ever throws — `getEffect` raises on an unknown effect id and on a
-dead handle, and this runs inside combat resolution where a throw would abandon
-the remaining targets. An unreadable target reports as *unaffected*, so the
-failure mode is "no bonus", never "free bonus".
+None of these reads ever throws — `getEffect` and `getComponent` both raise on a
+dead handle, and they run inside combat resolution where a throw would abandon
+the remaining targets. An unreadable target reports as *unaffected* and
+*unhurt*, so the failure mode is always "no bonus", never "free bonus": `ward`
+only forms below a threshold and `drain` only pays below one, so reporting 1
+withholds both rather than granting both.
 
 The ordering rule that goes with it: **read the target's state before striking**,
-so the effects an activation applies cannot trigger its own bonus. Both `nova`
-and `afflict` do this, and a test asserts it.
+so the effects or damage an activation applies cannot trigger its own bonus.
+`nova`, `afflict` and `drain` all do this, and a test asserts it for each.
 
 ### Moving the caster
 
@@ -794,6 +810,39 @@ Three details worth stating:
 
 `config.movement.maxDashDistance` caps every dash at 10 blocks regardless of
 what a definition asks for.
+
+### Acting where the caster is not
+
+Every offensive ability up to v0.9.0 originated at the wielder's body: the
+radial bursts expand from their feet, `cleave` is a cone off their arm, `chain`
+starts on whatever they point at, `repulse` throws from where they stand. None
+could affect a place the caster was not standing in.
+
+`TargetingService.resolvePoint` had existed since step 4 for exactly this and
+had no consumer. `rift` (Void Sword) is the first:
+
+```
+resolvePoint(ctx)          one block raycast, capped by the binding's range
+  -> targeting.around(...)  one entity query around the returned point
+  -> combat.strike(..., { origin: centre, knockback: { pull: true } })
+```
+
+Two safety properties make that a framework capability rather than a hole in
+one:
+
+- **`around` keeps the binding's filters.** It is a front door onto the same
+  `sphere` query the caster-centred abilities use, carrying `ctx.allowedTargets`
+  and the caster exclusion, so choosing a different origin cannot widen what an
+  ability may hit. An ability cannot escape its own permissions by aiming
+  elsewhere.
+- **Reach is bounded twice.** The binding's `targeting.range` is clamped to
+  `config.targeting.maxRange`, and the blast radius is a separate parameter, so
+  a long-ranged rift is not automatically a wide one.
+
+`StrikeSpec.origin` is what makes the pull work: it is the knockback's reference
+point, so passing the rift's centre and `pull: true` drags everything caught
+inward. That is also the cleanest available answer to "move entities rather than
+the caster" — no teleport, no per-tick force, one impulse at resolution time.
 
 ### Stacking charges
 
@@ -1062,11 +1111,20 @@ and the action bar and catalogue both show the label. Without this the choice
 was between reusable abilities and evocative names; there is no reason to lose
 either.
 
-Nine profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`, `grove`,
-`ember`, and `arcane` as the framework's neutral default. A test asserts no two
-share a caster particle or a cast sound, so "distinct look per theme" is
-enforced rather than intended — which is what keeps `ember` and `fire` from
-converging as more fire-themed swords arrive.
+Twelve profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
+`grove`, `ember`, `shadow`, `crystal`, `void`, and `arcane` as the framework's
+neutral default. A test asserts no two share a caster particle or a cast sound,
+so "distinct look per theme" is enforced rather than intended — which is what
+keeps `ember` and `fire` from converging as more fire-themed swords arrive.
+
+The rule matters most for the pairs that are *conceptually* adjacent, where the
+temptation is to reach for the same vocabulary at a different brightness:
+
+| Pair | How they are kept apart |
+|---|---|
+| `fire` / `ember` | open flame and molten spatter versus spark motes and a single candle flame |
+| `frost` / `crystal` | snow and rime versus mystical motes and a mineral flare — no snowflake anywhere in `crystal` |
+| `shadow` / `void` | portal motes marking where the wielder *was* versus dragon-breath wisps and End-sparkle marking somewhere else *arriving*; the two share not one identifier |
 
 ### Why this layer exists
 

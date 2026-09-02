@@ -5,18 +5,19 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.9.0 — nine swords, all craftable.**
-> Shadow Sword 🌑 and Ember Blade 🔥 join the seven Elemental Collection
-> blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and
-> Nature 🌿. See
-> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
+> **Status: v0.10.0 — eleven swords, all craftable.**
+> Crystal 🔮 and Void 🕳️ join Shadow 🌑, Ember Blade 🔥 and the seven Elemental
+> Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨,
+> Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster and
+> `ROADMAP.md` for what comes next.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Ember Blade, Frost, Thunder and Shadow have **not** been client-tested.
+> Ember Blade, Frost, Thunder, Shadow, Crystal and Void have **not** been
+> client-tested.
 
 ---
 
@@ -55,6 +56,8 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:tidal_sword       a wave pushed forward
 /give @s custom_swords:nature_sword      an execute, and it heals you
 /give @s custom_swords:shadow_sword      dash through the dark, then hit hard
+/give @s custom_swords:crystal_sword     hits harder the more of them there are
+/give @s custom_swords:void_sword        tear a rift where you are looking
 ```
 
 Every sword is craftable at a crafting table — `SWORD_CATALOG.md` shows each
@@ -151,7 +154,7 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **9 of 20–25 swords.** The remaining 11–16 arrive in milestones 7, 9 and 10.
+- **11 of 20–25 swords.** The remaining 9–14 arrive in milestones 7, 9 and 10.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No loot tables or trades.** Every sword is craftable at a table, but none
@@ -160,7 +163,13 @@ Stated plainly:
 - **In-memory state only.** Cooldowns and player state reset on world reload, by
   design; persistence is tracked in `TODO.md`.
 - **No multi-stage abilities.** Wind-up → impact, and the cancellation that goes
-  with it, is milestone 8. Everything resolves within a single tick today.
+  with it, is milestone 8. Everything resolves within a single tick today —
+  including Void Rift, which opens and closes inside one activation.
+- **No reactive abilities.** Bedrock gives an item custom component exactly two
+  player-driven hooks, `onUse` and `onHitEntity`, so nothing can trigger on the
+  wielder *being* hit without a world-wide damage listener the architecture
+  deliberately refuses. Crystal Guard reads the wielder's health on the swing
+  instead, which is the honest version of the same fantasy.
 - **No tooltip flavour text.** Bedrock has no item-JSON lore component; a
   sword's description is reachable through `/scriptevent custom_swords:info` but
   not the vanilla tooltip. See `TODO.md`.

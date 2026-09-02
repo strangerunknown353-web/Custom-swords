@@ -127,19 +127,37 @@ the gap between the four swords built in step 5 and the benchmark set since.
 most of its scope, so what remains there is the codex UI, loot tables and
 trades.
 
+### Interlude — Crystal and Void (v0.10.0) — **done**
+Swords ten and eleven, and the first two that are not about hitting harder.
+Crystal is the collection's first defensive sword: its active scales *up* with
+the size of the crowd it is caught in, and its passive forms a guard only once
+its wielder is losing. Void is the first sword that acts somewhere the wielder
+is not — `rift` is the first consumer of the `point` targeting mode, which had
+been sitting unused in `TargetingService` since step 4 — and its passive pays out
+on how *empty* the target is rather than on how hard it was hit.
+
+**Milestone 6 shrinks accordingly**: abilities that move entities rather than
+the caster now exist (`rift` pulls a group toward a remote point), and `point`
+targeting has a proven consumer. What remains there is genuinely block-aware
+targeting and persistent area denial.
+
 ### 6. Ability library — spatial (planned)
 Gravity manipulation, earthquakes and area denial. Teleportation and its safety
-rules arrived early with Shadow Sword (`systems/movement.js`), so what is left
-is block-aware targeting beyond the `point` mode and abilities that move
-*entities* rather than the caster.
+rules arrived early with Shadow Sword (`systems/movement.js`), and remote point
+detonation with pull arrived with Void Sword (`abilities/builtin/rift.js`), so
+what is left is block-aware targeting beyond the `point` mode and effects that
+persist for a few seconds rather than resolving in one activation.
 
-### 7. Swords 8–13 (planned)
-The forged and mystic tiers, leaning on the spatial library. First swords
-carrying three or four activation methods at once, which stress-tests whether
-the activation fallback rules hold up under real bindings.
+### 7. Swords 12–13 (planned)
+Swords 8 through 11 landed early in the interludes above — Ember Blade, Shadow,
+Crystal and Void — so this step is the two that remain of the forged and mystic
+tiers, leaning on the spatial library. They are also where the first swords
+carrying three or four activation methods at once belong, which stress-tests
+whether the activation fallback rules hold up under real bindings; every sword
+so far binds exactly two.
 
 ### 8. Ability library — exotic and ultimates (planned)
-Life steal, shadow and light, time-based effects, meteors, and the multi-stage
+Shadow and light, time-based effects, meteors, and the multi-stage
 pattern (wind-up → impact) with cancellation on death, disconnect or dimension
 change. The first abilities that need state to survive across ticks.
 

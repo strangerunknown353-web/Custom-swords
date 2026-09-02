@@ -13,6 +13,88 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.10.0] — 2026-09-02
+
+**Crystal Sword and Void Sword**, taking the collection to eleven. Both are
+built on questions the framework had never been asked: what an area attack
+should do about a *crowd*, what a passive should do about its *wielder's* health
+rather than its target's, and what an ability that acts somewhere the caster is
+not should look like.
+
+### Added
+
+- **Crystal Sword 🔮** (`custom_swords:crystal_sword`, Epic, 8 melee, 850
+  durability) — the collection's first defensive sword.
+  - **Crystal Burst** (`custom_swords:resonate`, 8 s): a lattice struck once,
+    ringing louder for every body caught in it. Damage rises for *every* target
+    with each additional target, capped at +4.2 so a spawner room is reach
+    rather than a one-shot. Inverts the usual area balance, where a crowd is
+    total damage spread thinner.
+  - **Crystal Guard** (`custom_swords:ward`): a defensive layer that forms only
+    once the wielder is at or below 60 % health, one tier stronger below 30 %,
+    hard-capped at Resistance II and rate-limited by its own 7-second mark
+    rather than by the binding cooldown. It cannot be pre-stacked, cannot be
+    maintained by swinging at a pig, and is worth nothing while the wielder is
+    safe.
+- **Void Sword 🕳️** (`custom_swords:void_sword`, Legendary, 9 melee, 1600
+  durability — the collection's most durable) — the first blade that reaches
+  somewhere the wielder is not.
+  - **Void Rift** (`custom_swords:rift`, 9 s): the **first consumer of `point`
+    targeting**, which had been in `TargetingService` since v0.4.0 with nothing
+    using it. Resolves the block the player is looking at, up to ten blocks, and
+    collapses a 3.5-block sphere there — damage rising with how far the rift was
+    torn, the exact inverse of `burst`'s falloff, and knockback applied from the
+    rift's centre with `pull` so everything caught is dragged in rather than
+    scattered.
+  - **Void Drain** (`custom_swords:drain`): health returned to the wielder in
+    proportion to how little the target has left, not to the damage dealt. That
+    inversion is the anti-abuse mechanism: flat lifesteal is farmable forever
+    against a tanky mob, while a payout that peaks as a target dies has nothing
+    to farm. Capped at 3 HP a hit, read *before* the strike so the ability
+    cannot inflate its own payout, and paid only on a hit that actually landed.
+- **Two visual profiles**, `crystal` and `void`, built from particle and sound
+  vocabularies no existing profile touches — `void` deliberately shares not one
+  identifier with `shadow`.
+- **Five sound presets** (`crystal_cast`, `crystal_impact`, `crystal_ward`,
+  `void_cast`, `void_impact`, `void_drain`), each verified against the vanilla
+  sound event list like every other preset.
+- **`EffectService.healthFraction`** — one shared, never-throwing "how hurt is
+  this?" read, with two opposite consumers: `ward` asks it about the caster,
+  `drain` about the target. An unreadable entity reports *unhurt*, which
+  withholds both benefits rather than granting both.
+- **`tests/unit/crystal_void.test.mjs`** — 24 tests covering resonance scaling
+  and its cap, the guard's health gate, tier and interval, that the guard never
+  lands on the target, that the rift detonates at the aimed point rather than at
+  the wielder, that its damage rises with reach, that it pulls rather than
+  scatters, that the drain pays nothing against a fresh target and cannot
+  inflate its own payout, and per-player isolation for all of it.
+- **Recipe audit gates**: no two swords may craft from the same grid, and a
+  recipe must produce exactly one sword.
+- **Crafting recipes** for both, verified against the vanilla item list like the
+  other nine: Crystal is three amethyst shards over a diamond core on a quartz
+  hilt; Void is dragon breath, two eyes of ender and a netherite ingot on an end
+  rod — the only recipe in the collection that requires the dragon fight.
+
+### Changed
+
+- **`MockDimension.getBlockFromRay` now marches the ray** through the same block
+  model `getBlock` serves, instead of always reporting open air. `resolvePoint`
+  had no test coverage before because nothing used it; Void Rift's reach
+  scaling cannot be tested without a mock that can stop a ray.
+
+### Fixed
+
+- `abilities/builtin/chain.js` referred to a `surge` ability that has never
+  existed. Rewritten to compare against `rift`, which is the reaching ability it
+  was describing.
+- `docs/TEXTURE_STANDARD.md` listed Shadow's theme as "not yet"; Shadow shipped
+  in v0.8.0.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and nothing above has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
 ## [0.9.0] — 2026-09-01
 
 **Every sword is craftable.** The collection had nine swords and zero recipes;

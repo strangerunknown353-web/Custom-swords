@@ -106,7 +106,7 @@ Do not write particle ids and sound names into a binding by hand. Name a
 profile:
 
 ```js
-visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember | arcane
+visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember | shadow | crystal | void | arcane
 ```
 
 That supplies the caster particle, the target particle, the trail used for arcs
@@ -126,6 +126,28 @@ Two rules, and they are not stylistic:
   sound event list.
 
 Adding a new theme means adding a profile, not editing seven swords.
+
+### Reading how hurt something is
+
+`services.effects.healthFraction(entity)` returns 1 at full health down to 0 at
+death, for the caster or for a target, and never throws:
+
+```js
+// A passive that only pays off once its wielder is in trouble:
+if (services.effects.healthFraction(ctx.player) > params.guardThreshold) {
+    return { ok: true, message: 'strike' };
+}
+
+// A passive that pays out most against what is nearly gone. Read BEFORE the
+// strike, so the ability's own damage cannot inflate its own payout:
+const fraction = services.effects.healthFraction(target);
+```
+
+An unreadable entity reports **1 — unhurt**, which is deliberate: both shipped
+consumers only grant something *below* a threshold, so failing to 1 withholds
+the benefit rather than handing it out for free. If you write a mechanic that
+pays out *above* a threshold, invert your own default rather than changing this
+one.
 
 ### State that carries between activations
 

@@ -63,7 +63,9 @@ same outline discipline — but each sword carries its own theme:
 | Earth | rough stone, brown and grey, chunky and blunt, a fleck of moss | Earth — the widest and shortest blade, deliberately unrefined |
 | Water | deep teal with a coral guard and a pearl pommel | Tidal — flowing edge, warm guard against a cold blade |
 | Nature | living wood and leaf-green, gold sap, growth over metal | Nature — leaf-shaped blade, branching guard |
-| Shadow | matte near-black, violet rim light, ragged edge | *(not yet)* |
+| Shadow | matte near-black, violet rim light, ragged edge | Shadow — narrow blade, violet seam on the cutting edge, wide crescent guard |
+| Crystal | cut amethyst, faceted rather than forged, warm metal against a cool stone | Crystal — broad shard, alternating specular and rose facets, rose-gold cross guard, pale grip |
+| Void | deep indigo void-metal, cold cyan rift-light, high contrast | Void — long narrow blade with the light in its *centre*, clipped chisel point, gem set in the guard |
 | Dragon | ancient bronze and bone, scaled guard, warm patina | *(not yet)* |
 
 **Two swords must never be distinguishable only by hue.** Every sword in the
@@ -212,3 +214,20 @@ be tellable from the first four at hotbar scale.
 | Ember Blade | 13 | 31% | 225 |
 
 Those numbers are the floor for the collection, not the ceiling.
+
+**A third reference, for the hardest case: `art/swords/void_sword.json` — where
+the light lives.** Every other blade in the set is lit along its edge, with the
+upper-left face bright and the lower-right face shaded. Void puts the light in
+the blade's *centre* instead — a seam of cold cyan running down a dark indigo
+body — and terminates in a clipped chisel rather than a point.
+
+It is the reference for what to do when a theme has no natural colour of its
+own. "Void" wants to be black, and a black sword next to Shadow is a recolour of
+Shadow. The answer was not a different black; it was a different *place for the
+light*, which changes the silhouette's internal structure rather than its hue.
+Reach for that before reaching for the colour picker.
+
+| Reference | Colours | Coverage | Luminance spread |
+|---|---:|---:|---:|
+| Void Sword | 12 | 39% | 240 |
+| Crystal Sword | 13 | 37% | 238 |

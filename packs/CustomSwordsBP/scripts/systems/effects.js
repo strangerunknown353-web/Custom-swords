@@ -122,6 +122,43 @@ export class EffectService {
     }
 
     /**
+     * How much of an entity's health remains, as 1 at full down to 0 at death.
+     *
+     * The framework's one shared answer to "how hurt is this thing?", and it
+     * has two very different consumers, which is why it lives here rather than
+     * in either of them:
+     *
+     *  - `ward` reads the **caster's** fraction, so a defensive guard forms
+     *    only once its wielder is actually in danger;
+     *  - `drain` reads the **target's**, so the void pays out most for taking
+     *    what is nearest to gone.
+     *
+     * Never throws, for the same reason {@link has} does not: it is called
+     * inside combat resolution, where a raised exception would abandon every
+     * remaining target. An unreadable entity reports 1 — "unhurt" — which fails
+     * towards *not* granting either benefit.
+     *
+     * @param {Entity} target
+     * @returns {number} 0..1
+     */
+    healthFraction(target) {
+        if (target === undefined || target === null) return 1;
+        try {
+            if (!target.isValid) return 1;
+            const health = target.getComponent('minecraft:health');
+            if (health === undefined) return 1;
+            const component = /** @type {import('@minecraft/server').EntityHealthComponent} */ (health);
+            const max = component.effectiveMax;
+            const current = component.currentValue;
+            if (!Number.isFinite(max) || !Number.isFinite(current) || max <= 0) return 1;
+            return Math.max(0, Math.min(1, current / max));
+        } catch (error) {
+            this.log.debug('effects.healthFraction failed:', error);
+            return 1;
+        }
+    }
+
+    /**
      * Restores health, clamped to the entity's maximum.
      *
      * Uses the health attribute component directly rather than an instant-health

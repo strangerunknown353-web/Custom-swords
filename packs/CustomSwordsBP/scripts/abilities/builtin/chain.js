@@ -1,10 +1,10 @@
 /**
  * Chain — a precise strike on one target that arcs to nearby others.
  *
- * The collection's other reaching ability, `surge`, detonates at a *point* the
+ * The collection's other reaching ability, `rift`, detonates at a *point* the
  * caster is looking at and damages everything in a sphere around it. This one
  * picks a single entity and jumps between entities, which is a different shape
- * of decision: `surge` rewards aiming at a cluster's centre, `chain` rewards
+ * of decision: `rift` rewards aiming at a cluster's centre, `chain` rewards
  * finding a line of enemies.
  *
  * ## Why this does not spawn a lightning bolt

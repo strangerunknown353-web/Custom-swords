@@ -47,6 +47,38 @@ describe('EffectService.heal', () => {
     });
 });
 
+describe('EffectService.healthFraction', () => {
+    it('reports the remaining share of health', () => {
+        assert.equal(effects.healthFraction(mob(20, 20)), 1);
+        assert.equal(effects.healthFraction(mob(10, 20)), 0.5);
+        assert.equal(effects.healthFraction(mob(0, 20)), 0);
+    });
+
+    it('reports an unreadable entity as unhurt, which withholds every bonus keyed on it', () => {
+        // Failing towards 1 rather than 0 is the safe direction: `ward` only
+        // forms below a threshold and `drain` only pays below one, so an
+        // unreadable entity grants neither instead of granting both.
+        const removed = mob(2, 20);
+        removed.isValid = false;
+        assert.equal(effects.healthFraction(removed), 1);
+
+        const bodiless = new MockEntity({ id: 'bodiless', location: { x: 0, y: 64, z: 0 } });
+        delete bodiless.components['minecraft:health'];
+        assert.equal(effects.healthFraction(bodiless), 1);
+
+        assert.equal(effects.healthFraction(undefined), 1);
+        assert.equal(effects.healthFraction(null), 1);
+    });
+
+    it('never throws, and never leaves the 0..1 range', () => {
+        const nonsense = mob(200, 20);
+        assert.doesNotThrow(() => effects.healthFraction(nonsense));
+        assert.equal(effects.healthFraction(nonsense), 1);
+        assert.equal(effects.healthFraction(mob(-5, 20)), 0);
+        assert.equal(effects.healthFraction(mob(5, 0)), 1, 'a zero maximum cannot be divided by');
+    });
+});
+
 describe('EffectService.ignite', () => {
     it('sets a target alight', () => {
         const target = mob();

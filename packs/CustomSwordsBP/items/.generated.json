@@ -1,6 +1,7 @@
 {
   "note": "Written by tools/generate.mjs so stale generated files can be pruned. Not read by Minecraft.",
   "items": [
+    "crystal_sword.item.json",
     "earth_sword.item.json",
     "ember_blade.item.json",
     "frost_sword.item.json",
@@ -9,9 +10,11 @@
     "shadow_sword.item.json",
     "thunder_sword.item.json",
     "tidal_sword.item.json",
+    "void_sword.item.json",
     "wind_sword.item.json"
   ],
   "recipes": [
+    "crystal_sword.recipe.json",
     "earth_sword.recipe.json",
     "ember_blade.recipe.json",
     "frost_sword.recipe.json",
@@ -20,6 +23,7 @@
     "shadow_sword.recipe.json",
     "thunder_sword.recipe.json",
     "tidal_sword.recipe.json",
+    "void_sword.recipe.json",
     "wind_sword.recipe.json"
   ]
 }

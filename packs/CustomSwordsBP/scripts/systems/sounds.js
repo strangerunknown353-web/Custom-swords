@@ -80,6 +80,26 @@ export const SOUND_LIBRARY = Object.freeze({
     shadow_cast: { id: 'mob.endermen.portal', volume: 0.8, pitch: 0.7 },
     shadow_impact: { id: 'mob.shulker.teleport', volume: 0.6, pitch: 0.8 },
 
+    // Crystal: the amethyst resonance chime, which is the closest thing vanilla
+    // has to a struck lattice, and a sharp mineral tick where it lands. Nature
+    // already uses `break.amethyst_cluster`, so this family stays on `chime.`
+    // and `hit.` to keep the two apart by more than pitch.
+    crystal_cast: { id: 'chime.amethyst_block', volume: 0.9, pitch: 1.3 },
+    crystal_impact: { id: 'hit.amethyst_cluster', volume: 0.6, pitch: 1.6 },
+    // The guard forming. `resonate.amethyst_block` is the block's own answering
+    // note — the one cue in the collection that means "something closed around
+    // you" rather than "something went out from you".
+    crystal_ward: { id: 'resonate.amethyst_block', volume: 0.7, pitch: 0.9 },
+
+    // Void: dimensional, not dark. A portal warp pitched well down for the tear
+    // opening, a beacon powering down for what it takes with it. Deliberately
+    // nothing from the enderman family, which shadow already owns.
+    void_cast: { id: 'portal.trigger', volume: 0.9, pitch: 0.6 },
+    void_impact: { id: 'beacon.deactivate', volume: 0.6, pitch: 0.7 },
+    // The drain: a respawn anchor losing a charge, which is exactly the sound
+    // of something being emptied.
+    void_drain: { id: 'respawn_anchor.deplete', volume: 0.5, pitch: 0.8 },
+
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },

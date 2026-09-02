@@ -1,0 +1,36 @@
+{
+  "name": "Void Sword",
+  "description": "Deep indigo void-metal with a seam of cold rift-light running down the blade's centre rather than along its edge — the inverse of every other blade in the collection — dimming from a clipped, chisel-flat point toward the hilt. Pale violet cross guard with a void-light gem set where the blade passes through it, dark corded grip, and a second smaller rift core ringed in the pommel.",
+  "palette": {
+    "o": "#030209",
+    "X": "#ccfdff",
+    "V": "#45d8f0",
+    "v": "#1c7d9c",
+    "H": "#5b5482",
+    "B": "#38325c",
+    "S": "#211d3a",
+    "D": "#121022",
+    "G": "#9d90c8",
+    "g": "#4f4776",
+    "W": "#574c5e",
+    "k": "#2b2333"
+  },
+  "pixels": [
+    ".............oo.",
+    "............oXVo",
+    "...........oHVBo",
+    "..........oHVBSo",
+    "...oo....oHVBSo.",
+    "..oGgo..oHVBSDo.",
+    "...oGgooHvBSDo..",
+    "....oGXHvBSDo...",
+    ".....oVGHvBo....",
+    "....oWogGoo.....",
+    "...oWkoogGo.....",
+    ".ooWko..ogo.....",
+    "oGVGo....o......",
+    "oggGo...........",
+    ".ooo............",
+    "................"
+  ]
+}

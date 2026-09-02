@@ -121,7 +121,8 @@ for (const sword of shipped) {
     for (const binding of sword.abilities) {
         const targeting = binding.targeting ?? { type: 'self' };
         const details = [];
-        if (binding.params?.damage) details.push(`${binding.params.damage} ability damage`);
+        const damage = describeDamage(binding.params ?? {}, sword);
+        if (damage !== undefined) details.push(damage);
         if (binding.knockback?.horizontal) {
             details.push(`knockback ${binding.knockback.horizontal}${binding.knockback.mode === 'forward' ? ' (wave)' : ''}`);
         }
@@ -178,4 +179,72 @@ if (existing === content) {
 } else {
     fs.writeFileSync(OUTPUT, content);
     console.log(`catalog: wrote SWORD_CATALOG.md (${shipped.length} sword(s), ${ABILITIES.length} abilities).`);
+}
+
+/**
+ * A binding's damage, in whatever shape the ability expresses it.
+ *
+ * Reporting only a flat `damage` understated every ability whose output scales:
+ * Void Rift declares `nearDamage` + `reachBonus` and would have published no
+ * damage at all, and Shadow Edge's `damage: 1` hid the 7 it actually deals
+ * inside its window. The catalogue is the roster players read, so it reports the
+ * range rather than the floor.
+ *
+ * @param {Record<string, any>} params
+ * @param {any} sword The owning sword, so a charge-fed active can find the
+ *   ceiling declared by the passive that fills its meter.
+ * @returns {string | undefined}
+ */
+function describeDamage(params, sword) {
+    const round = (n) => String(Math.round(n * 10) / 10);
+
+    // A remote ability whose damage ramps with how far it was placed.
+    if (typeof params.nearDamage === 'number') {
+        const top = params.nearDamage + (params.reachBonus ?? 0);
+        return top > params.nearDamage
+            ? `${round(params.nearDamage)}-${round(top)} ability damage (scales with reach)`
+            : `${round(params.nearDamage)} ability damage`;
+    }
+
+    if (typeof params.damage !== 'number' || params.damage <= 0) return undefined;
+    const base = params.damage;
+
+    // A conditional bonus: a combo window, or a target already afflicted.
+    const bonus = params.empoweredDamage ?? params.escalationDamage ?? params.shatterBonus;
+    if (typeof bonus === 'number' && bonus > 0) {
+        return `${round(base)}-${round(base + bonus)} ability damage (conditional)`;
+    }
+
+    // A resource the wielder banks. The ceiling lives on whichever binding of
+    // the same sword *fills* the meter, so look it up by shared charge key
+    // rather than reporting only the empty-meter figure.
+    if (typeof params.damagePerCharge === 'number') {
+        const cap = maxChargesFor(sword, params.chargeKey);
+        if (cap !== undefined) {
+            return `${round(base)}-${round(base + params.damagePerCharge * cap)} ability damage (scales with banked charges)`;
+        }
+        return `${round(base)}+ ability damage (scales with banked charges)`;
+    }
+    if (typeof params.maxResonance === 'number' && params.maxResonance > 0) {
+        return `${round(base)}-${round(base + params.maxResonance)} ability damage (scales with the crowd)`;
+    }
+
+    return `${round(base)} ability damage`;
+}
+
+/**
+ * The charge ceiling a sword declares for one meter, read from whichever of its
+ * bindings fills that meter.
+ *
+ * @param {any} sword
+ * @param {string | undefined} chargeKey
+ * @returns {number | undefined}
+ */
+function maxChargesFor(sword, chargeKey) {
+    if (chargeKey === undefined) return undefined;
+    for (const binding of sword?.abilities ?? []) {
+        const params = binding.params ?? {};
+        if (params.chargeKey === chargeKey && typeof params.maxCharges === 'number') return params.maxCharges;
+    }
+    return undefined;
 }

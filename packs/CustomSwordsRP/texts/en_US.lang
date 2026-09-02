@@ -47,3 +47,13 @@ item.custom_swords:nature_sword.description=Still growing. New shoots close over
 item.custom_swords:shadow_sword=§dShadow Sword§r
 item.custom_swords:shadow_sword.name=§dShadow Sword§r
 item.custom_swords:shadow_sword.description=Its edge is only ever where you last looked away from.
+
+## custom_swords:crystal_sword - Epic
+item.custom_swords:crystal_sword=§dCrystal Sword§r
+item.custom_swords:crystal_sword.name=§dCrystal Sword§r
+item.custom_swords:crystal_sword.description=Struck once, it rings until everything around it answers.
+
+## custom_swords:void_sword - Legendary
+item.custom_swords:void_sword=§6Void Sword§r
+item.custom_swords:void_sword.name=§6Void Sword§r
+item.custom_swords:void_sword.description=The edge is a seam. What it opens does not stay open.

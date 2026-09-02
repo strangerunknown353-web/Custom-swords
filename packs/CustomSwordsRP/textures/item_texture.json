@@ -28,6 +28,12 @@
     },
     "shadow_sword": {
       "textures": "textures/items/custom_swords/swords/shadow_sword"
+    },
+    "crystal_sword": {
+      "textures": "textures/items/custom_swords/swords/crystal_sword"
+    },
+    "void_sword": {
+      "textures": "textures/items/custom_swords/swords/void_sword"
     }
   }
 }

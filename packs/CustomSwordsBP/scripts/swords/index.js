@@ -22,6 +22,8 @@ import { earthSword } from './earth_sword.js';
 import { tidalSword } from './tidal_sword.js';
 import { natureSword } from './nature_sword.js';
 import { shadowSword } from './shadow_sword.js';
+import { crystalSword } from './crystal_sword.js';
+import { voidSword } from './void_sword.js';
 
 /** @type {readonly import('../core/types.js').SwordDefinition[]} */
 export const SWORDS = Object.freeze([
@@ -34,4 +36,6 @@ export const SWORDS = Object.freeze([
     tidalSword,
     natureSword,
     shadowSword,
+    crystalSword,
+    voidSword,
 ]);

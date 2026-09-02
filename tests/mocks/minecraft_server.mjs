@@ -148,13 +148,43 @@ export class MockDimension {
     }
 
     /**
-     * Block raycast. The mock world is empty air, so this reports no hit and
-     * callers fall back to their maximum reach — which is the common outdoor
-     * case in a real world too.
+     * Block raycast, marched through the same block model {@link getBlock}
+     * serves.
+     *
+     * Returns the first solid (non-air, non-liquid) block along the ray, or
+     * `undefined` when the ray reaches `maxDistance` through open air — in
+     * which case a caller such as `TargetingService.resolvePoint` falls back to
+     * its full reach, which is the common outdoor case in a real world too.
+     *
+     * Stepping in quarter-blocks is finer than any distance these abilities
+     * care about and keeps the walk cheap.
      *
      * @param {any} location @param {any} direction @param {any} options
      */
-    getBlockFromRay(location, direction, options) {
+    getBlockFromRay(location, direction, options = {}) {
+        const max = options.maxDistance ?? 16;
+        const length = Math.hypot(direction.x, direction.y, direction.z);
+        if (!(length > 0)) return undefined;
+        const step = 0.25;
+        for (let travelled = step; travelled <= max; travelled += step) {
+            const point = {
+                x: location.x + (direction.x / length) * travelled,
+                y: location.y + (direction.y / length) * travelled,
+                z: location.z + (direction.z / length) * travelled,
+            };
+            let block;
+            try {
+                block = this.getBlock(point);
+            } catch {
+                // An unloaded chunk stops the ray, as it does in the engine.
+                return undefined;
+            }
+            if (block.isAir || block.isLiquid) continue;
+            return {
+                block: { x: Math.floor(point.x), y: Math.floor(point.y), z: Math.floor(point.z) },
+                face: 'Up',
+            };
+        }
         return undefined;
     }
 

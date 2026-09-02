@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 405 unit + integration tests against a mocked @minecraft/server
+npm test            # 436 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -173,8 +173,9 @@ confirmed working by the project owner. The Tested column below is ticked for
 the item-and-presentation layer on that basis.
 
 What is **not** ticked is per-sword ability behaviour: the client test exercised
-the add-on, not all eight swords' individual actives and passives. Ember Blade
-is new in v0.6.0 and has not been in a client at all.
+the add-on, not each sword's individual actives and passives. Ember Blade
+(v0.6.0), Shadow (v0.8.0) and Crystal and Void (v0.10.0) have not been in a
+client at all.
 
 The other columns record what is verified *statically*.
 
@@ -189,6 +190,8 @@ The other columns record what is verified *statically*.
 | Nature 🌿 | `custom_swords:nature_sword` | 7 | Strike — execute below 40 % health (5.5 s) | Bolster — regeneration 4 s | ✅ | ✅ | ✅ | ☐ |
 | Shadow 🌑 | `custom_swords:shadow_sword` | 8 | Shadow Step — 6-block validated dash, light strike on arrival (7 s) | Shadow Edge — +6 and 2 lifesteal within 4 s of a step | ✅ | ✅ | ✅ | ☐ |
 | Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
+| Crystal 🔮 | `custom_swords:crystal_sword` | 8 | Crystal Burst — 4.5 m ring, +1.2 damage to **every** target per extra target, capped at +4.2 (8 s) | Crystal Guard — Resistance 5 s below 60 % health, II below 30 %, once per 7 s | ✅ | ✅ | ✅ | ☐ |
+| Void 🕳️ | `custom_swords:void_sword` | 9 | Void Rift — collapse at the aimed point up to 10 m, 3.5 m radius, 5→9 damage with reach, pulls inward (9 s) | Void Drain — up to 3 HP back, scaled by how little the target has left | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
 
@@ -447,6 +450,62 @@ appear.
 - [ ] No sword damages its own wielder
 - [ ] No content-log errors from any activation
 
+### F3. Crystal Sword — the crowd, and the guard
+
+Two mechanics that both need a *situation*, so neither can be checked by
+swinging at one pig on flat ground.
+
+**Crystal Burst (`use`, 8 s) — bring a crowd:**
+
+- [ ] Against **one** mob within 4.5 blocks, right-click deals about 5 damage
+- [ ] Against **four** mobs, each of them takes visibly more (about 8.6)
+- [ ] Against **eight** mobs, each takes about 9.2 and no more — the cap holds
+- [ ] Everything caught is Slowed for 3 seconds
+- [ ] Everything caught is nudged outward, not thrown apart
+- [ ] The amethyst chime plays and the mystical motes are visible
+- [ ] With nothing in range, right-click costs no cooldown
+
+**Crystal Guard (`attack`) — you have to be losing:**
+
+- [ ] At **full health**, hitting mobs repeatedly grants no Resistance at all
+- [ ] Below **12 hearts**, the next hit grants Resistance for 5 seconds
+- [ ] Below **6 hearts**, it grants Resistance **II** instead
+- [ ] It never goes above Resistance II however low you drop
+- [ ] After it forms, swinging again does not re-form it for ~7 seconds
+- [ ] The **mob** never gains Resistance — check its behaviour, or hit a
+      second player in a PvP world and watch their effects
+- [ ] The guard forming is *noticeable* — there is no action-bar message by
+      design, so the sound and particles are the whole cue. If it is not
+      noticeable, that is a finding, not a nitpick
+
+### F4. Void Sword — reach, and the drain
+
+**Void Rift (`use`, 9 s) — aim it:**
+
+- [ ] Right-click while looking at a mob **ten blocks away**: the rift opens
+      there and damages it
+- [ ] A mob standing **next to you** while you aim far away is *not* hit
+- [ ] A rift opened at your feet (look at the ground) hits for noticeably less
+      than one opened at full reach
+- [ ] Mobs caught are dragged **toward** the rift, not away from it
+- [ ] Mobs caught are Weakened for 4 seconds
+- [ ] The tether and ring particles make the rift's location readable — if you
+      cannot tell where it landed, that is a finding
+- [ ] **No blocks are broken, placed or changed.** Fire the rift into a build
+      and confirm the build is untouched
+- [ ] Nothing is left behind after the activation — no lingering entity, no
+      portal, no particles that outlive the cast by more than a moment
+- [ ] Aiming at open sky with nothing in range costs no cooldown
+
+**Void Drain (`attack`):**
+
+- [ ] Hitting a **full-health** mob restores nothing
+- [ ] Hitting a mob at **1 heart** restores health, up to about 1.5 hearts
+- [ ] It never takes you above your maximum health
+- [ ] Repeatedly hitting one high-health mob (a ravager, an iron golem) does
+      **not** sustain you — this is the abuse case the mechanic is shaped to
+      prevent, and it is the single most important line in this section
+
 ### G. Combat safety layer
 
 - [ ] Spam-clicking any sword as fast as possible produces refusals, never
@@ -526,6 +585,47 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.10.0 — Crystal and Void, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **436 passed**, 0 failed |
+| Recipes | 11 recipes, 44 ingredient/repair items verified against 1607 vanilla items |
+| Registry | 11 swords, 18 abilities, none orphaned |
+| Textures | 11 sources, 0 errors, 0 warnings; Crystal 13 colours / 37 % / spread 238, Void 12 colours / 39 % / spread 240 |
+| Sounds | 29 presets verified against 1824 vanilla sound events |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — unchanged from v0.9.0 despite two more swords |
+
+**Three things here are new in kind, not just in number, and each has a way to
+fail that no automated check in this repository can see:**
+
+1. **Crystal Guard is the first mechanic with no action-bar feedback.** `attack`
+   activations deliberately get none, so the only signal that the guard formed
+   is the `resonate.amethyst_block` cue plus caster particles. The tests prove
+   the effect is applied; nothing proves a player *notices*.
+2. **Void Rift is the first ability that acts somewhere the player is not.** The
+   tests prove it detonates at the resolved point and that damage rises with
+   reach — against a mocked raycast. Whether ten blocks is aimable on touch
+   controls, and whether the tether and ring particles make the rift's location
+   readable, is a client question.
+3. **Two new particle vocabularies.** `lab_table_misc_mystical_particle`,
+   `magnesium_salts_emitter`, `dragon_breath_trail`, `obsidian_tear_particle`
+   and `end_chest` are all in the usable catalogue and all previously unused by
+   this project. The catalogue says they *can* be spawned standalone; only a
+   client says they look like anything.
+
+Specifically to check:
+
+- [ ] Crystal Burst visibly hits harder against a crowd than against one mob
+- [ ] Crystal Guard forms when you drop below ~12 hearts and is noticeable
+- [ ] Crystal Guard does **not** form at full health, however much you swing
+- [ ] Void Rift opens where you are looking, not at your feet
+- [ ] Void Rift drags mobs toward the rift rather than scattering them
+- [ ] Void Drain heals visibly more from a nearly-dead mob than a fresh one
+- [ ] Both new recipes work in survival and produce exactly one sword
+- [ ] Neither new sword's particles or sounds are silent or missing
 
 ### v0.9.0 — crafting, not yet tested in Minecraft
 

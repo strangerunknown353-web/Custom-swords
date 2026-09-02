@@ -103,6 +103,35 @@ describe('generated recipe JSON', () => {
         }
     });
 
+    it('produces exactly one sword, never a stack', () => {
+        // A shaped recipe with a bare identifier `result` yields one item. If
+        // that ever becomes `{ item, count }` the count must stay 1 — a sword
+        // that crafts in twos is a duplication bug, not a generosity.
+        for (const { file, json } of recipeFiles()) {
+            const result = json['minecraft:recipe_shaped'].result;
+            if (typeof result === 'string') continue;
+            assert.equal(result.count ?? 1, 1, `${file}: must produce exactly one sword`);
+        }
+    });
+
+    it('has no two swords sharing a craftable grid', () => {
+        // Two recipes with the same pattern AND the same ingredients conflict:
+        // the crafting table can only resolve one of them, and which one is not
+        // something the project controls. Identical patterns with different
+        // ingredients are fine, and common — every sword is a vertical bar.
+        /** @type {Map<string, string>} */
+        const grids = new Map();
+        for (const { json } of recipeFiles()) {
+            const shaped = json['minecraft:recipe_shaped'];
+            const grid = shaped.pattern
+                .map((row) => [...row].map((ch) => (ch === ' ' ? '-' : shaped.key[ch].item)).join('|'))
+                .join('/');
+            const owner = grids.get(grid);
+            assert.equal(owner, undefined, `${shaped.result} crafts from the same grid as ${owner}`);
+            grids.set(grid, shaped.result);
+        }
+    });
+
     it('matches the sword definitions exactly', () => {
         for (const sword of SWORDS) {
             const file = recipeFiles().find((r) => r.json['minecraft:recipe_shaped'].result === sword.id);

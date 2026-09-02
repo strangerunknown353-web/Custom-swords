@@ -1,0 +1,37 @@
+{
+  "name": "Crystal Sword",
+  "description": "A broad amethyst shard cut rather than forged: the lit edge alternates white specular and rose refraction so the facets step down the blade instead of blending. Thick rose-gold cross guard, a pale bone-wrapped grip — the only light grip in the collection — and an oversized faceted violet pommel stone.",
+  "palette": {
+    "o": "#0a0713",
+    "X": "#fdf4ff",
+    "C": "#ffc9ea",
+    "H": "#d9a8ff",
+    "B": "#9b5ad6",
+    "S": "#5f318f",
+    "D": "#35194f",
+    "G": "#e8bc7a",
+    "g": "#a06f34",
+    "W": "#cfc7b4",
+    "w": "#8a8270",
+    "P": "#b970f5",
+    "p": "#6d3aa8"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oXo",
+    "............oHBo",
+    "...........oXHBo",
+    "..........oHHBSo",
+    ".........oXHBSDo",
+    ".....oo.oHXBSDo.",
+    "....oGgoCHBSDo..",
+    ".....oGgXHBSDo..",
+    "......oGgHBSo...",
+    ".....oWogGoo....",
+    "....oWwoogo.....",
+    "..ooWwo..o......",
+    ".oPXPo..........",
+    ".oppPo..........",
+    "..ooo..........."
+  ]
+}

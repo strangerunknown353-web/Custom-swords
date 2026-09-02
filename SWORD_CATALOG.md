@@ -16,7 +16,7 @@ are not part of the collection.
 | Frost Sword | Rare | 7 | 900 | Frost Nova | 6s | Frostbite |
 | Wind Sword | Rare | 6 | 800 | Wind Burst | 5s | Wind Momentum |
 | Earth Sword | Epic | 10 | 1500 | Earth Shock | 9s | Stone Guard |
-| Tidal Sword | Epic | 8 | 1200 | Tidal Wave | 7.5s | Aqua Affinity |
+| Ocean Sword | Epic | 8 | 1200 | Tidal Wave | 7.5s | Aqua Affinity |
 | Nature Sword | Rare | 7 | 1000 | Nature's Grasp | 5.5s | Nature's Vitality |
 | Shadow Sword | Epic | 8 | 1000 | Shadow Step | 7s | Shadow Edge |
 | Crystal Sword | Epic | 8 | 850 | Crystal Burst | 8s | Crystal Guard |
@@ -226,7 +226,7 @@ are not part of the collection.
 | Use (right-click / long-press) | Earth Shock | 9s | mob, player | 11 ability damage · knockback 1 · slowness 3.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
 | Melee hit | Stone Guard | 8s | any | resistance 5.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
 
-### Tidal Sword
+### Ocean Sword
 
 *Drawn from a trench that has never seen light. The pull comes with it.*
 
@@ -580,7 +580,7 @@ checked rather than asserted.
 | epic | Earth Sword | `emerald` — nether, ocean monument or trial chamber | 2 |
 | epic | Crystal Sword | `quartz` — nether, ocean monument or trial chamber | 2 |
 | epic | Storm Sword | `lightning_rod` — nether, ocean monument or trial chamber | 2 |
-| epic | Tidal Sword | `heart_of_the_sea` — end, ancient city or deep nether | 3 |
+| epic | Ocean Sword | `heart_of_the_sea` — end, ancient city or deep nether | 3 |
 | epic | Shadow Sword | `echo_shard` — end, ancient city or deep nether | 3 |
 | epic | Gravity Sword | `shulker_shell` — end, ancient city or deep nether | 3 |
 | legendary | Thunder Sword | `netherite_ingot` — end, ancient city or deep nether | 3 |
@@ -613,7 +613,7 @@ and the Mythic sits last: Time Sword deals three damage and stops a fight.
 | Gravity Sword | epic | 12 | 8 | 10s | 9.6 |
 | Crystal Sword | epic | 9.2 | 8 | 8s | 9.2 |
 | Inferno Sword | epic | 7 | 8 | 7s | 8.0 |
-| Tidal Sword | epic | 6 | 10 | 7.5s | 8.0 |
+| Ocean Sword | epic | 6 | 10 | 7.5s | 8.0 |
 | Void Sword | legendary | 9 | 6 | 9s | 6.0 |
 | Thunder Sword | legendary | 12 | 4 | 10s | 4.8 |
 | Wind Sword | rare | 2 | 12 | 5s | 4.8 |
@@ -626,10 +626,10 @@ and the Mythic sits last: Time Sword deals three damage and stops a fight.
 | Ability | Used by | Behaviour |
 |---|---|---|
 | **Burst** | Earth Sword | Detonates around the caster, hitting hardest at the centre. |
-| **Repulse** | Wind Sword, Tidal Sword | Throws everything nearby away from the caster. |
+| **Repulse** | Wind Sword, Ocean Sword | Throws everything nearby away from the caster. |
 | **Brand** | Inferno Sword | Marks its targets with lingering afflictions. |
 | **Cleave** | Inferno Sword | Sweeps everything in a wide arc ahead of the caster. |
-| **Bolster** | Wind Sword, Earth Sword, Tidal Sword, Nature Sword | Steeps the wielder in the blade’s own energy. |
+| **Bolster** | Wind Sword, Earth Sword, Ocean Sword, Nature Sword | Steeps the wielder in the blade’s own energy. |
 | **Ember Burst** | Ember Blade | Releases stored heat in a tight burst around the wielder. |
 | **Ember Edge** | Ember Blade | Banks a little heat with every blow that lands. |
 | **Nova** | Frost Sword | Bursts outward, gripping hardest at its centre. |

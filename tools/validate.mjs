@@ -456,6 +456,34 @@ function iconDistance(a, b) {
     return counted === 0 ? 0 : sum / counted;
 }
 
+/** Above this share of a common silhouette, two swords are the same weapon. */
+const SILHOUETTE_CEILING = 0.95;
+
+/**
+ * How much of two icons' shape is the same, as intersection over union of their
+ * opaque masks.
+ *
+ * Not "share of the 256 pixels that agree", which sounds equivalent and is
+ * useless: both icons leave most of the canvas empty, so that measure reads
+ * 90%+ for every pair in the collection and separates nothing. Union as the
+ * denominator throws the background away and asks only about the weapons.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} a
+ * @param {Uint8ClampedArray | Uint8Array} b
+ * @returns {number} 0 for disjoint shapes, 1 for identical ones.
+ */
+function silhouetteOverlap(a, b) {
+    let both = 0;
+    let either = 0;
+    for (let pixel = 0; pixel < 16 * 16; pixel++) {
+        const inA = a[pixel * 4 + 3] > 0;
+        const inB = b[pixel * 4 + 3] > 0;
+        if (inA && inB) both++;
+        if (inA || inB) either++;
+    }
+    return either === 0 ? 0 : both / either;
+}
+
 /**
  * No two swords may be hard to tell apart in a hotbar slot.
  *
@@ -485,8 +513,26 @@ function validateIconDistinctness(swords) {
 
     let closest = Number.POSITIVE_INFINITY;
     let closestPair = 'none';
+    let widest = 0;
+    let widestPair = 'none';
     for (let i = 0; i < icons.length; i++) {
         for (let j = i + 1; j < icons.length; j++) {
+            // Silhouette first. Two icons can be far apart in colour and still
+            // be the same weapon painted twice, which is what a recolour *is*;
+            // the existing rule only caught grids that matched pixel for pixel.
+            const overlap = silhouetteOverlap(icons[i].pixels, icons[j].pixels);
+            if (overlap > widest) {
+                widest = overlap;
+                widestPair = `${icons[i].id} / ${icons[j].id}`;
+            }
+            if (overlap > SILHOUETTE_CEILING) {
+                warn(
+                    `${icons[i].id} and ${icons[j].id} share ${(overlap * 100).toFixed(0)}% of their ` +
+                        `silhouette (ceiling ${(SILHOUETTE_CEILING * 100).toFixed(0)}%). Same weapon, ` +
+                        'different paint — give one of them its own blade, guard or pommel.',
+                );
+            }
+
             const distance = iconDistance(icons[i].pixels, icons[j].pixels);
             if (distance < closest) {
                 closest = distance;
@@ -503,6 +549,10 @@ function validateIconDistinctness(swords) {
 
     if (icons.length > 1) {
         note(`icon distinctness: closest pair is ${closestPair} at ${closest.toFixed(1)} (floor ${FLOOR}).`);
+        note(
+            `silhouette overlap: widest pair is ${widestPair} at ${(widest * 100).toFixed(0)}% ` +
+                `(ceiling ${(SILHOUETTE_CEILING * 100).toFixed(0)}%).`,
+        );
     }
 }
 

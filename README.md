@@ -9,7 +9,7 @@ sounds and cooldowns.
 > Time ⏳ and Storm 🌩️ close out the roster, joining Solar ☀️, Gravity 🪐,
 > Poison 🧪, Crystal 🔮, Void 🕳️, Shadow 🌑, Ember Blade 🔥 and the seven
 > Elemental Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️,
-> Earth 🪨, Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
+> Earth 🪨, Ocean 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
 > crafting progression and its output curve.
 >
 > v1.0.0 is the final engineering pass rather than new content: the build gates
@@ -85,7 +85,7 @@ recipe grid. To confirm the framework recognises a sword, run in game:
 ```
 
 Every sword has an **active** on right-click and a **passive** that fires on a
-melee hit. The Wind and Tidal swords run the *same* ability with different
+melee hit. The Wind and Ocean swords run the *same* ability with different
 data — one scatters targets outward, the other pushes them forward — which is
 the framework's whole point.
 

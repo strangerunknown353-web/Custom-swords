@@ -167,7 +167,35 @@ fails on:
 - a pixel grid identical in shape to another sword's (a recolour);
 - **a sword with no authored source at all.**
 
-It warns on near-duplicate palette entries.
+It warns on near-duplicate palette entries, on two icons closer than 50 in mean
+colour distance, and — since v1.1.0 — on two icons sharing more than 95% of
+their silhouette.
+
+That last one exists because the rule above it was not enough. "Identical pixel
+grid" catches a copy-paste and nothing else, and the collection drifted into
+sixteen swords that were the same diagonal blade, the same straight crossguard
+and the same round pommel in sixteen colours. Every one of them passed. The
+overlap measure is intersection over union of the two opaque masks, which
+throws the empty background away — the naive version, share of all 256 pixels
+that agree, reads above 90% for every pair here and separates nothing.
+
+### The six hilt forms
+
+Varying the blade alone is not enough to keep the silhouettes apart, so the
+collection has six hilts and every sword takes one:
+
+| Form | Reads as | Used by |
+|---|---|---|
+| `standard` | a long crossguard, round pommel | Inferno, Crystal |
+| `heavy` | a counterweight instead of a cap | Ember, Earth, Gravity, — |
+| `slim` | a collar, barely a guard | Frost, Wind, Poison |
+| `cross` | long quillons both ways, ceremonial | Thunder, Ocean, Solar |
+| `ring` | a pierced pommel — the only holes in the set | Void, Time |
+| `short` | pulled in tight, quick in the hand | Shadow, Nature, Storm |
+
+The rule that follows from this: **cover the blade with your thumb, and the
+hilt should still tell you which sword it is.** The rule from v0.10.0 still
+holds too — cover the hilt, and what is left must be recognisably a hilt.
 
 ## 7. What the gate cannot judge
 
@@ -191,8 +219,11 @@ the first result.
 4. Render it **beside every other sword in the set**, at both scales, on a dark
    background. A texture that is fine alone and indistinct in company has
    failed. This is how the Thunder revision above was caught.
-5. `npm run validate` — the gate must pass with zero errors and zero warnings.
-6. Only then is the sword complete.
+5. Check it against the two measures the gate reports: colour distance to its
+   nearest neighbour, and silhouette overlap with its widest match. Passing the
+   thresholds is the floor, not the goal.
+6. `npm run validate` — the gate must pass with zero errors and zero warnings.
+7. Only then is the sword complete.
 
 ## 9. Benchmarks
 

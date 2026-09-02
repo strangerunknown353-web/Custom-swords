@@ -1,5 +1,5 @@
 /**
- * Tidal Sword — direction. It shares an ability with the Wind Sword and plays
+ * Ocean Sword — direction. It shares an ability with the Wind Sword and plays
  * nothing like it.
  *
  * Identity: a wave. Where the Wind Sword shoves outward in every direction,
@@ -8,11 +8,20 @@
  * moving off a ledge, which is a completely different tool from "get away from
  * me". The difference is one field in the binding: `knockback.mode: 'forward'`.
  *
+ * ## Why the identifier still says `tidal_sword`
+ *
+ * This shipped as "Tidal Sword" from v0.7.0 through v1.0.0 and is renamed here
+ * to match the roster it was always meant to fill. The **identifier does not
+ * move**: an item id is a save-file key, and changing it would orphan every
+ * copy already crafted, in every world, with no migration path. The display
+ * name is what a player reads; the id is what the world file remembers. Its
+ * ability keeps the name Tidal Wave, which is what the wave itself is called.
+ *
  * @type {import('../core/types.js').SwordDefinition}
  */
 export const tidalSword = {
     id: 'custom_swords:tidal_sword',
-    name: 'Tidal Sword',
+    name: 'Ocean Sword',
     rarity: 'epic',
     description: 'Drawn from a trench that has never seen light. The pull comes with it.',
 

@@ -540,7 +540,7 @@ carries real design weight:
 | `away` (default) | each target is pushed radially from the origin | an explosion |
 | `forward` | every target is pushed along one shared vector | a wave |
 
-The Wind and Tidal Swords bind the *same ability* and differ mainly by this one
+The Wind and Ocean Swords bind the *same ability* and differ mainly by this one
 field — scatter versus sweep — which is the clearest demonstration in the
 project that behaviour comes from data.
 

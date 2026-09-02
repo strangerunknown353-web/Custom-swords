@@ -34,8 +34,8 @@ item.custom_swords:earth_sword.name=§dEarth Sword§r
 item.custom_swords:earth_sword.description=More monolith than blade. The ground answers when it lands.
 
 ## custom_swords:tidal_sword - Epic
-item.custom_swords:tidal_sword=§dTidal Sword§r
-item.custom_swords:tidal_sword.name=§dTidal Sword§r
+item.custom_swords:tidal_sword=§dOcean Sword§r
+item.custom_swords:tidal_sword.name=§dOcean Sword§r
 item.custom_swords:tidal_sword.description=Drawn from a trench that has never seen light. The pull comes with it.
 
 ## custom_swords:nature_sword - Rare

@@ -160,7 +160,7 @@ and an ability that tries to target its own caster.
 Milestone 5 adds the seven shipped swords: each definition validates, each binds
 a registered ability, each has an authored texture that passes the linter, the
 catalogue matches the definitions, and — the test that matters most — Wind and
-Tidal, which share the `repulse` ability, produce measurably different knockback
+Ocean, which share the `repulse` ability, produce measurably different knockback
 vectors from the same code.
 
 Bug-fix 2 adds the presentation layer: every visual profile references only
@@ -179,7 +179,7 @@ Two tests deserve calling out:
 
 - **The same ability bound twice with different envelopes must behave
   differently** (`pipeline.test.mjs`). That is the property the whole 20–25
-  sword plan rests on, and the Wind/Tidal pair is its shipped proof.
+  sword plan rests on, and the Wind/Ocean pair is its shipped proof.
 - **Clearing life-scoped state must not clear cooldowns**
   (`player_state_lifecycle.test.mjs`). Otherwise dying resets a long cooldown,
   which is an exploit rather than a feature.
@@ -222,7 +222,7 @@ The other columns record what is verified *statically*.
 | Frost ❄️ | `custom_swords:frost_sword` | 7 | Frost Nova — duration scales with nearness, +5 vs already-slowed (6 s) | Frostbite — slowness, escalates on a chilled target | ✅ | ✅ | ✅ | ☐ |
 | Wind 🌪️ | `custom_swords:wind_sword` | 6 | Repulse — scatter outward, kb 2.2 (5 s) | Bolster — speed 4 s | ✅ | ✅ | ✅ | ☐ |
 | Earth 🪨 | `custom_swords:earth_sword` | 10 | Burst — ground shock, distance falloff (9 s) | Bolster — resistance 5 s | ✅ | ✅ | ✅ | ☐ |
-| Tidal 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
+| Ocean 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
 | Nature 🌿 | `custom_swords:nature_sword` | 7 | Strike — execute below 40 % health (5.5 s) | Bolster — regeneration 4 s | ✅ | ✅ | ✅ | ☐ |
 | Shadow 🌑 | `custom_swords:shadow_sword` | 8 | Shadow Step — 6-block validated dash, light strike on arrival (7 s) | Shadow Edge — +6 and 2 lifesteal within 4 s of a step | ✅ | ✅ | ✅ | ☐ |
 | Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
@@ -294,7 +294,7 @@ For **each** of the eight items:
       this is the check the texture linter cannot perform
 - [ ] It renders as a held tool in first and third person
 - [ ] Its melee damage matches `SWORD_CATALOG.md` (Inferno 9, Thunder 9,
-      Frost 7, Wind 6, Earth 10, Tidal 8, Nature 7, Ember Blade 6)
+      Frost 7, Wind 6, Earth 10, Ocean 8, Nature 7, Ember Blade 6)
 - [ ] Its durability bar depletes when it is used to attack
 - [ ] It can be enchanted at an enchanting table
 - [ ] It can be repaired at an anvil with the material named in the catalogue
@@ -307,7 +307,7 @@ For **each** of the eight items:
       `8 registered — 8 shipped, 0 diagnostic` and lists all eight
 - [ ] `/scriptevent custom_swords:abilities` reports nine abilities and, for
       each, the swords that bind it — `repulse` must list **both** Wind and
-      Tidal
+      Ocean
 - [ ] Holding each sword, `/scriptevent custom_swords:held` reports a
       **registered custom sword** with the right melee damage and lists its
       activations
@@ -471,7 +471,7 @@ appear.
 - [ ] It has the highest melee damage of the collection (10) and the slowest
       active
 
-**Tidal 🌊 (`use` → repulse, 7.5 s):**
+**Ocean 🌊 (`use` → repulse, 7.5 s):**
 
 - [ ] Right-click pushes everything **forward, along the look direction**, in a
       cone — visibly different from Wind's outward scatter, despite both being
@@ -703,7 +703,7 @@ them within 5 blocks of each other with several mobs between them.
       targets, neither is refused because of the other, and no mob takes double
       damage
 - [ ] Give both players the **same** sword: their cooldowns run independently
-- [ ] Give A the Wind Sword and B the Tidal Sword and fire both at the same mob
+- [ ] Give A the Wind Sword and B the Ocean Sword and fire both at the same mob
       group: the two knockback directions are visibly different
 - [ ] A disconnects and reconnects: no leftover cooldown, and B is unaffected
       throughout
@@ -761,7 +761,7 @@ the edge-case suite. Never loaded into a client.
 | Recipes | 16 recipes, 69 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
 | Registry | 16 swords, 28 abilities, none orphaned |
 | Shared state | 5 state keys, 4 cross-binding pairings agreed, no collisions between swords |
-| Textures | 16 sources, 0 errors, 0 warnings; closest icon pair Frost/Tidal at 62.3 against a floor of 50 |
+| Textures | 16 sources, 0 errors, 0 warnings; closest icon pair Frost/Ocean at 62.3 against a floor of 50 |
 | Particles | worst single activation 72, median 28, budget 120 |
 | Cost curve | 9× tier 2, 4× tier 3, 3× tier 4 |
 | Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, seven swords ago |

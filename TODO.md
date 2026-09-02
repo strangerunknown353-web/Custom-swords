@@ -30,6 +30,160 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in the final engineering pass (v1.0.0)
+
+- [x] **The ability parameter gate was dead and is now live.** It read
+      `sword.active` and `sword.passive`, which no definition has ever carried,
+      so it validated nothing while reporting a clean build. It reads
+      `sword.abilities`, checks all 32 bindings, and reports the count.
+- [x] Guarded the post-damage `location` reads in `CombatSystem.strike` and in
+      the three passives that draw a flourish at a target they have just hit. A
+      lethal blow released the handle and the throw abandoned the rest of the
+      target list.
+- [x] **Cross-binding consistency gate** — the item this list called "the
+      obvious next validator gate". Keys and charge clocks must agree between a
+      sword's bindings, and must not collide between swords.
+- [x] **Damage-cause catalogue**, the fourth build-time gate against Bedrock's
+      silent failures. Both halves of the params merge are checked.
+- [x] **World-mutation ban list** — the addon's strongest safety property was
+      true only by convention since v0.1.0.
+- [x] **Per-activation particle budget** and **icon distinctness**, both of them
+      properties invisible from any single definition.
+- [x] **Thunder Sword is Legendary on tier-3 materials.** Resolved by raising
+      the recipe rather than lowering the sword: its core is netherite, which
+      also reads better against "storm-iron". No validator warnings remain.
+- [x] Ember Blade re-priced — it out-damaged three Legendaries while being the
+      cheapest sword to craft.
+- [x] Tidal and Nature's passives differentiated from Wind's and Earth's, using
+      parameters `bolster` already exposed.
+- [x] Earth Sword repainted as cold stone; it and Nature were the closest icon
+      pair in the collection by a wide margin.
+- [x] `describeDamage` taught about Storm Surge and Shadow Step, which were both
+      publishing as dealing no damage, and an output curve added to the
+      catalogue.
+- [x] `set-version` now rewrites the README's artefact filenames, which had
+      drifted three milestones behind.
+
+### Still open after this pass
+
+- [ ] **Client testing.** Everything above is reasoning, unit tests against a
+      mocked engine, and static validation. Not one line of it has run in
+      Minecraft. This is the single largest gap in the project and no amount of
+      further automated work will close it.
+- [ ] The **multi-stage ability pattern** (wind-up then impact, cancelled on
+      death, disconnect or dimension change) remains the one shape the framework
+      cannot express. Gravity Crush and Time Freeze both wanted it. See
+      `ROADMAP.md` step 8.
+- [ ] `config.debug` ships enabled at `info`. Audited and deliberate — the only
+      `info` sites are one component registration, one world-load summary and
+      the diagnostics command's replies, and every `log.debug` sits in a catch
+      block — but a creator running a large server may still want it at `warn`.
+- [ ] The icon-distinctness floor (50) and particle budget (120) were both set
+      from the collection as it stands. If the roster ever reopens, they are
+      guesses that should be revisited with evidence rather than defended.
+
+## Completed in Time and Storm — the roster closes (v0.12.0)
+
+- [x] Time Sword (the collection's only Mythic) and Storm Sword, at sixteen.
+- [x] Four abilities on the last two axes: waiting (`stasis`, `tempo`) and the
+      caster's motion (`surge`, `momentum`).
+- [x] A non-life mark scope on `PlayerStateStore`, so a charge clock survives
+      death instead of reading as absent and refilling itself.
+- [x] `MovementService.momentumOf`, and `scaleKnockback` shared out of the two
+      Storm abilities.
+- [x] **Crafting progression audit** — ingredient tiers, a floor per rarity, a
+      validator warning when a sword costs less than its rarity implies, and the
+      whole curve published in `SWORD_CATALOG.md`.
+- [x] Storm Sword reclassified Epic after the audit disagreed with its draft
+      Legendary tier.
+- [x] Fixed a filter bypass in Time Freeze: the first draft held targets the
+      combat layer had refused to damage.
+
+### Still open from this milestone
+
+- [ ] **Nothing here has been in a client.** Time Sword's charge is the mechanic
+      most at risk: the action bar reports the meter on every cast, and whether a
+      player connects "I waited" to "it held longer" without being told is
+      exactly what static validation cannot answer.
+- [ ] `momentumOf` reads `isSprinting` and `isOnGround`/`isFalling` rather than
+      velocity. If those report reliably in a client, a scalar from
+      `getVelocity()` would read better than two booleans — worth revisiting
+      once there is evidence either way.
+
+## Completed in Solar, Gravity and Poison (v0.11.0)
+
+- [x] Three swords, taking the collection to fourteen.
+- [x] Six abilities on three axes the framework had never had: world state
+      (`flare`, `radiance`), altitude and mass (`crush`, `weigh`), and a
+      resource banked on the enemy (`envenom`, `rupture`).
+- [x] `systems/environment.js` — the first service answering a question about
+      the world rather than about an entity.
+- [x] `EffectService.maxHealth` / `.amplifierOf` / `.remove`, and
+      `TargetingService.isCategory`.
+- [x] **Performance and duplication pass.** Confirmed every entity query in the
+      project still goes through `systems/targeting.js` (two call sites, no
+      global scans, no per-sword loops); consolidated five hand-rolled distance
+      helpers into `abilities/support.js` with no behaviour change.
+- [x] `tools/catalog.mjs` reports daylight, altitude and venom scaling, so no
+      sword's published damage understates it.
+- [x] Texture preview and contact-sheet tooling used again — see the Tooling
+      note below, which is now overdue.
+
+### Still open from this milestone
+
+- [ ] **Nothing here has been in a client.** Solar in particular has a mechanic
+      no automated check can evaluate: whether a player *notices* the sword is
+      weaker at night, or just concludes it is broken. The action-bar message
+      names the sun percentage for exactly that reason, and whether that is
+      enough is a question only a player can answer.
+- [ ] Gravity Crush's altitude ramp assumes the wielder is below the target.
+      Fighting downward off a cliff at something on the ground gets the floor,
+      which is correct but may read as the ability failing. Worth watching in a
+      client before deciding whether a symmetric version is better.
+- [ ] Venom stacks are stored in the poison effect itself, which means a
+      *different* source of poison — a witch, a cave spider, a potion — feeds
+      the sword's meter. That is arguably correct and arguably an exploit; it
+      needs play, not reasoning, to settle.
+- [ ] `EnvironmentService` has one reader. Weather (`world.getDynamicProperty`
+      is not it — there is no weather query in the 2.0.0 API surface this
+      project targets) and depth are the obvious next two, and neither has a
+      sword asking for it yet.
+
+## Completed in Crystal and Void (v0.10.0)
+
+- [x] Crystal Sword and Void Sword, taking the collection to eleven.
+- [x] Four new abilities — `resonate`, `ward`, `rift`, `drain` — each answering
+      a question no existing ability asked.
+- [x] First consumer of `point` targeting (`rift`), which had been in
+      `TargetingService` unused since v0.4.0.
+- [x] `EffectService.healthFraction`, one shared health read with two opposite
+      consumers.
+- [x] `crystal` and `void` visual profiles, six new verified sound presets.
+- [x] Both textures authored to the standard; `void_sword.json` added to
+      `docs/TEXTURE_STANDARD.md` as the reference for a theme with no colour of
+      its own.
+- [x] Recipes for both, plus two new audit gates: no two swords may craft from
+      the same grid, and a recipe must produce exactly one sword.
+- [x] `MockDimension.getBlockFromRay` now marches the ray through the mock's own
+      block model, so `resolvePoint` is testable at all.
+
+### Still open from this milestone
+
+- [ ] **Nothing here has been in a client.** Crystal Guard in particular is the
+      first mechanic that reads the *wielder's* health mid-combat; whether the
+      guard forming is legible to the player — the `resonate.amethyst_block`
+      cue and the caster particles are the only signal, since `attack`
+      activations get no action bar — is exactly the kind of thing static
+      validation cannot answer.
+- [ ] Void Rift's reach ramp is tuned on paper (5 at the feet to 9 at ten
+      blocks). Whether ten blocks is *aimable* with Bedrock touch controls is a
+      client question, and if it is not, the answer is a shorter range rather
+      than a bigger number.
+- [ ] Decide whether `ward` should have a companion that pays out *above* a
+      health threshold (an execute-style aggressive passive). The
+      `healthFraction` default of 1-on-failure would need inverting for that,
+      and the guidance in `docs/ADDING_A_SWORD.md` says so.
+
 ## Completed in crafting + finalization (v0.9.0)
 
 - [x] Crafting recipes for all nine swords, generated from the definitions.
@@ -209,8 +363,13 @@ Only items actually finished are ticked.
 - [ ] Optional type-check step (`npm i -D @minecraft/server && tsc -p jsconfig.json`)
       wired into CI. Skipped for now to keep the project dependency-free.
 - [ ] Texture preview command — render an art source enlarged, next to a 1:1
-      copy, so a reviewer can judge it without importing the pack. Contact
-      sheets were rendered by hand again this milestone; it should be a script.
+      copy and beside the rest of the set, so a reviewer can judge it without
+      importing the pack. Contact sheets have now been re-created by hand for a
+      **fourth** milestone running, and all three v0.11.0 textures needed
+      revisions that only the contact sheet caught — Gravity's and Poison's
+      hilts both vanished at hotbar scale in their first drafts and neither the
+      linter nor the stats had anything to say about it. This is the
+      highest-value tooling item on the list and it is overdue.
 - [ ] Balance report beyond the catalogue. `tools/catalog.mjs` publishes the
       roster; a damage-per-second and cooldown-uptime comparison would make the
       milestone 13 tuning pass evidence-driven.

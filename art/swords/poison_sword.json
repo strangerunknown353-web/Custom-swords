@@ -1,0 +1,33 @@
+{
+  "name": "Poison Sword",
+  "description": "A long barbed blade, snagged down both flanks, with a bead of venom standing at the point.",
+  "palette": {
+    "o": "#0a0f06",
+    "V": "#e4ff9a",
+    "n": "#8ecf3e",
+    "p": "#3f7a18",
+    "k": "#7a3f9c",
+    "A": "#8a9a68",
+    "B": "#39441f",
+    "K": "#2b3318",
+    "P": "#b9cf7a"
+  },
+  "pixels": [
+    "..............oV",
+    "............oVno",
+    "..........oVnpo.",
+    "........okVnpo..",
+    ".......oVVnpo...",
+    "......oVVnpko...",
+    ".....oVVnpo.....",
+    "....okVnpo......",
+    ".oABoVnpo.......",
+    "..oABnpo........",
+    "...oABo.........",
+    "..oKKABo........",
+    "ooKKooABo.......",
+    "oPPo............",
+    ".oo.............",
+    "................"
+  ]
+}

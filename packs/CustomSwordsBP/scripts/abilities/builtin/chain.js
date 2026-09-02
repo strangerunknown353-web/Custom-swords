@@ -1,10 +1,12 @@
+import { locationOf } from '../support.js';
+
 /**
  * Chain — a precise strike on one target that arcs to nearby others.
  *
- * The collection's other reaching ability, `surge`, detonates at a *point* the
+ * The collection's other reaching ability, `rift`, detonates at a *point* the
  * caster is looking at and damages everything in a sphere around it. This one
  * picks a single entity and jumps between entities, which is a different shape
- * of decision: `surge` rewards aiming at a cluster's centre, `chain` rewards
+ * of decision: `rift` rewards aiming at a cluster's centre, `chain` rewards
  * finding a line of enemies.
  *
  * ## Why this does not spawn a lightning bolt
@@ -130,12 +132,10 @@ export const chain = {
  * @returns {{ x: number, y: number, z: number }}
  */
 function safeLocation(entity) {
-    try {
-        const { x, y, z } = entity.location;
-        return { x, y: y + 1, z };
-    } catch {
-        return { x: 0, y: 0, z: 0 };
-    }
+    // Chest height, so an arc drawn between two mobs runs through their bodies
+    // rather than along the floor. A dead handle collapses the arc to the
+    // origin, which draws nothing — better than throwing mid-chain.
+    return locationOf(entity, 1) ?? { x: 0, y: 0, z: 0 };
 }
 
 /**

@@ -5,18 +5,36 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.9.0 — nine swords, all craftable.**
-> Shadow Sword 🌑 and Ember Blade 🔥 join the seven Elemental Collection
-> blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and
-> Nature 🌿. See
-> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
+> **Status: v1.0.0 — sixteen swords, all craftable, all distinct.**
+> Time ⏳ and Storm 🌩️ close out the roster, joining Solar ☀️, Gravity 🪐,
+> Poison 🧪, Crystal 🔮, Void 🕳️, Shadow 🌑, Ember Blade 🔥 and the seven
+> Elemental Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️,
+> Earth 🪨, Ocean 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
+> crafting progression and its output curve.
+>
+> v1.3.0 puts the swords back on the vanilla diagonal, keeping the proportions
+> v1.2.0 earned: 67-80% blade, a crossguard wider than the blade on every one,
+> and a grip and pommel that run down-left from the guard the way vanilla's do.
+> v1.2.0 before it was the silhouette correction — the set before that measured
+> 36-50% blade, so the handle was longer than the blade and the icons read as
+> daggers. v1.0.0 was the
+> > engineering pass — the
+> build gates that were silently checking nothing now check, the collection is
+> priced so the cheapest sword is not the strongest, and the properties this
+> addon has always claimed (it never modifies the world, no two icons look
+> alike, every damage cause is real) are gates instead of conventions.
+> `CHANGELOG.md` has the list.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Ember Blade, Frost, Thunder and Shadow have **not** been client-tested.
+> **Everything after v0.5.2 — eleven of the sixteen swords, and every change in
+> this release — has not been client-tested.** What has been done to it is
+> automated: 543 unit tests against a mocked engine, and a validator that
+> checks the packs, the data and the architecture. Neither is a substitute for
+> launching the game, and this README will not pretend otherwise.
 
 ---
 
@@ -35,11 +53,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.9.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.9.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.9.0.mcpack` | resource pack alone |
+| `CustomSwords-v1.3.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v1.3.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v1.3.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v0.9.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v1.3.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with
@@ -55,6 +73,13 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:tidal_sword       a wave pushed forward
 /give @s custom_swords:nature_sword      an execute, and it heals you
 /give @s custom_swords:shadow_sword      dash through the dark, then hit hard
+/give @s custom_swords:crystal_sword     hits harder the more of them there are
+/give @s custom_swords:void_sword        tear a rift where you are looking
+/give @s custom_swords:solar_sword       strong at noon, weak at night, no use in the Nether
+/give @s custom_swords:gravity_sword     drags things down; hits airborne targets hardest
+/give @s custom_swords:poison_sword      work venom into one target, then burst it
+/give @s custom_swords:time_sword        worth more the longer you do not use it
+/give @s custom_swords:storm_sword       worth nothing at all standing still
 ```
 
 Every sword is craftable at a crafting table — `SWORD_CATALOG.md` shows each
@@ -67,7 +92,7 @@ recipe grid. To confirm the framework recognises a sword, run in game:
 ```
 
 Every sword has an **active** on right-click and a **passive** that fires on a
-melee hit. The Wind and Tidal swords run the *same* ability with different
+melee hit. The Wind and Ocean swords run the *same* ability with different
 data — one scatters targets outward, the other pushes them forward — which is
 the framework's whole point.
 
@@ -151,7 +176,11 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **9 of 20–25 swords.** The remaining 11–16 arrive in milestones 7, 9 and 10.
+- **Sixteen swords, and the roster is closed.** The original plan said 20–25;
+  sixteen distinct designs is where the axes ran out. Every sword answers a
+  question no other one asks — see the table in `ARCHITECTURE.md` §9 — and a
+  seventeenth would have had to repeat one. Milestones 9 and 10 are retired
+  rather than unfinished.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No loot tables or trades.** Every sword is craftable at a table, but none
@@ -160,7 +189,13 @@ Stated plainly:
 - **In-memory state only.** Cooldowns and player state reset on world reload, by
   design; persistence is tracked in `TODO.md`.
 - **No multi-stage abilities.** Wind-up → impact, and the cancellation that goes
-  with it, is milestone 8. Everything resolves within a single tick today.
+  with it, is milestone 8. Everything resolves within a single tick today —
+  including Void Rift, which opens and closes inside one activation.
+- **No reactive abilities.** Bedrock gives an item custom component exactly two
+  player-driven hooks, `onUse` and `onHitEntity`, so nothing can trigger on the
+  wielder *being* hit without a world-wide damage listener the architecture
+  deliberately refuses. Crystal Guard reads the wielder's health on the swing
+  instead, which is the honest version of the same fantasy.
 - **No tooltip flavour text.** Bedrock has no item-JSON lore component; a
   sword's description is reachable through `/scriptevent custom_swords:info` but
   not the vanilla tooltip. See `TODO.md`.

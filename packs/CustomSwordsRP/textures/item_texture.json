@@ -28,6 +28,27 @@
     },
     "shadow_sword": {
       "textures": "textures/items/custom_swords/swords/shadow_sword"
+    },
+    "crystal_sword": {
+      "textures": "textures/items/custom_swords/swords/crystal_sword"
+    },
+    "void_sword": {
+      "textures": "textures/items/custom_swords/swords/void_sword"
+    },
+    "solar_sword": {
+      "textures": "textures/items/custom_swords/swords/solar_sword"
+    },
+    "gravity_sword": {
+      "textures": "textures/items/custom_swords/swords/gravity_sword"
+    },
+    "poison_sword": {
+      "textures": "textures/items/custom_swords/swords/poison_sword"
+    },
+    "time_sword": {
+      "textures": "textures/items/custom_swords/swords/time_sword"
+    },
+    "storm_sword": {
+      "textures": "textures/items/custom_swords/swords/storm_sword"
     }
   }
 }

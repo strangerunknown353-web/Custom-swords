@@ -1,0 +1,33 @@
+{
+  "name": "Storm Sword",
+  "description": "A long blade shot through with weather, narrowing toward a swept thunderhead guard.",
+  "palette": {
+    "o": "#06080f",
+    "W": "#dde4f5",
+    "Y": "#7d9ed4",
+    "b": "#33507f",
+    "B": "#1e2b4a",
+    "v": "#ffe066",
+    "A": "#7f8aa5",
+    "K": "#101827",
+    "P": "#a2accc"
+  },
+  "pixels": [
+    "..............oW",
+    "............oWbo",
+    "..........oWYbo.",
+    "........oWYbBo..",
+    ".......oWYbBo...",
+    "......oWYvBo....",
+    "......oWYbo.....",
+    ".....oWYbo......",
+    ".oABoWYbo.......",
+    "..oABYbo........",
+    "...oABo.........",
+    "..oKKABo........",
+    ".oKKooABo.......",
+    "oKKo............",
+    "PPo.............",
+    "oo.............."
+  ]
+}

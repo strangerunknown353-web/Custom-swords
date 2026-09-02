@@ -1,0 +1,54 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:item": {
+    "description": {
+      "identifier": "custom_swords:crystal_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "crystal_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.custom_swords:crystal_sword"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 7
+      },
+      "minecraft:durability": {
+        "max_durability": 850
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 16
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:amethyst_shard"
+            ],
+            "repair_amount": 213
+          }
+        ]
+      },
+      "minecraft:swing_duration": {
+        "value": 0.34
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "custom_swords:is_custom_sword"
+        ]
+      },
+      "custom_swords:sword": {}
+    }
+  }
+}

@@ -27,7 +27,7 @@ code path.**
 │               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
 │ SYSTEMS       targeting  damage  combat  effects  particles          │
-│               sounds     feedback  movement                          │
+│               sounds  feedback  movement  environment                │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -114,16 +114,16 @@ A sword is **pure data**: no code, no conditionals, no engine calls. This is
 Ember Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
 
-Eight swords are registered today, all shipped: Ember Blade plus the seven
+Sixteen swords are registered today, and the roster is closed: the seven
 Elemental Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal,
-Nature). The project no longer ships a diagnostic item — the former Test Blade
-became Ember Blade — though `isTestItem` remains in the data model for future
-use. All seven were added
-without a single new engine call — six of the seven reuse abilities the previous
-milestone already shipped, and the seventh, `cleave`, is generic enough that a
-future sword can bind it too. `SWORD_CATALOG.md` is generated from those
-definitions by `tools/catalog.mjs`, so the published stats cannot drift from the
-code.
+Nature) plus Ember Blade, Shadow, Crystal, Void, Solar, Gravity, Poison, Time
+and Storm. The project no longer ships a diagnostic item — the
+former Test Blade became Ember Blade — though `isTestItem` remains in the data
+model for future use. Not one of the sixteen required a new engine call:
+everything a sword can do is expressed as a binding envelope over an ability,
+and every ability goes through the same combat pipeline. `SWORD_CATALOG.md` is
+generated from those definitions by `tools/catalog.mjs`, so the published stats
+cannot drift from the code.
 
 Wind and Tidal are the clearest demonstration that behaviour comes from data:
 both bind the same `repulse` ability, but Wind's binding targets an area with
@@ -540,7 +540,7 @@ carries real design weight:
 | `away` (default) | each target is pushed radially from the origin | an explosion |
 | `forward` | every target is pushed along one shared vector | a wave |
 
-The Wind and Tidal Swords bind the *same ability* and differ mainly by this one
+The Wind and Ocean Swords bind the *same ability* and differ mainly by this one
 field — scatter versus sweep — which is the clearest demonstration in the
 project that behaviour comes from data.
 
@@ -612,6 +612,29 @@ Searches happen only when an ability runs. Range is clamped to
 `config.targeting.maxRange` (32) and results to `config.targeting.maxTargets`
 (64) on every path, so no definition can ask the engine for a thousand-block
 sweep or act on an unbounded crowd.
+
+### The gates that watch the gates
+
+Four properties of this project were true only because everyone kept being
+careful, and one gate had stopped working without anyone noticing. v1.0.0 turned
+all five into build failures. They are grouped here because they share a shape:
+**each describes something no single file can see.**
+
+| Gate | What it sees that a file cannot |
+|---|---|
+| ability parameters | that `validateParams` reached a real binding at all — it reports the count for exactly this reason |
+| shared state | that two bindings on one sword name the same clock, and that two swords do not |
+| world mutation | that no script anywhere calls an API that writes to the world |
+| particle budget | that a binding's *total* draw is bounded, not just each call |
+| icon distinctness | that no two icons look alike, which no icon knows on its own |
+
+The first is the reason the others exist. `tools/validate.mjs` had been calling
+each ability's `validateParams` against `sword.active` and `sword.passive` —
+fields no definition has ever carried — so the loop found `undefined` every time
+and skipped. Twenty-five abilities' worth of constraints were dead for eleven
+milestones while the build reported a clean pass, because **a gate that
+validates nothing is indistinguishable from a gate that passes.** Every gate
+added since prints how much work it did.
 
 ### Status effects (`core/effect_catalogue.js`)
 
@@ -736,23 +759,56 @@ read half of the effect system, and they open an axis the framework did not
 have: an ability can branch on **what the target is already suffering**.
 
 That is what makes Frost Sword a sequence rather than a button. Its passive
-leaves slowness; its active deals bonus damage to anything already slowed. The
-three burst abilities now each ask a different question:
+leaves slowness; its active deals bonus damage to anything already slowed.
+
+`EffectService.healthFraction(entity)` (v0.10.0) is the third read, and the one
+with two opposite consumers: `ward` asks it about the **caster**, so a defensive
+guard forms only once its wielder is losing; `drain` asks it about the
+**target**, so the void pays out most for taking what is nearest to gone. One
+utility, because the failure handling — a health component that is absent, a
+handle that has gone invalid, a maximum of zero — is identical either way and is
+exactly the sort of thing that gets written twice and fixed once.
+
+Every area and on-hit ability in the collection now scales with a different
+question, which is the test a new ability has to pass to justify existing:
 
 | Ability | Scales with | Sword |
 |---|---|---|
 | `burst` | how far the target is from the centre | Earth |
 | `ember_burst` | how much heat the **caster** has banked | Ember Blade |
 | `nova` | what the **target** is already suffering | Frost |
+| `entangle` | how many were caught, paid to the caster | Nature |
+| `resonate` | how many were caught, paid to every target | Crystal |
+| `rift` | how far from the caster it was opened | Void |
+| `ward` | the **caster's** remaining health | Crystal |
+| `drain` | the **target's** remaining health | Void |
+| `flare` | the time of day and the dimension | Solar |
+| `radiance` | what *kind* of thing the target is | Solar |
+| `crush` | how far **above** the caster the target is | Gravity |
+| `weigh` | the target's **maximum** health, as mass | Gravity |
+| `rupture` | venom the target is already carrying | Poison |
+| `stasis` | **how long the caster has waited** | Time |
+| `surge` | **how fast the caster is moving** | Storm |
 
-Neither read ever throws — `getEffect` raises on an unknown effect id and on a
-dead handle, and this runs inside combat resolution where a throw would abandon
-the remaining targets. An unreadable target reports as *unaffected*, so the
-failure mode is "no bonus", never "free bonus".
+Sixteen swords, and every row of that table is a different question. That is
+also why the roster closed there: the collection's rule has always been that a
+sword must ask something no other sword asks, and by sixteen the axes a Bedrock
+add-on can cheaply and reliably read — distance, angle, crowd size, caster
+health, target health, target category, target mass, altitude, reach, world
+time, banked charge, banked venom, waiting, motion — were used up. A
+seventeenth would have had to repeat one, and a repeated axis is a recolour with
+a different particle.
+
+None of these reads ever throws — `getEffect` and `getComponent` both raise on a
+dead handle, and they run inside combat resolution where a throw would abandon
+the remaining targets. An unreadable target reports as *unaffected* and
+*unhurt*, so the failure mode is always "no bonus", never "free bonus": `ward`
+only forms below a threshold and `drain` only pays below one, so reporting 1
+withholds both rather than granting both.
 
 The ordering rule that goes with it: **read the target's state before striking**,
-so the effects an activation applies cannot trigger its own bonus. Both `nova`
-and `afflict` do this, and a test asserts it.
+so the effects or damage an activation applies cannot trigger its own bonus.
+`nova`, `afflict` and `drain` all do this, and a test asserts it for each.
 
 ### Moving the caster
 
@@ -794,6 +850,142 @@ Three details worth stating:
 
 `config.movement.maxDashDistance` caps every dash at 10 blocks regardless of
 what a definition asks for.
+
+### Reading the world, not the fight
+
+`systems/environment.js` (v0.11.0) is the first service that answers a question
+about neither the caster nor the target. `daylight(dimension)` reports how high
+the sun stands, as 1 at noon falling to 0 across the night, and 0 anywhere the
+sun does not reach.
+
+That is a genuinely different *kind* of condition, and it is worth naming as
+one:
+
+| Condition on | Example | Read through |
+|---|---|---|
+| The caster | Crystal Guard forms only when wounded | `effects.healthFraction(ctx.player)` |
+| The target | Void Drain pays out on what is nearly gone | `effects.healthFraction(target)` |
+| The fight | Crystal Burst rings louder for a crowd | the resolved target list |
+| **The world** | **Solar Flare is worth a third of itself at night** | **`environment.daylight(ctx.dimension)`** |
+
+Three design notes that generalise:
+
+- **A ramp, not a switch.** The daylight curve is a cosine over the day, so dusk
+  fades. A sword that switched off at a fixed hour would be a rule to memorise;
+  one that fades is something a player feels.
+- **The dimension is part of the question.** `daylight` takes the dimension and
+  returns 0 for the Nether and the End regardless of the clock, because a solar
+  weapon that worked identically underground would be a solar weapon in name
+  only. That check lives in the service rather than in the ability, so the next
+  sun-reading sword inherits it.
+- **It fails to zero.** An unreadable clock reports no sun, matching every other
+  conditional read in the framework: the failure mode is "no bonus", never
+  "free bonus".
+
+Nothing here polls. One engine call at the moment an ability fires, and never
+again.
+
+### Storing state on the target instead of the player
+
+`PlayerStateStore` holds three shapes of state, all keyed by `player.id`.
+Poison Sword needed a fourth that belongs to nobody: how much venom **a
+particular mob** is carrying.
+
+The obvious implementation is a `Map` from entity id to a stack count, and it is
+a memory leak wearing a hat. Entities die, despawn, unload with their chunk and
+cross dimensions; every one of those leaves a key that nothing will ever remove,
+and the leak grows with playtime on a busy server.
+
+So the count is stored in **the effect itself**. `envenom` reads
+`effects.amplifierOf(target, 'poison')` and applies the same effect one
+amplifier higher; `rupture` reads the tiers, pays out for them, and calls
+`effects.remove` to spend them.
+
+| | Player-side (`PlayerStateStore`) | Target-side (the effect) |
+|---|---|---|
+| Keyed by | `player.id` | nothing — it *is* the entity's state |
+| Cleared by | death, disconnect, the 30-second sweep | the effect's own expiry |
+| Survives the mob dying | n/a | no, and correctly so |
+| Bytes held between activations | one map entry per active player | **zero** |
+| Spending it | `spendCharges` | `effects.remove` |
+
+The trade is that the game is now the source of truth, which means a *different*
+source of the same effect feeds the meter — a witch's poison counts as venom.
+That is recorded in `TODO.md` as a question for play rather than reasoning; it
+is arguably correct and arguably an exploit, and it is not the sort of thing
+static analysis settles.
+
+### Waiting as a resource, and the second mark scope
+
+Time Sword's `stasis` is the only ability whose output depends on **how long it
+has been since it last ran**. That needed no new machinery — `sinceMark` already
+answers it — but it did need a second scope.
+
+Marks are life-scoped by default so a combo window cannot outlast the death that
+ended it. A charge clock must not be: a life-scoped clock is *cleared* on death,
+`sinceMark` then reports `Infinity`, and `Infinity` means "has been waiting
+forever", which is a **full meter**. Dying would recharge the sword. So
+`mark`/`sinceMark` take `{ lifeScoped: false }`, storing under a `mark:` prefix
+that survives respawning and is dropped on disconnect like everything else.
+
+| Scope | Key prefix | Cleared on | Use for |
+|---|---|---|---|
+| Life | `life:` | death, respawn, disconnect | combo windows, charge levels |
+| **Mark** | `mark:` | **disconnect only** | clocks that belong to the item, not the body |
+| Player | anything else | disconnect | anything that should survive a respawn |
+
+It is the same reasoning that keeps cooldowns out of the life scope, and it is
+worth stating as a rule: **anything a player would benefit from resetting must
+not be life-scoped.**
+
+`Infinity` for an unwritten mark is load-bearing rather than incidental here — a
+sword picked up and never fired has, correctly, been waiting forever, and
+arrives fully wound with no special case in the ability.
+
+### Reading the caster's motion
+
+`MovementService.momentumOf` is the last of the conditional reads, and the only
+one about what the caster is *doing* rather than what they are.
+
+It is built from `isSprinting` and `isOnGround`/`isFalling` — booleans — rather
+than from `getVelocity()`, which would give a nicer scalar. Server-side player
+velocity in Bedrock is jittery and can report near-zero for a player who is
+plainly running, and a sword's headline mechanic cannot rest on a reading like
+that. Two reliable booleans beat one unreliable float; `TODO.md` records the
+trade so it can be revisited with client evidence rather than by argument.
+
+### Acting where the caster is not
+
+Every offensive ability up to v0.9.0 originated at the wielder's body: the
+radial bursts expand from their feet, `cleave` is a cone off their arm, `chain`
+starts on whatever they point at, `repulse` throws from where they stand. None
+could affect a place the caster was not standing in.
+
+`TargetingService.resolvePoint` had existed since step 4 for exactly this and
+had no consumer. `rift` (Void Sword) is the first:
+
+```
+resolvePoint(ctx)          one block raycast, capped by the binding's range
+  -> targeting.around(...)  one entity query around the returned point
+  -> combat.strike(..., { origin: centre, knockback: { pull: true } })
+```
+
+Two safety properties make that a framework capability rather than a hole in
+one:
+
+- **`around` keeps the binding's filters.** It is a front door onto the same
+  `sphere` query the caster-centred abilities use, carrying `ctx.allowedTargets`
+  and the caster exclusion, so choosing a different origin cannot widen what an
+  ability may hit. An ability cannot escape its own permissions by aiming
+  elsewhere.
+- **Reach is bounded twice.** The binding's `targeting.range` is clamped to
+  `config.targeting.maxRange`, and the blast radius is a separate parameter, so
+  a long-ranged rift is not automatically a wide one.
+
+`StrikeSpec.origin` is what makes the pull work: it is the knockback's reference
+point, so passing the rift's centre and `pull: true` drags everything caught
+inward. That is also the cleanest available answer to "move entities rather than
+the caster" — no teleport, no per-tick force, one impulse at resolution time.
 
 ### Stacking charges
 
@@ -1062,11 +1254,25 @@ and the action bar and catalogue both show the label. Without this the choice
 was between reusable abilities and evocative names; there is no reason to lose
 either.
 
-Nine profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`, `grove`,
-`ember`, and `arcane` as the framework's neutral default. A test asserts no two
-share a caster particle or a cast sound, so "distinct look per theme" is
-enforced rather than intended — which is what keeps `ember` and `fire` from
-converging as more fire-themed swords arrive.
+Seventeen profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
+`grove`, `ember`, `shadow`, `crystal`, `void`, `solar`, `gravity`, `venom`,
+`chrono`, `tempest`, and `arcane` as the framework's neutral default. A test asserts no two share a caster particle or a cast sound,
+so "distinct look per theme" is enforced rather than intended — which is what
+keeps `ember` and `fire` from converging as more fire-themed swords arrive.
+
+The rule matters most for the pairs that are *conceptually* adjacent, where the
+temptation is to reach for the same vocabulary at a different brightness:
+
+| Pair | How they are kept apart |
+|---|---|
+| `fire` / `ember` | open flame and molten spatter versus spark motes and a single candle flame |
+| `frost` / `crystal` | snow and rime versus mystical motes and a mineral flare — no snowflake anywhere in `crystal` |
+| `shadow` / `void` | portal motes marking where the wielder *was* versus dragon-breath wisps and End-sparkle marking somewhere else *arriving*; the two share not one identifier |
+| `fire` / `ember` / `solar` | the third warm theme takes the one warm vocabulary neither of the first two uses — totem sparkle and a pale spike, never flame or spatter |
+| `void` / `gravity` | cosmic and bright against dark versus entirely achromatic dust and debris |
+| `grove` / `venom` | villager-happy motes and blossom, unmistakably benign, versus a thrown toxic puff and a sour pulse |
+| `storm` / `tempest` | a single white arc between two points versus the whole sky — cloud, rain and a pale discharge |
+| `gale` / `tempest` | a shockwave and drifting motes versus weather that lands on its targets |
 
 ### Why this layer exists
 
@@ -1087,7 +1293,7 @@ is only as good as the catalogue it was checked against.**
 
 ### The catalogues
 
-Three now, all the same pattern — a transcribed snapshot, checked at build
+Five now, all the same pattern — a transcribed snapshot, checked at build
 time, failing towards a build error rather than a silent no-op in someone's
 world:
 
@@ -1095,8 +1301,19 @@ world:
 |---|---|---|
 | `core/effect_catalogue.js` | 37 status effects | `@minecraft/vanilla-data` 1.26.44 |
 | `core/particle_catalogue.js` | usable particles, plus Molang-dependent ones mapped to their usable sibling | Bedrock Wiki vanilla particle list |
+| `core/damage_cause_catalogue.js` | 36 damage causes | `@minecraft/server`'s `EntityDamageCause` |
 | `tools/data/vanilla_sound_events.json` | 1824 sound events | the vanilla resource pack's `sound_definitions.json` |
 | `tools/data/vanilla_items.json` | 1607 item identifiers | Mojang's `bedrock-samples` metadata |
+
+The damage-cause catalogue (v1.0.0) is the last of them and the most insidious
+failure of the five, because it is the only one where the ability still *works*.
+A misspelled effect does nothing, a misspelled particle draws nothing, a
+misspelled sound plays nothing — all visible. A misspelled damage cause deals
+the damage anyway, and only its classification is wrong: `fire_resistance` and
+the other cause-specific mitigations stop matching, the death message is wrong,
+and any pack reading the `entityHurt` payload sees something it does not expect.
+Nothing on screen says so. Both halves of the params merge are checked, since
+a binding may override the cause its ability declares as a default.
 
 The particle catalogue encodes the distinction that caused the bug. An
 identifier fails for one of two reasons, and the error says which:

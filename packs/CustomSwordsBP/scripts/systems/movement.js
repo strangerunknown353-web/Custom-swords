@@ -81,6 +81,47 @@ export class MovementService {
     }
 
     /**
+     * How much motion the caster is carrying, as 0 standing still rising to 1
+     * at a full run through the air.
+     *
+     * The framework's one read of the caster's **movement state**, and the axis
+     * Storm Sword is built on. It is a small set of booleans rather than a
+     * velocity vector on purpose:
+     *
+     * | Considered | Why not the obvious alternative |
+     * |---|---|
+     * | `isSprinting`, `isFalling`, `isOnGround` | documented `Player` properties, stable frame to frame |
+     * | ~~`getVelocity()`~~ | a scalar would read better, but server-side player velocity in Bedrock is jittery and can report near-zero for a player who is plainly moving — a headline mechanic cannot rest on that |
+     *
+     * Each contributing state is worth `1 / stateCount`, so the scale is even
+     * and a sword can decide for itself how much the difference is worth.
+     *
+     * Never throws. An unreadable player reports **0** — no momentum — which
+     * fails towards withholding the bonus, matching every other conditional
+     * read in the framework.
+     *
+     * @param {import('@minecraft/server').Player} player
+     * @returns {number} 0..1
+     */
+    momentumOf(player) {
+        if (player === undefined || player === null) return 0;
+        try {
+            if (!player.isValid) return 0;
+            let states = 0;
+            // Running with the storm.
+            if (player.isSprinting === true) states++;
+            // Off the ground: falling, leaping, or riding a knockback. Read via
+            // `isOnGround` as well so a player standing still on flat ground can
+            // never accidentally score the airborne point.
+            if (player.isFalling === true || player.isOnGround === false) states++;
+            return Math.max(0, Math.min(1, states / 2));
+        } catch (error) {
+            this.log.debug('movement.momentumOf failed:', error);
+            return 0;
+        }
+    }
+
+    /**
      * Moves the caster forward along their view, as far as is safe.
      *
      * Never throws, never moves an entity into a place that would kill it, and

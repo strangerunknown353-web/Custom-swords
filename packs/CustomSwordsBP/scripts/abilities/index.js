@@ -26,6 +26,20 @@ import { discharge } from './builtin/discharge.js';
 import { blink } from './builtin/blink.js';
 import { opportunist } from './builtin/opportunist.js';
 import { entangle } from './builtin/entangle.js';
+import { resonate } from './builtin/resonate.js';
+import { rift } from './builtin/rift.js';
+import { ward } from './builtin/ward.js';
+import { drain } from './builtin/drain.js';
+import { flare } from './builtin/flare.js';
+import { radiance } from './builtin/radiance.js';
+import { crush } from './builtin/crush.js';
+import { weigh } from './builtin/weigh.js';
+import { rupture } from './builtin/rupture.js';
+import { envenom } from './builtin/envenom.js';
+import { stasis } from './builtin/stasis.js';
+import { tempo } from './builtin/tempo.js';
+import { surge } from './builtin/surge.js';
+import { momentum } from './builtin/momentum.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -43,4 +57,18 @@ export const ABILITIES = Object.freeze([
     blink,
     opportunist,
     entangle,
+    resonate,
+    rift,
+    ward,
+    drain,
+    flare,
+    radiance,
+    crush,
+    weigh,
+    rupture,
+    envenom,
+    stasis,
+    tempo,
+    surge,
+    momentum,
 ]);

@@ -1,6 +1,8 @@
 # Roadmap
 
-Fifteen milestones from an empty repository to a finished 20–25 sword add-on.
+Fifteen milestones from an empty repository to a finished add-on. The original
+target was 20–25 swords; **the roster closed at sixteen in v0.12.0**, which is a
+deliberate stop rather than a shortfall — see steps 9 and 10.
 
 The plan is re-balanced as milestones land, but the total stays at fifteen.
 Milestone 2 was originally "sword framework hardening"; delivering it showed the
@@ -127,27 +129,127 @@ the gap between the four swords built in step 5 and the benchmark set since.
 most of its scope, so what remains there is the codex UI, loot tables and
 trades.
 
+### Interlude — Crystal and Void (v0.10.0) — **done**
+Swords ten and eleven, and the first two that are not about hitting harder.
+Crystal is the collection's first defensive sword: its active scales *up* with
+the size of the crowd it is caught in, and its passive forms a guard only once
+its wielder is losing. Void is the first sword that acts somewhere the wielder
+is not — `rift` is the first consumer of the `point` targeting mode, which had
+been sitting unused in `TargetingService` since step 4 — and its passive pays out
+on how *empty* the target is rather than on how hard it was hit.
+
+**Milestone 6 shrinks accordingly**: abilities that move entities rather than
+the caster now exist (`rift` pulls a group toward a remote point), and `point`
+targeting has a proven consumer. What remains there is genuinely block-aware
+targeting and persistent area denial.
+
 ### 6. Ability library — spatial (planned)
 Gravity manipulation, earthquakes and area denial. Teleportation and its safety
-rules arrived early with Shadow Sword (`systems/movement.js`), so what is left
-is block-aware targeting beyond the `point` mode and abilities that move
-*entities* rather than the caster.
+rules arrived early with Shadow Sword (`systems/movement.js`), and remote point
+detonation with pull arrived with Void Sword (`abilities/builtin/rift.js`), so
+what is left is block-aware targeting beyond the `point` mode and effects that
+persist for a few seconds rather than resolving in one activation.
 
-### 7. Swords 8–13 (planned)
-The forged and mystic tiers, leaning on the spatial library. First swords
-carrying three or four activation methods at once, which stress-tests whether
-the activation fallback rules hold up under real bindings.
+### Interlude — Solar, Gravity and Poison (v0.11.0) — **done**
+Swords twelve through fourteen, and three axes the framework had never had.
+Solar reads the **world** — the time of day and the dimension — which is the
+first condition on a sword that is not about the caster, the target or the
+fight. Gravity reads **altitude**, filling the collection's one obvious gap:
+thirteen swords measured distance in a straight line and were all equally poor
+against anything flying. Poison banks its resource **on the enemy**, storing the
+count in the effect itself so there is no per-target map to leak.
+
+The milestone also carried the performance pass the growing roster needed. It
+found no duplicated queries — every entity search in the project still goes
+through `systems/targeting.js`, at exactly two call sites — but five abilities
+had each written their own guarded distance helper, so those were consolidated
+into `abilities/support.js` with no behaviour change.
+
+**Milestone 7 is complete**: swords 8 through 14 have all landed across the
+interludes. What follows is the exotic ability library and the epic and
+legendary tiers built on it.
+
+### 7. Swords 8–14 — **done**
+Delivered across the interludes above rather than as one step: Ember Blade
+(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0), Solar, Gravity and Poison
+(v0.11.0). The one item it planned that has not happened is a sword binding
+three or four activation methods at once — every sword so far binds exactly two,
+and no design has yet needed a third. Carried into step 9 rather than invented
+for its own sake.
+
+### Interlude — Time and Storm, and the roster closes (v0.12.0) — **done**
+Swords fifteen and sixteen, chosen as a pair: Time Freeze is worth more the
+longer the sword has gone unused, and Storm Surge is worth nothing at all
+standing still. The same question about time and motion, answered from both
+ends, which is the right note to finish a collection on.
+
+Time Sword is the collection's only **Mythic** — the tier existed in
+`core/rarity.js` from v0.2.0 and had never been used.
+
+The milestone also brought the **crafting-progression audit**: every ingredient
+now carries an acquisition tier, every rarity a floor, and `npm run validate`
+warns when a sword costs less than its rarity implies. It immediately caught
+Storm Sword drafted as a Legendary on entirely tier-2 materials, which is why
+Storm ships as an Epic.
+
+**The roster is closed at sixteen.** The original plan said 20–25 and this is a
+deliberate stop rather than a shortfall: every sword answers a question no other
+one asks, and by sixteen the distinct axes were used up. Steps 9 and 10 below
+are retired.
+
+### 7b. Swords 15–16 — **done**
+Time and Storm, delivered in the interlude above.
+
+### Interlude — the final engineering pass (v1.0.0) — **done**
+No new content. The last milestone of the plan was an audit, and the audit's
+main finding was about the audits: several of the things this project believed
+were checked were not being checked.
+
+The ability parameter gate had read `sword.active` and `sword.passive` since
+the binding shape changed — fields no definition has ever carried — so
+twenty-five abilities' worth of constraints sat dead while every build reported
+a clean pass. `CombatSystem.strike` read a target's position straight after the
+blow that may have killed it, and the throw abandoned the rest of the sweep.
+
+Both are now fixed and both are covered by tests that fail without the fix. The
+more durable outcome is five new gates: a damage-cause catalogue, cross-binding
+agreement on shared state, a world-mutation ban list, a per-activation particle
+budget, and icon distinctness. Each closes a hole a green build could hide, and
+three of them describe properties that were previously true only because
+everyone kept being careful.
+
+The balance pass found the cheapest sword in the collection out-damaging three
+Legendaries, and the art pass found the two closest icons were a pair the brief
+had specifically asked to keep apart. Both are corrected, and both are measured
+on every build now rather than noticed by eye.
+
+**This completes the fifteen-milestone plan.**
 
 ### 8. Ability library — exotic and ultimates (planned)
-Life steal, shadow and light, time-based effects, meteors, and the multi-stage
-pattern (wind-up → impact) with cancellation on death, disconnect or dimension
-change. The first abilities that need state to survive across ticks.
+The **multi-stage pattern** — wind-up, then impact, with cancellation on death,
+disconnect or dimension change. It is the one ability shape the framework still
+cannot express: everything shipped resolves inside a single activation, and
+Gravity Crush and Time Freeze both wanted a second stage and were written
+without one rather than smuggling in per-tick state under a sword.
 
-### 9. Swords 14–19 (planned)
-The epic and legendary tiers, built on the exotic library.
+Shadow, light and time-based effects were absorbed by Shadow, Solar and Time
+Swords; "meteors" arrived as Void Rift's remote point. What remains here is the
+machinery, not the content.
 
-### 10. Swords 20–25 and the mythic tier (planned)
-Genuinely climactic ultimates. Completes the collection at 25 swords.
+### 9. ~~Swords 14–19~~ — **retired**
+### 10. ~~Swords 20–25 and the mythic tier~~ — **retired**
+The roster closed at sixteen in v0.12.0, and the mythic tier is spent on Time
+Sword. Both steps are retired rather than unfinished: the collection's rule has
+always been that a sword must answer a question no other sword asks, and by
+sixteen the distinct axes — distance, angle, crowd size, caster health, target
+health, target category, target mass, altitude, reach, world time, banked
+charge, banked venom, waiting, and motion — were used up. A seventeenth sword
+would have had to repeat one, and a repeated axis is a recolour with a different
+particle.
+
+Adding more later remains a one-file change if a genuinely new axis turns up.
+That was always the point of the architecture; it is just not something to do
+for its own sake.
 
 ---
 

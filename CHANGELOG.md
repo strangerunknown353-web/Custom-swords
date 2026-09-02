@@ -13,6 +13,576 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [1.3.0] — 2026-09-02
+
+**Back to the vanilla tilt.** v1.2.0 fixed the proportions by standing the
+swords upright, which read unmistakably as swords and did not look like
+Minecraft. All sixteen are redrawn on the diagonal, tip to the upper right,
+keeping the proportions that v1.2.0 earned.
+
+### Changed — art
+
+- **All sixteen icons redrawn tilted.** 67-80% blade, a crossguard wider than
+  the blade on every one, and the grip and pommel running down-left from the
+  guard the way vanilla's do.
+- The trick that makes a diagonal blade work, and that three earlier attempts
+  missed: a blade is a stack of **horizontal runs**, one per screen row, each
+  shifted one column left of the row above. Drawn as a true 45° lattice — one
+  step along the blade being `(-1,+1)` and one across it `(+1,+1)` — it only
+  reaches cells of one parity and comes out a checkerboard. Only the crossguard
+  is a real diagonal line, which is what makes it perpendicular to the blade.
+- Sixteen unique combinations of blade length, width, taper, tip, guard reach,
+  grip length and pommel. The first tilted render tripped 18 warnings; after
+  the differentiation pass, **zero**. Widest silhouette overlap 94%, closest
+  colour pair 63.2 — both better than the upright set managed.
+
+### Fixed — the proportion gate was measuring the wrong thing
+
+The blade-share rule added in v1.2.0 counted pixels per screen row and looked
+for the row where the icon suddenly got wider. That works for an upright sword
+and is nonsense for a tilted one, where every row is about equally wide and the
+guard is smeared across several. It now finds the weapon's own long axis from
+the principal axis of its opaque pixels and measures the cross-section
+perpendicular to it, so one rule grades both orientations.
+
+Its first version also oriented the sword by comparing which end looked
+narrower, which reads a blunt or broad blade backwards — Earth Sword measured
+33% blade that way. It orients by the widest slice now, since the crossguard is
+both the widest part of a sword and unambiguously at the hilt end.
+
+### Unchanged
+
+Abilities, passives, cooldowns, damage, targeting, recipes, item registration,
+manifests and dependencies are untouched. 543 tests pass exactly as before.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
+## [1.2.0] — 2026-09-02
+
+**The silhouette correction.** No new swords, no changed abilities, no changed
+recipes, no changed scripts beyond the texture gate. All sixteen icons are
+redrawn again, because v1.1.0 gave each sword its own weapon and got the
+proportions of that weapon wrong.
+
+### Fixed — the swords were daggers
+
+Measured, the v1.1.0 set was **36-50% blade**: on twelve of the sixteen the
+handle was longer than the blade. Nothing in the pipeline noticed, because
+every texture rule up to then graded colour, contrast or silhouette *overlap*,
+and none of them can tell a sword from a knife.
+
+All sixteen are now **67-87% blade**, against a floor of 65% that
+`npm run validate` enforces. Two changes got there:
+
+- **The blade grew and the hilt shrank.** Ten or eleven rows of blade above a
+  five-row hilt, instead of eight rows of blade under a sprawling diagonal
+  crossguard that was eating half the canvas.
+- **The swords are drawn upright.** This was geometry, not taste: at 45° a
+  ten-row blade reaches the far edge of a sixteen-pixel canvas with nothing
+  left for a hilt — which is exactly why vanilla's own blade stops at eight
+  rows — and every compromise that buys the length back bends the blade into
+  something that reads as a flame or a horn. Three attempts confirmed it before
+  the orientation changed.
+
+**The crossguard is now wider than the blade on every sword**, from 8-vs-4 up
+to 14-vs-7. A guard no wider than its blade does not read as a guard, and
+without a guard an upright blade reads as a rod. Also checked on every build.
+
+### Changed — keeping sixteen upright swords apart
+
+A shared upright skeleton makes silhouettes converge, so the blade carries a
+**taper** as well as a width: `straight`, `leaf`, `flare` or `spike`. No two
+swords share a combination of width, taper, tip, length and hilt. The first
+render of the upright set tripped thirteen warnings; the worst silhouette pair
+was 100% identical and the worst colour pair scored 26 against a floor of 50.
+After the taper work and a colour pass: **zero warnings**, worst silhouette
+overlap 95%, closest colour pair 50.7.
+
+Ember Blade is the collection's documented shading benchmark and had fallen to
+eight colours, below the set's median of nine. It carries twelve again — four
+tones down the coal plus three separate heats of live ember — rather than the
+benchmark test being lowered to meet it.
+
+### Added — gates
+
+- **Blade proportion.** The crossguard is found as the row where the icon
+  suddenly gets *wider*, not the widest row: on a sword with a slender guard
+  and a heavy pommel, "widest" finds the pommel and reports the blade as half
+  the weapon. Everything above the guard is blade.
+- **Guard width** against the blade width two rows above it.
+
+Both were confirmed to fire by shortening a blade back to the v1.1.0
+proportion and watching the build complain.
+
+### Unchanged
+
+Abilities, passives, cooldowns, damage, targeting, recipes, item registration,
+manifests and dependencies are untouched. 543 tests pass exactly as before.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
+## [1.1.0] — 2026-09-02
+
+**The art pass.** No new swords, no removed swords, no reworked abilities. All
+sixteen icons are redrawn, sword #8 takes the name the roster always gave it,
+and three more things the project asserted are now things it checks.
+
+### Changed — art
+
+- **All sixteen textures replaced.** The collection had drifted into one
+  silhouette painted sixteen ways: the same diagonal blade, the same straight
+  crossguard, the same round pommel. Every one passed the texture gate, because
+  the only shape rule was "no two pixel grids are identical" — which catches a
+  copy-paste and nothing else.
+
+  The blade is the identity now, and there are sixteen profiles: a broad forge
+  wedge, a stubby chopped cleaver, a needle icicle, a forked prong, a curved
+  sickle, a guardless needle, a blunt chisel with no point at all, a scalloped
+  wave front, a branch still in leaf, a faceted shard widest two-thirds up, a
+  blade with a seam you can see through, a widening flare, a top-heavy head on
+  a thin neck, a barbed fang, a chrono needle, and a bolt kinked twice.
+
+- **Six hilt forms** — standard, heavy, slim, cross, ring and short — spread
+  across the set, because varying blades alone was not enough. Silhouette
+  overlap between the closest pair fell from 98% to 93%; mean colour distance
+  across all 120 pairs rose from 97 to 122.
+
+- **Four pairs were retuned** after the first render tripped the colour floor.
+  Ember is a banked coal against Inferno's open flame, Earth is warm stone
+  against Gravity's cold indigo, Ocean is sea glass against Storm's steel, and
+  Time is brass against every other pale blade.
+
+### Changed — naming
+
+- **Sword #8 is Ocean Sword.** It shipped as Tidal Sword from v0.7.0 and the
+  roster has always called it Ocean. Its **identifier does not move**: an item
+  id is a save-file key, and changing it would orphan every copy already
+  crafted, in every world, with no migration path. Its ability keeps the name
+  Tidal Wave, which is what the wave is called.
+
+### Changed — performance
+
+- **Impact sounds are capped at four per strike.** They were played per target,
+  which is right for one or two and waste for twelve: Earth Shock and Wind Burst
+  were each firing thirteen sounds into a single frame at positions a few blocks
+  apart. Past about four the ear hears one crack either way. Damage, effects and
+  knockback are untouched — this caps the noise, not the hit.
+
+### Added — gates
+
+- **Silhouette overlap.** Measured as intersection over union of the two opaque
+  masks, so the empty background does not drown the signal; the naive version
+  (share of all 256 pixels that agree) reads above 90% for every pair here and
+  separates nothing. Above 95% is a warning.
+- **An effect-duration ceiling** of 30 seconds. There is no API for handing a
+  player a permanent effect by accident, but a definition asking for twenty
+  minutes of Slowness IV is the same thing from the receiving end. The
+  collection's real maximum is 15 seconds.
+
+### Verified, not changed
+
+Re-audited and found correct, so left alone: no re-entrancy path exists for
+ability damage (`applyDamage` does not re-fire the item component, and the addon
+subscribes to no damage event); no unused imports anywhere in the behaviour
+pack; every one of the 27 effect applications is finite; the resource pack
+overrides no vanilla texture or string; all 16 items carry exactly one
+crafting-table recipe; and no player ever sees a raw identifier.
+
+### Testing
+
+543 unit tests, all passing. The sound cap and the effect ceiling each have a
+regression test confirmed to fail without the fix — the first version of the
+sound test asserted the cap against the config value the code reads, which
+passes at any setting, and was rewritten against a literal.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
+## [1.0.0] — 2026-09-02
+
+**The final engineering pass.** No new swords — the roster closed at sixteen in
+v0.12.0 and stays there. This release is about the difference between a project
+that works and a project that can be shown to work, and the audit that produced
+it found that several of the things this one claimed were checked were not
+being checked at all.
+
+### Fixed
+
+- **Every ability's parameter validator had never run.** `tools/validate.mjs`
+  called `validateParams` against `sword.active` and `sword.passive` — fields no
+  definition has ever carried, since all sixteen swords keep their bindings in
+  `sword.abilities`. The loop found `undefined` every time and skipped, so
+  twenty-five abilities' worth of constraints sat dead while the build reported
+  a clean pass. The gate reads the real shape now, checks all 32 bindings, and
+  **reports the count**, because a gate that validates nothing looks exactly
+  like a gate that passes.
+- **A lethal hit could abandon the rest of an ability.** `CombatSystem.strike`
+  read `target.location` for particles and the impact sound directly after
+  `damage.apply` may have killed that target. `Entity.location` throws on a
+  handle the engine has released, and the throw escaped `strike` entirely,
+  leaving every target still in the list unstruck. Guarded here and in the three
+  passives that draw a flourish at something they have just hit.
+- **`particles.ring` did not screen its centre**, the only drawing primitive
+  that did not, so a centre computed from an entity that had gone away would
+  have asked the engine for a ring of NaN.
+- **The catalogue under-reported two swords.** Storm Surge published as pure
+  knockback and Shadow Step as dealing no damage at all, because neither calls
+  its damage `damage`. It also read each binding's params without the ability's
+  defaults, which is not the merge the executor performs.
+- **Ember Blade and Inferno Sword carried no ability labels**, so they announced
+  themselves on the action bar by their ability's generic name — 'Cleave',
+  'Brand' — while the other fourteen swords named their own moves.
+
+### Changed — balance
+
+- **Ember Blade re-priced** (cooldown 3.5 s → 4.5 s, 1.5 → 1.2 damage per
+  charge). It produced more sustained damage across a crowd than anything else
+  in the collection, including three Legendaries, while being the cheapest thing
+  in it to craft — and the ceiling was genuinely reachable, since five landed
+  hits at the passive's own cadence is three seconds. It is still the fastest
+  active in the collection.
+- **Thunder Sword's core is netherite** rather than diamond. It was the only
+  sword priced below the ingredient tier its rarity implies: a Legendary
+  buildable without leaving the Nether, while Void and Solar both ask for a boss
+  drop. This clears the last standing validator warning.
+- **Tidal and Nature's passives are no longer the same shape as Wind's and
+  Earth's.** Four swords bind `bolster` and differed only in which effect they
+  named; two of them now reach for the `heal` and `extinguish` parameters the
+  ability always exposed and nothing used, so water puts the wielder's fire out
+  and vitality restores a point outright. Wind and Earth stay pure on purpose.
+
+### Changed — art
+
+- **Earth Sword is cold stone.** It and Nature scored 47 on icon distance
+  against a collection median of 135 — the closest pair by a wide margin, both
+  reading as a brown-hilted, green-bladed sword in a hotbar slot. Earth is now a
+  dark deepslate blade, a bright iron guard, a bound leather grip and a pale
+  stone pommel, with the emerald vein as its one accent, which is what its own
+  description always claimed. The pair now scores 64.
+
+### Added — gates
+
+Five new build-time checks, each closing a hole that a green build could hide:
+
+- **A damage-cause catalogue**, the fourth of its kind. Bedrock accepts an
+  unrecognised `EntityDamageCause` without complaint and applies the damage
+  anyway, so a typo is invisible in play: the hit lands, only its classification
+  is wrong. Both halves of the params merge are checked, and a mistyped cause is
+  told what it probably meant.
+- **Cross-binding agreement on shared state.** Ember, Shadow and Time each hold
+  a passive and an active together with nothing but two matching string literals
+  in different files, and several definitions carried a comment saying they must
+  match. A comment is not a gate. State keys must also be unique across swords,
+  since they are scoped to the player rather than the sword.
+- **A world-mutation ban list.** The addon reads blocks but never writes one,
+  never spawns an entity, never touches the clock or the weather, and never
+  shells out to a command. That has been true by convention since v0.1.0.
+- **A per-activation particle budget.** `maxPerEmit` caps a single call at 64,
+  but a binding drawing at each of twelve targets is inside every individual cap
+  and still asks the client for hundreds in one frame. The worst activation in
+  the collection draws 72; the median draws 28.
+- **Icon distinctness.** Every other texture rule grades an icon on its own, so
+  a collection can pass all of them and still contain two nobody can tell apart
+  at sixteen pixels.
+
+Also: a binding with no label, and a binding that deals damage the catalogue
+cannot describe, are both build failures now.
+
+### Added — documentation
+
+- **An output curve** in `SWORD_CATALOG.md`: peak ability damage per second for
+  every sword, ranked. It is what made the Ember Blade inversion visible.
+- `bolster` and `repulse` — the two abilities more than one sword binds — each
+  carry a table showing how the swords that bind them differ.
+- `tools/set-version.mjs` now rewrites the artefact filenames in `README.md`,
+  which had drifted three milestones behind.
+
+### Testing
+
+540 unit tests, all passing, against a mocked `@minecraft/server`. The mock now
+models the engine releasing an entity handle on a lethal hit, which is what let
+the combat regression be written as a test that fails without the fix.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
+## [0.12.0] — 2026-09-02
+
+**Time Sword and Storm Sword complete the roster at sixteen.** They are the last
+two swords the collection takes, and they are deliberately opposites: one is
+worth more the longer you have not used it, the other is worth nothing at all
+standing still.
+
+### Added
+
+- **Time Sword ⏳** (`custom_swords:time_sword`, **Mythic** — the first and only
+  one — 9 melee, 1800 durability, the highest in the collection).
+  - **Time Freeze** (`custom_swords:stasis`, 12 s): holds everything within four
+    blocks, and *how long* it holds depends entirely on how long the sword has
+    been carried without firing. Two seconds spent on cooldown, eight at a full
+    meter. Every other active here is worth the same whenever you press it; this
+    is the only sword where **not** pressing the button is a play.
+  - **Temporal Edge** (`custom_swords:tempo`): each landed hit advances the
+    charge clock, so fighting winds the sword faster than waiting does — a
+    patient *fighter* rather than a patient bystander.
+  - **No timers and nothing to restore.** The hold is a vanilla `slowness` VI
+    the engine expires on its own. The charge is one number under one key per
+    player. The addon still schedules exactly one interval in total, and it is
+    the memory sweep that has existed since v0.1.0.
+  - It never touches the world clock, never moves the wielder or a target, and
+    never stops an entity's AI — `world.setTimeOfDay` is a global mutation on a
+    shared world, and there is no supported API for the other two.
+- **Storm Sword 🌩️** (`custom_swords:storm_sword`, Epic, 9 melee, 1250
+  durability).
+  - **Storm Surge** (`custom_swords:surge`, 7.5 s): a 130° cone of weather —
+    wind that hurls, rain that slows, a discharge drawn across the front — whose
+    damage *and* knockback scale with **the wielder's own motion**. 4 from a
+    standstill, 11 sprinting through the air. The last scaling axis the
+    framework was missing.
+  - **Storm Momentum** (`custom_swords:momentum`): a landed hit grants the
+    wielder Speed and throws the target harder the faster the wielder was
+    already going, so the sword supplies exactly the currency its own active
+    spends.
+  - **No lightning entity is ever spawned.** A real bolt starts fires, charges
+    creepers, transforms pigs and villagers, hurts the caster, and does all of
+    it outside the combat layer's rules. The lightning here is a particle line.
+- **`PlayerStateStore.mark`/`sinceMark` take an optional non-life scope.** Time
+  Sword's charge clock belongs to the sword rather than to the body carrying it:
+  a life-scoped clock would read as *absent* after a death and hand back a full
+  meter, making dying a way to reload.
+- **`MovementService.momentumOf`** — the caster's motion state as 0..1, built
+  from `isSprinting` and `isOnGround`/`isFalling` rather than `getVelocity()`,
+  because server-side player velocity in Bedrock is jittery enough that a
+  headline mechanic should not rest on it.
+- **Two visual profiles** (`chrono`, `tempest`) and **six sound presets**, each
+  verified against the vanilla sound event list.
+- **A crafting-progression audit.** `tools/data/ingredient_tiers.json` gives
+  every ingredient an acquisition tier and every rarity a floor;
+  `npm run validate` warns when a sword costs less than its rarity implies, and
+  `SWORD_CATALOG.md` now publishes the whole curve. The cost progression is
+  checked rather than asserted.
+- **`tests/unit/time_storm.test.mjs`** (25 tests) and ten more in
+  `shared_services.test.mjs`: charge accumulation and spend, a whiffed cast
+  keeping its charge, the charge surviving death, the hold expiring on its own,
+  motion scaling on both Storm abilities, and per-player isolation throughout.
+
+### Changed
+
+- **Storm Sword is Epic, not Legendary.** It was drafted Legendary and the new
+  progression audit disagreed: every ingredient in its recipe is tier 2, while
+  the other Legendaries are gated behind the End, an ancient city or a boss.
+  Epic is also the better design — it leaves Thunder as the one Legendary bolt
+  and keeps a sixteen-sword roster from going top-heavy. The final spread is
+  1 Uncommon, 4 Rare, 7 Epic, 3 Legendary, 1 Mythic.
+- **`abilities/support.js` gained `scaleKnockback`.** Both Storm abilities had
+  written their own copy of the same knockback scaling; the shared version also
+  preserves `mode`, `pull`, `from` and `direction`, which a second copy is
+  liable to drop.
+- The mock gained `MockPlayer` motion properties.
+
+### Fixed
+
+- **Time Freeze held targets the combat layer had refused.** The first draft
+  struck the whole target list in one call and then applied the hold to every
+  target in a second pass — so a target outside the binding's allowed
+  categories, or inside another player's hit-protection window, would have been
+  frozen by an ability that never touched it. That is a filter bypass, and the
+  combat layer exists to prevent exactly it. Now struck one at a time, holding
+  only what was actually damaged, matching the shape `nova` established.
+
+### Known, and deferred to the balance pass
+
+- `npm run validate` reports **one warning**: Thunder Sword is Legendary but its
+  costliest ingredient is a lightning rod (tier 2). It is a pre-existing,
+  shipped recipe and a balance judgement rather than a defect, so it is left for
+  the balance pass rather than redesigned here.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and none of it has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
+## [0.11.0] — 2026-09-02
+
+**Solar, Gravity and Poison Swords**, taking the collection to fourteen. Each is
+built on a question the framework had never been able to ask: what the *world*
+is doing, how far *up* a target is, and what happens when a sword's resource is
+banked on the **enemy** rather than the wielder.
+
+### Added
+
+- **Solar Sword ☀️** (`custom_swords:solar_sword`, Legendary, 9 melee, 1000
+  durability, enchantability 24 — the highest in the collection, matching
+  vanilla's soft gold).
+  - **Solar Flare** (`custom_swords:flare`, 8.5 s): a 120° cone whose damage is
+    drawn from the sky — 3 at midnight rising to 11 at noon, the widest gap
+    between a sword's best and worst case here. Worth its floor and nothing more
+    in the Nether and the End, whatever the clock says. Its payload is
+    `blindness`, and it **never ignites anything**: light is not fire, which is
+    the whole separation from Inferno and Ember Blade.
+  - **Solar Radiance** (`custom_swords:radiance`): the first passive that asks
+    *what a target is* rather than what state it is in. Bonus damage against a
+    declared target **category** — undead here — scaled by the same daylight.
+    The category is binding data, so a later sword can bind the same ability
+    against `arthropod` with no new code, and it reads Bedrock's own
+    `minecraft:type_family` rather than a hard-coded mob list that would go
+    silently stale.
+- **Gravity Sword 🪐** (`custom_swords:gravity_sword`, Epic, 10 melee — tying
+  Earth for the heaviest — 1500 durability, 0.5 s swing).
+  - **Gravity Crush** (`custom_swords:crush`, 10 s): a well that drags
+    everything inward *and downward*, with damage scaled by **how far above the
+    caster** each target was: 5 on the floor, 12 at five blocks up. The
+    collection's answer to phantoms, blazes and ledges — thirteen other swords
+    treat "five blocks up" exactly like "five blocks sideways".
+  - **Heavy Force** (`custom_swords:weigh`): every swing presses its target into
+    the ground — straight down, no horizontal component, so a crowd stays
+    gathered for the next crush — and deals bonus damage scaled by the target's
+    **maximum** health, the closest thing Bedrock offers to mass. Capped at 60
+    max health, so a golem, a ravager, a warden and the dragon are all worth the
+    same 3.
+- **Poison Sword 🧪** (`custom_swords:poison_sword`, Rare, 6 melee, 750
+  durability, 0.26 s swing).
+  - **Venomous Edge** (`custom_swords:envenom`): the framework's **fourth shape
+    of state, and the first that is not the player's**. Each landed hit reads
+    the poison the target already carries and applies it one amplifier deeper,
+    to Poison III. The count lives in the effect itself — the game is the store
+    — so there is no per-target map to leak, nothing to clean up when a mob dies
+    or despawns, and no bytes held between activations.
+  - **Venom Burst** (`custom_swords:rupture`, 6.5 s): spends it. Each target
+    takes 4 plus 3 per venom tier it was carrying, up to 13, and the venom is
+    stripped and replaced with a short residual dose. Banked on the enemy rather
+    than the wielder, which makes this the one sword that punishes *switching
+    targets*.
+- **`systems/environment.js`** — the first service that answers a question about
+  the world rather than about an entity. `daylight(dimension)` is one engine
+  call per activation, a cosine over the day so dusk fades rather than
+  switching off at an hour, and 0 outside the Overworld.
+- **`EffectService.maxHealth` / `.amplifierOf` / `.remove`** — mass, banked
+  stacks, and spending them. `amplifierOf` returns `-1` for a target carrying
+  nothing so `+ 1` starts a fresh target at 0.
+- **`TargetingService.isCategory`** — the category filter, exposed as a
+  question so an ability can branch on what a target is.
+- **Three visual profiles** (`solar`, `gravity`, `venom`) and **seven sound
+  presets**, each verified against the vanilla sound event list.
+- **`tests/unit/solar_gravity_poison.test.mjs`** (33 tests) and
+  **`tests/unit/shared_services.test.mjs`** (20 tests): daylight scaling and the
+  dimension check, the undead bonus by family, altitude scaling and its cap,
+  mass scaling and its cap, downward-only knockback, venom deepening one tier
+  per hit and stopping at the cap, the burst spending what was banked, and
+  per-player isolation for all of it.
+
+### Changed
+
+- **`abilities/support.js`** — a duplication audit for the performance pass
+  found five abilities had each written their own guarded "how far away is this
+  target" helper (`falloff`, `angleFalloff`, `nearnessOf`, `reachFraction`,
+  `safeLocation`). The duplication was cheap; the **guard** was not — each copy
+  independently decided what a dead entity handle means, and getting that wrong
+  throws out of the middle of combat resolution. The measurement is now shared
+  and the *meaning* stays with each ability, since "no bonus" and "full bonus"
+  are both right answers depending on which way the mechanic should fail.
+  Behaviour is unchanged and the existing 436 tests proved it.
+- `tools/catalog.mjs` reports the two new scaling shapes (daylight and
+  altitude), so the published catalogue does not understate a sword.
+- The mock gained `world.getTimeOfDay` and `MockEntity.removeEffect`, both real
+  APIs it had simply never needed.
+
+### Fixed
+
+- **Gravity Crush advertised a ceiling it could not reach.** The first draft
+  paired a five-block well with a six-block full-height bonus, so anything high
+  enough to earn the maximum was already outside the query and the sword quietly
+  never dealt its stated damage. Caught by a unit test, fixed in the sword
+  (reach 6, full height 5) rather than in the test.
+- **`glowing` is not a Bedrock effect.** Solar Radiance's first draft used it;
+  `core/effect_catalogue.js` rejected it at build time. `addEffect` would have
+  failed silently on every swing.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and none of it has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
+## [0.10.0] — 2026-09-02
+
+**Crystal Sword and Void Sword**, taking the collection to eleven. Both are
+built on questions the framework had never been asked: what an area attack
+should do about a *crowd*, what a passive should do about its *wielder's* health
+rather than its target's, and what an ability that acts somewhere the caster is
+not should look like.
+
+### Added
+
+- **Crystal Sword 🔮** (`custom_swords:crystal_sword`, Epic, 8 melee, 850
+  durability) — the collection's first defensive sword.
+  - **Crystal Burst** (`custom_swords:resonate`, 8 s): a lattice struck once,
+    ringing louder for every body caught in it. Damage rises for *every* target
+    with each additional target, capped at +4.2 so a spawner room is reach
+    rather than a one-shot. Inverts the usual area balance, where a crowd is
+    total damage spread thinner.
+  - **Crystal Guard** (`custom_swords:ward`): a defensive layer that forms only
+    once the wielder is at or below 60 % health, one tier stronger below 30 %,
+    hard-capped at Resistance II and rate-limited by its own 7-second mark
+    rather than by the binding cooldown. It cannot be pre-stacked, cannot be
+    maintained by swinging at a pig, and is worth nothing while the wielder is
+    safe.
+- **Void Sword 🕳️** (`custom_swords:void_sword`, Legendary, 9 melee, 1600
+  durability — the collection's most durable) — the first blade that reaches
+  somewhere the wielder is not.
+  - **Void Rift** (`custom_swords:rift`, 9 s): the **first consumer of `point`
+    targeting**, which had been in `TargetingService` since v0.4.0 with nothing
+    using it. Resolves the block the player is looking at, up to ten blocks, and
+    collapses a 3.5-block sphere there — damage rising with how far the rift was
+    torn, the exact inverse of `burst`'s falloff, and knockback applied from the
+    rift's centre with `pull` so everything caught is dragged in rather than
+    scattered.
+  - **Void Drain** (`custom_swords:drain`): health returned to the wielder in
+    proportion to how little the target has left, not to the damage dealt. That
+    inversion is the anti-abuse mechanism: flat lifesteal is farmable forever
+    against a tanky mob, while a payout that peaks as a target dies has nothing
+    to farm. Capped at 3 HP a hit, read *before* the strike so the ability
+    cannot inflate its own payout, and paid only on a hit that actually landed.
+- **Two visual profiles**, `crystal` and `void`, built from particle and sound
+  vocabularies no existing profile touches — `void` deliberately shares not one
+  identifier with `shadow`.
+- **Five sound presets** (`crystal_cast`, `crystal_impact`, `crystal_ward`,
+  `void_cast`, `void_impact`, `void_drain`), each verified against the vanilla
+  sound event list like every other preset.
+- **`EffectService.healthFraction`** — one shared, never-throwing "how hurt is
+  this?" read, with two opposite consumers: `ward` asks it about the caster,
+  `drain` about the target. An unreadable entity reports *unhurt*, which
+  withholds both benefits rather than granting both.
+- **`tests/unit/crystal_void.test.mjs`** — 24 tests covering resonance scaling
+  and its cap, the guard's health gate, tier and interval, that the guard never
+  lands on the target, that the rift detonates at the aimed point rather than at
+  the wielder, that its damage rises with reach, that it pulls rather than
+  scatters, that the drain pays nothing against a fresh target and cannot
+  inflate its own payout, and per-player isolation for all of it.
+- **Recipe audit gates**: no two swords may craft from the same grid, and a
+  recipe must produce exactly one sword.
+- **Crafting recipes** for both, verified against the vanilla item list like the
+  other nine: Crystal is three amethyst shards over a diamond core on a quartz
+  hilt; Void is dragon breath, two eyes of ender and a netherite ingot on an end
+  rod — the only recipe in the collection that requires the dragon fight.
+
+### Changed
+
+- **`MockDimension.getBlockFromRay` now marches the ray** through the same block
+  model `getBlock` serves, instead of always reporting open air. `resolvePoint`
+  had no test coverage before because nothing used it; Void Rift's reach
+  scaling cannot be tested without a mock that can stop a ray.
+
+### Fixed
+
+- `abilities/builtin/chain.js` referred to a `surge` ability that has never
+  existed. Rewritten to compare against `rift`, which is the reaching ability it
+  was describing.
+- `docs/TEXTURE_STANDARD.md` listed Shadow's theme as "not yet"; Shadow shipped
+  in v0.8.0.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and nothing above has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
 ## [0.9.0] — 2026-09-01
 
 **Every sword is craftable.** The collection had nine swords and zero recipes;

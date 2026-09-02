@@ -58,5 +58,15 @@ if (!versionPattern.test(config)) {
 }
 fs.writeFileSync(configPath, config.replace(versionPattern, `$1${version}$2`));
 
-console.log(`set-version: ${previous} -> ${version} (package.json, both manifests, config.js).`);
+// The README names the built artefacts by filename, and those names carry the
+// version. They had drifted three milestones behind by the time anyone looked,
+// which is the ordinary fate of a version number written down somewhere the
+// bump script does not reach.
+const readme = fs.readFileSync(PATHS.readme, 'utf8');
+const rewritten = readme.replace(/CustomSwords(BP|RP)?-v\d+\.\d+\.\d+\.mc(addon|pack)/g, (match) =>
+    match.replace(/v\d+\.\d+\.\d+/, `v${version}`),
+);
+if (rewritten !== readme) fs.writeFileSync(PATHS.readme, rewritten);
+
+console.log(`set-version: ${previous} -> ${version} (package.json, both manifests, config.js, README.md).`);
 console.log('set-version: remember to add a CHANGELOG.md entry, then run `npm run all`.');

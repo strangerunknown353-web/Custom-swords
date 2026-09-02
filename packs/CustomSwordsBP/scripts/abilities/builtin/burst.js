@@ -1,3 +1,5 @@
+import { distanceTo, spanFraction, taper } from '../support.js';
+
 /**
  * Burst — area damage around the caster, falling off with distance.
  *
@@ -93,13 +95,7 @@ export const burst = {
  */
 function falloff(origin, target, radius, edgeFactor) {
     if (radius <= 0 || edgeFactor >= 1) return 1;
-    try {
-        const dx = target.location.x - origin.x;
-        const dy = target.location.y - origin.y;
-        const dz = target.location.z - origin.z;
-        const distance = Math.min(Math.sqrt(dx * dx + dy * dy + dz * dz), radius);
-        return 1 - (distance / radius) * (1 - edgeFactor);
-    } catch {
-        return 1;
-    }
+    // An unmeasurable target is treated as a centre hit rather than dropped:
+    // the alternative silently softens a blast when a mob dies mid-sweep.
+    return taper(spanFraction(distanceTo(origin, target), radius) ?? 0, edgeFactor);
 }

@@ -148,13 +148,43 @@ export class MockDimension {
     }
 
     /**
-     * Block raycast. The mock world is empty air, so this reports no hit and
-     * callers fall back to their maximum reach — which is the common outdoor
-     * case in a real world too.
+     * Block raycast, marched through the same block model {@link getBlock}
+     * serves.
+     *
+     * Returns the first solid (non-air, non-liquid) block along the ray, or
+     * `undefined` when the ray reaches `maxDistance` through open air — in
+     * which case a caller such as `TargetingService.resolvePoint` falls back to
+     * its full reach, which is the common outdoor case in a real world too.
+     *
+     * Stepping in quarter-blocks is finer than any distance these abilities
+     * care about and keeps the walk cheap.
      *
      * @param {any} location @param {any} direction @param {any} options
      */
-    getBlockFromRay(location, direction, options) {
+    getBlockFromRay(location, direction, options = {}) {
+        const max = options.maxDistance ?? 16;
+        const length = Math.hypot(direction.x, direction.y, direction.z);
+        if (!(length > 0)) return undefined;
+        const step = 0.25;
+        for (let travelled = step; travelled <= max; travelled += step) {
+            const point = {
+                x: location.x + (direction.x / length) * travelled,
+                y: location.y + (direction.y / length) * travelled,
+                z: location.z + (direction.z / length) * travelled,
+            };
+            let block;
+            try {
+                block = this.getBlock(point);
+            } catch {
+                // An unloaded chunk stops the ray, as it does in the engine.
+                return undefined;
+            }
+            if (block.isAir || block.isLiquid) continue;
+            return {
+                block: { x: Math.floor(point.x), y: Math.floor(point.y), z: Math.floor(point.z) },
+                face: 'Up',
+            };
+        }
         return undefined;
     }
 
@@ -202,6 +232,8 @@ export class MockEntity {
         this.location = location;
         this.dimension = dimension ?? new MockDimension();
         this.isValid = true;
+        /** When true, `applyDamage` releases the handle, as a lethal hit does. */
+        this.releaseOnDamage = false;
         this.isSneaking = false;
         this.isOnGround = true;
         this.isInWater = false;
@@ -226,7 +258,29 @@ export class MockEntity {
     applyDamage(amount, options) {
         if (!this.isValid) throw new Error('Entity is not valid.');
         this.damageTaken.push({ amount, options });
+        // Models a blow that kills outright and takes the handle with it. The
+        // engine does this often — it is what every lethal hit looks like from
+        // script — and code that reads the corpse's position afterwards has to
+        // survive it.
+        if (this.releaseOnDamage) this.release();
         return true;
+    }
+
+    /**
+     * Models the engine releasing this entity's handle.
+     *
+     * After release, `isValid` reads false and every other property access
+     * throws, which is how a removed entity actually behaves. Tests use it to
+     * prove that a mob dying mid-sweep does not abort the rest of an ability.
+     */
+    release() {
+        this.isValid = false;
+        const dead = () => {
+            throw new Error('Entity is not valid.');
+        };
+        for (const property of ['location', 'typeId', 'dimension']) {
+            Object.defineProperty(this, property, { get: dead, configurable: true });
+        }
     }
 
     /** @param {any} horizontal @param {number} vertical */
@@ -304,6 +358,23 @@ export class MockEntity {
         return { typeId: match.effect, duration: match.duration, amplifier: match.options?.amplifier ?? 0 };
     }
 
+    /**
+     * Strips every instance of an effect, as the engine does.
+     *
+     * The mock records applications as a history so a test can assert how a
+     * stack was built up; removing therefore has to drop every matching entry,
+     * or `getEffect` would keep reporting an earlier tier that the game would
+     * consider gone.
+     *
+     * @param {string} effectId
+     */
+    removeEffect(effectId) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        const before = this.effects.length;
+        this.effects = this.effects.filter((e) => e.effect !== effectId);
+        return this.effects.length !== before;
+    }
+
     getEffects() {
         if (!this.isValid) throw new Error('Entity is not valid.');
         return this.effects.map((e) => ({ typeId: e.effect, duration: e.duration, amplifier: e.options?.amplifier ?? 0 }));
@@ -377,6 +448,12 @@ export class MockPlayer extends MockEntity {
         };
         /** @type {string[]} */
         this.chatMessages = [];
+        // Motion state, as the engine exposes it on Player. Defaults describe a
+        // player standing still on flat ground, which is the case a test that
+        // does not care about motion should get.
+        this.isSprinting = false;
+        this.isFalling = false;
+        this.isOnGround = true;
         /** @type {Record<string, MockItemStack | undefined>} */
         this.equipment = {};
         this.components['minecraft:equippable'] = {
@@ -510,6 +587,15 @@ export const world = {
     },
     /** @type {any[]} */
     messages: [],
+
+    /**
+     * World time, 0-23999. Defaults to 6000 — noon — so a test that does not
+     * care about the clock gets full daylight, and one that does sets it.
+     */
+    timeOfDay: 6000,
+    getTimeOfDay() {
+        return this.timeOfDay;
+    },
 };
 
 /** Resets every mutable global between tests. */
@@ -525,6 +611,7 @@ export function resetMocks() {
     world.afterEvents.worldLoad = new Signal();
     world.players = [];
     world.messages = [];
+    world.timeOfDay = 6000;
 }
 
 /** Registry stand-in passed to `InputRouter.register`. */

@@ -61,10 +61,22 @@ export const emberBlade = {
             // EMBER BURST — spend banked heat in a tight ring around the
             // wielder. Short range and a short cooldown, so it is a rhythm
             // ability rather than an opener.
+            //
+            // Re-priced in the final balance pass. At a 3.5s cooldown and a
+            // 11.5 ceiling this sword produced more sustained damage across a
+            // crowd than anything else in the collection — including three
+            // Legendaries — while being the cheapest thing in it to craft. The
+            // ceiling was reachable, too: five landed hits at the passive's own
+            // 0.6s cadence is three seconds, which fits inside the old window
+            // with time to spare. That is a progression inversion, not a
+            // strong starter, so both halves moved: a slightly longer rhythm
+            // and a ceiling that no longer tops an Epic's flat damage. It is
+            // still the fastest active in the collection.
             activation: 'use',
             visual: 'ember',
+            label: 'Ember Burst',
             abilityId: 'custom_swords:ember_burst',
-            cooldownTicks: 70,
+            cooldownTicks: 90,
             hudCategory: 'custom_swords_ember_blade',
             targeting: { type: 'area', range: 3, maxTargets: 6 },
             allowedTargets: ['mob', 'player'],
@@ -76,7 +88,7 @@ export const emberBlade = {
             sounds: { cast: 'ember_cast', impact: 'ember_impact' },
             params: {
                 damage: 4,
-                damagePerCharge: 1.5,
+                damagePerCharge: 1.2,
                 igniteSeconds: 2,
                 igniteSecondsPerCharge: 0.5,
                 chargeKey: 'ember_heat',
@@ -89,6 +101,7 @@ export const emberBlade = {
             // own; its whole purpose is the counter it builds.
             activation: 'attack',
             visual: 'ember',
+            label: 'Ember Edge',
             abilityId: 'custom_swords:ember_edge',
             // A cooldown on the passive is what stops the fastest sword in the
             // collection from filling its own meter in one flurry.

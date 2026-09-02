@@ -16,6 +16,42 @@ import path from 'node:path';
 
 import { PATHS, MODULES } from './lib/project.mjs';
 
+/**
+ * Ingredient acquisition tiers, so the published catalogue can show the cost
+ * curve rather than assert one. Shares its data file with `tools/validate.mjs`,
+ * which fails a warning when a sword sits below the tier its rarity implies.
+ */
+const TIER_DATA = JSON.parse(
+    fs.readFileSync(path.join(PATHS.root, 'tools', 'data', 'ingredient_tiers.json'), 'utf8'),
+);
+/** @type {Map<string, number>} vanilla item -> tier */
+const INGREDIENT_TIER = new Map();
+/** @type {Map<number, string>} tier -> label */
+const TIER_LABEL = new Map([[0, 'starting materials']]);
+for (const group of TIER_DATA.tiers ?? []) {
+    TIER_LABEL.set(group.tier, group.label);
+    for (const item of group.items ?? []) INGREDIENT_TIER.set(item, group.tier);
+}
+
+/**
+ * The rarest ingredient a recipe demands, and its tier.
+ *
+ * @param {any} sword
+ * @returns {{ tier: number, item: string }}
+ */
+function costOf(sword) {
+    let tier = 0;
+    let item = '—';
+    for (const value of Object.values(sword.recipe?.key ?? {})) {
+        const itemTier = INGREDIENT_TIER.get(value) ?? 0;
+        if (itemTier >= tier) {
+            tier = itemTier;
+            item = value;
+        }
+    }
+    return { tier, item };
+}
+
 const CHECK_ONLY = process.argv.includes('--check');
 const OUTPUT = path.join(PATHS.root, 'SWORD_CATALOG.md');
 
@@ -121,7 +157,30 @@ for (const sword of shipped) {
     for (const binding of sword.abilities) {
         const targeting = binding.targeting ?? { type: 'self' };
         const details = [];
-        if (binding.params?.damage) details.push(`${binding.params.damage} ability damage`);
+        // Merged the way the executor merges, so a value an ability supplies as
+        // a default is published as readily as one the binding states. Reading
+        // the binding alone would let a sword's numbers depend on whether its
+        // author happened to restate them.
+        const ability = ABILITIES.find((a) => a.id === binding.abilityId);
+        const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+        const damage = describeDamage(params, sword);
+        if (damage !== undefined) details.push(damage);
+        else if (dealsDamage(params)) {
+            // A binding that damages but publishes nothing is a hole in this
+            // document, not a quirk of a sword. Storm Surge and Shadow Step
+            // both sat in it because their damage is not called `damage`.
+            throw new Error(
+                `${sword.id}.${binding.activation} deals damage that the catalogue cannot describe. ` +
+                    `Teach describeDamage about ${damageKeys(params).join(', ')}.`,
+            );
+        }
+        // Time Freeze's payload is the hold, and its length is the thing that
+        // varies; the binding's own effect durations are only its floor.
+        if (typeof params.minFreezeTicks === 'number' && typeof params.maxFreezeTicks === 'number') {
+            details.push(
+                `holds ${(params.minFreezeTicks / 20).toFixed(1)}-${(params.maxFreezeTicks / 20).toFixed(1)}s (scales with charge)`,
+            );
+        }
         if (binding.knockback?.horizontal) {
             details.push(`knockback ${binding.knockback.horizontal}${binding.knockback.mode === 'forward' ? ' (wave)' : ''}`);
         }
@@ -158,6 +217,83 @@ if (diagnostics.length > 0) {
     lines.push('');
 }
 
+lines.push('## Crafting progression', '');
+lines.push(
+    'What each rarity actually costs to make, by the rarest ingredient its recipe',
+    'demands. Tiers come from `tools/data/ingredient_tiers.json`; `npm run validate`',
+    'warns when a sword sits below the tier its rarity implies, so the curve is',
+    'checked rather than asserted.',
+    '',
+);
+lines.push('| Rarity | Sword | Gated behind | Tier |');
+lines.push('|---|---|---|---:|');
+const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+for (const rarity of rarityOrder) {
+    const group = shipped.filter((s) => s.rarity === rarity);
+    if (group.length === 0) continue;
+    group.sort((a, b) => costOf(a).tier - costOf(b).tier);
+    for (const sword of group) {
+        const { tier, item } = costOf(sword);
+        lines.push(
+            `| ${rarity} | ${sword.name} | \`${item.replace('minecraft:', '')}\` — ${TIER_LABEL.get(tier)} | ${tier} |`,
+        );
+    }
+}
+lines.push('');
+
+lines.push('## Output curve', '');
+lines.push(
+    'Peak ability output per second, computed from the same figures the tables',
+    'above publish: the top of each active\'s damage range, times the most',
+    'targets its binding may reach, divided by its cooldown. It is a ceiling and',
+    'not an average — most of these need setting up, and several are only',
+    'reachable standing in the middle of a crowd — but it is the one number that',
+    'makes a progression inversion visible, and the final pass found one: an',
+    'Uncommon starter that out-damaged three Legendaries.',
+    '',
+    'Read it as a shape rather than a ranking. Rarity here buys reach, control',
+    'and utility as much as damage, which is why the Legendaries sit mid-table',
+    'and the Mythic sits last: Time Sword deals three damage and stops a fight.',
+    '',
+);
+lines.push('| Sword | Rarity | Peak active | Targets | Cooldown | Peak/sec |');
+lines.push('|---|---|---|---:|---:|---:|');
+const curve = [];
+for (const sword of shipped) {
+    const binding = sword.abilities.find((b) => b.activation === 'use');
+    if (binding === undefined) continue;
+    const ability = ABILITIES.find((a) => a.id === binding.abilityId);
+    const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+    const described = describeDamage(params, sword);
+    const range = /([\d.]+)(?:-([\d.]+))?/.exec(described ?? '');
+    const peak = range === null ? 0 : Number(range[2] ?? range[1]);
+    const targeting = binding.targeting ?? { type: 'self' };
+    const targets =
+        targeting.type === 'self'
+            ? params.arrivalMaxTargets ?? 1
+            : targeting.type === 'point'
+              ? params.maxTargets ?? 1
+              : targeting.type === 'single' || targeting.type === 'ray'
+                ? 1 + (params.maxJumps ?? 0)
+                : targeting.maxTargets ?? 1;
+    const seconds = (binding.cooldownTicks ?? 0) / 20;
+    curve.push({
+        sword,
+        peak,
+        targets,
+        seconds,
+        rate: seconds > 0 ? (peak * targets) / seconds : 0,
+    });
+}
+curve.sort((a, b) => b.rate - a.rate);
+for (const row of curve) {
+    lines.push(
+        `| ${row.sword.name} | ${row.sword.rarity} | ${row.peak} | ${row.targets} | ${row.seconds}s | ` +
+            `${row.rate.toFixed(1)} |`,
+    );
+}
+lines.push('');
+
 lines.push('## Abilities', '');
 lines.push('| Ability | Used by | Behaviour |');
 lines.push('|---|---|---|');
@@ -178,4 +314,140 @@ if (existing === content) {
 } else {
     fs.writeFileSync(OUTPUT, content);
     console.log(`catalog: wrote SWORD_CATALOG.md (${shipped.length} sword(s), ${ABILITIES.length} abilities).`);
+}
+
+/**
+ * A binding's damage, in whatever shape the ability expresses it.
+ *
+ * Reporting only a flat `damage` understated every ability whose output scales:
+ * Void Rift declares `nearDamage` + `reachBonus` and would have published no
+ * damage at all, and Shadow Edge's `damage: 1` hid the 7 it actually deals
+ * inside its window. The catalogue is the roster players read, so it reports the
+ * range rather than the floor.
+ *
+ * @param {Record<string, any>} params
+ * @param {any} sword The owning sword, so a charge-fed active can find the
+ *   ceiling declared by the passive that fills its meter.
+ * @returns {string | undefined}
+ */
+/** Parameter names that carry a positive damage figure. */
+function damageKeys(params) {
+    return Object.entries(params)
+        .filter(([name, value]) => /damage/i.test(name) && typeof value === 'number' && value > 0)
+        .map(([name]) => name);
+}
+
+/**
+ * Whether a binding deals damage at all, judged from its parameters rather than
+ * from whether {@link describeDamage} happens to recognise them. The gap between
+ * these two answers is precisely the bug this guards.
+ *
+ * @param {Record<string, any>} params
+ * @returns {boolean}
+ */
+function dealsDamage(params) {
+    return damageKeys(params).length > 0;
+}
+
+function describeDamage(params, sword) {
+    const round = (n) => String(Math.round(n * 10) / 10);
+
+    // Abilities whose damage ramps over a world or spatial condition. Each pairs
+    // a floor with a bonus under its own names, so the catalogue reports the
+    // range rather than silently publishing nothing.
+    for (const [floor, bonus, why] of [
+        ['nearDamage', 'reachBonus', 'scales with reach'],
+        ['nightDamage', 'sunBonus', 'scales with daylight'],
+        ['groundDamage', 'heightBonus', 'scales with the target’s height'],
+        // Storm Surge. Without this pair the catalogue published the sword's
+        // headline ability as pure knockback, because its damage is not called
+        // `damage` — which is exactly the kind of thing a generated document is
+        // supposed to stop anyone having to notice by hand.
+        ['stillDamage', 'momentumBonus', 'scales with the wielder’s speed'],
+    ]) {
+        if (typeof params[floor] !== 'number') continue;
+        const top = params[floor] + (params[bonus] ?? 0);
+        return top > params[floor]
+            ? `${round(params[floor])}-${round(top)} ability damage (${why})`
+            : `${round(params[floor])} ability damage`;
+    }
+
+    // Shadow Step deals its damage on arrival rather than on the swing, so it
+    // names the parameter differently and was likewise publishing nothing.
+    if (typeof params.arrivalDamage === 'number' && params.arrivalDamage > 0) {
+        return `${round(params.arrivalDamage)} ability damage on arrival`;
+    }
+
+    if (typeof params.damage !== 'number' || params.damage <= 0) return undefined;
+    const base = params.damage;
+
+    // A conditional bonus: a combo window, a target already afflicted, a target
+    // of the right kind, or a target heavy enough to be worth pressing on.
+    const conditional =
+        params.empoweredDamage ?? params.escalationDamage ?? params.shatterBonus ?? params.smiteDamage ?? params.maxBonus;
+    if (typeof conditional === 'number' && conditional > 0) {
+        return `${round(base)}-${round(base + conditional)} ability damage (conditional)`;
+    }
+
+    // Venom banked on the target rather than the wielder: the ceiling is the
+    // tier cap the sword's own passive declares.
+    if (typeof params.damagePerTier === 'number' && params.damagePerTier > 0) {
+        const tiers = maxVenomTiersFor(sword, params.venomEffect);
+        return tiers === undefined
+            ? `${round(base)}+ ability damage (scales with banked venom)`
+            : `${round(base)}-${round(base + params.damagePerTier * tiers)} ability damage (scales with banked venom)`;
+    }
+
+    // A resource the wielder banks. The ceiling lives on whichever binding of
+    // the same sword *fills* the meter, so look it up by shared charge key
+    // rather than reporting only the empty-meter figure.
+    if (typeof params.damagePerCharge === 'number') {
+        const cap = maxChargesFor(sword, params.chargeKey);
+        if (cap !== undefined) {
+            return `${round(base)}-${round(base + params.damagePerCharge * cap)} ability damage (scales with banked charges)`;
+        }
+        return `${round(base)}+ ability damage (scales with banked charges)`;
+    }
+    if (typeof params.maxResonance === 'number' && params.maxResonance > 0) {
+        return `${round(base)}-${round(base + params.maxResonance)} ability damage (scales with the crowd)`;
+    }
+
+    return `${round(base)} ability damage`;
+}
+
+/**
+ * The charge ceiling a sword declares for one meter, read from whichever of its
+ * bindings fills that meter.
+ *
+ * @param {any} sword
+ * @param {string | undefined} chargeKey
+ * @returns {number | undefined}
+ */
+function maxChargesFor(sword, chargeKey) {
+    if (chargeKey === undefined) return undefined;
+    for (const binding of sword?.abilities ?? []) {
+        const params = binding.params ?? {};
+        if (params.chargeKey === chargeKey && typeof params.maxCharges === 'number') return params.maxCharges;
+    }
+    return undefined;
+}
+
+/**
+ * How many venom tiers a sword can build on one target, read from whichever of
+ * its bindings does the building. Mirrors {@link maxChargesFor}, for the
+ * resource that is banked on the enemy rather than on the wielder.
+ *
+ * @param {any} sword
+ * @param {string | undefined} venomEffect
+ * @returns {number | undefined}
+ */
+function maxVenomTiersFor(sword, venomEffect) {
+    if (venomEffect === undefined) return undefined;
+    for (const binding of sword?.abilities ?? []) {
+        const params = binding.params ?? {};
+        if (params.venomEffect === venomEffect && typeof params.maxAmplifier === 'number') {
+            return params.maxAmplifier + 1;
+        }
+    }
+    return undefined;
 }

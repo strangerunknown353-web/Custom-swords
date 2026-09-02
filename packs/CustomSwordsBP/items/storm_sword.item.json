@@ -1,0 +1,54 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:item": {
+    "description": {
+      "identifier": "custom_swords:storm_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "storm_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.custom_swords:storm_sword"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 8
+      },
+      "minecraft:durability": {
+        "max_durability": 1250
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 20
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:copper_ingot"
+            ],
+            "repair_amount": 313
+          }
+        ]
+      },
+      "minecraft:swing_duration": {
+        "value": 0.29
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "custom_swords:is_custom_sword"
+        ]
+      },
+      "custom_swords:sword": {}
+    }
+  }
+}

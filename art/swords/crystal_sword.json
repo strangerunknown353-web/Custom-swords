@@ -1,0 +1,33 @@
+{
+  "name": "Crystal Sword",
+  "description": "A long amethyst blade, faceted rather than forged, widest through the middle.",
+  "palette": {
+    "o": "#120a1c",
+    "V": "#f4e8ff",
+    "W": "#c69bf0",
+    "v": "#8f52c9",
+    "p": "#54277f",
+    "A": "#b3a4c4",
+    "B": "#453a58",
+    "K": "#241a33",
+    "P": "#d9c7ea"
+  },
+  "pixels": [
+    "..............oV",
+    "............oVvo",
+    "..........oVWvo.",
+    "........oVWvpo..",
+    "......oVVWvpo...",
+    "....oVVWvvpo....",
+    "...oVVWvvpo.....",
+    "...oVVWvpo......",
+    ".oABVWvpo.......",
+    ".oVABvpo........",
+    "...oABo.........",
+    "..oKKABo........",
+    "ooKKooABo.......",
+    "oPPo............",
+    ".oo.............",
+    "................"
+  ]
+}

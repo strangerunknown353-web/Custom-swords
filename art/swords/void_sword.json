@@ -1,0 +1,31 @@
+{
+  "name": "Void Sword",
+  "description": "A long blade opened along a seam you can see straight through, hung from a pierced pommel.",
+  "palette": {
+    "o": "#050208",
+    "V": "#c4b0ff",
+    "v": "#7f5cd4",
+    "K": "#3f2d75",
+    "A": "#8b81a8",
+    "B": "#332c48",
+    "P": "#a191d1"
+  },
+  "pixels": [
+    "..............oV",
+    "............oVvo",
+    "..........oVvKo.",
+    ".........oVvKo..",
+    "........oV.Ko...",
+    ".......oV.Ko....",
+    "......oV.Ko.....",
+    ".....oV.Ko......",
+    "....oV.Ko.......",
+    "oABoVvKo........",
+    ".oABvKo.........",
+    "..oABo..........",
+    ".oKKABo.........",
+    "oKKooABo........",
+    "PPo.............",
+    "Po.............."
+  ]
+}

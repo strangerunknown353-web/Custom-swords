@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 405 unit + integration tests against a mocked @minecraft/server
+npm test            # 543 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -86,10 +86,43 @@ npm run all         # check + build
   `@minecraft/server`; no `setTimeout` / `setInterval`; exactly one
   `system.runInterval`, and only in `core/bootstrap.js`; every engine event
   subscribed exactly once and only from the bootstrap; no orphaned script
-  modules.
+  modules;
+- **the world-mutation ban list** (v1.0.0): no script may call `setType`,
+  `setPermutation`, `fillBlocks`, `spawnEntity`, `spawnItem`, `createExplosion`,
+  `setTimeOfDay`, `setWeather`, `setGameRule` or `runCommand`. The addon reads
+  blocks — the dash needs to know where the ground is — and applies damage,
+  effects and knockback, and does nothing else to the world. Several definitions
+  argue at length for *not* using these APIs, so the scan blanks comments and
+  strings before looking;
+- **every damage cause is a real `EntityDamageCause`** (v1.0.0), checked against
+  `core/damage_cause_catalogue.js`. This is the fourth catalogue of its kind and
+  the most insidious of the four: Bedrock applies damage with an unrecognised
+  cause rather than complaining, so the hit lands and only its classification is
+  wrong. Both the binding's params and the ability's defaults are checked;
+- **paired bindings agree about shared state** (v1.0.0). Ember, Shadow and Time
+  each hold a passive and an active together with two matching string literals
+  in different files; a mismatch would leave the passive filling a meter nothing
+  reads, with nothing to see in game. State keys must also be unique across
+  swords, since they are scoped to the player rather than the sword;
+- **the per-activation particle budget** (v1.0.0). `maxPerEmit` caps a single
+  call, but a binding drawing at each of twelve targets is inside every
+  individual cap and still asks the client for hundreds in one frame;
+- **icon distinctness** (v1.0.0). Every other texture rule grades an icon on its
+  own, so a collection can pass all of them and still contain two nobody can
+  tell apart in a hotbar slot;
+- **every binding carries a label**, and **every binding that deals damage is
+  describable by the catalogue** (both v1.0.0).
 
 It also prints a roster of every sword — rarity, effective damage, durability,
-targeting and cooldown — so balance outliers are visible on every build.
+targeting and cooldown — so balance outliers are visible on every build, plus
+the crafting cost curve, the worst particle activation, the closest icon pair,
+and the number of bindings that passed their ability's own parameter validation.
+
+> That last count exists because of the bug that produced this milestone. The
+> gate had been reading a field no sword definition carries, so it validated
+> **zero** bindings while reporting a clean build for eleven milestones. A gate
+> that checks nothing is indistinguishable from a gate that passes unless it
+> says how much it checked.
 
 ### What the tests cover
 
@@ -127,7 +160,7 @@ and an ability that tries to target its own caster.
 Milestone 5 adds the seven shipped swords: each definition validates, each binds
 a registered ability, each has an authored texture that passes the linter, the
 catalogue matches the definitions, and — the test that matters most — Wind and
-Tidal, which share the `repulse` ability, produce measurably different knockback
+Ocean, which share the `repulse` ability, produce measurably different knockback
 vectors from the same code.
 
 Bug-fix 2 adds the presentation layer: every visual profile references only
@@ -146,7 +179,7 @@ Two tests deserve calling out:
 
 - **The same ability bound twice with different envelopes must behave
   differently** (`pipeline.test.mjs`). That is the property the whole 20–25
-  sword plan rests on, and the Wind/Tidal pair is its shipped proof.
+  sword plan rests on, and the Wind/Ocean pair is its shipped proof.
 - **Clearing life-scoped state must not clear cooldowns**
   (`player_state_lifecycle.test.mjs`). Otherwise dying resets a long cooldown,
   which is an exploit rather than a feature.
@@ -173,8 +206,12 @@ confirmed working by the project owner. The Tested column below is ticked for
 the item-and-presentation layer on that basis.
 
 What is **not** ticked is per-sword ability behaviour: the client test exercised
-the add-on, not all eight swords' individual actives and passives. Ember Blade
-is new in v0.6.0 and has not been in a client at all.
+the add-on, not each sword's individual actives and passives. Ember Blade
+(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0), Solar, Gravity and Poison
+(v0.11.0) and Time and Storm (v0.12.0) have not been in a client at all —
+eleven of the sixteen. The v1.0.0 engineering pass changed code in all sixteen
+and was likewise never launched, so no tick below has been re-earned since
+v0.5.2.
 
 The other columns record what is verified *statically*.
 
@@ -185,10 +222,17 @@ The other columns record what is verified *statically*.
 | Frost ❄️ | `custom_swords:frost_sword` | 7 | Frost Nova — duration scales with nearness, +5 vs already-slowed (6 s) | Frostbite — slowness, escalates on a chilled target | ✅ | ✅ | ✅ | ☐ |
 | Wind 🌪️ | `custom_swords:wind_sword` | 6 | Repulse — scatter outward, kb 2.2 (5 s) | Bolster — speed 4 s | ✅ | ✅ | ✅ | ☐ |
 | Earth 🪨 | `custom_swords:earth_sword` | 10 | Burst — ground shock, distance falloff (9 s) | Bolster — resistance 5 s | ✅ | ✅ | ✅ | ☐ |
-| Tidal 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
+| Ocean 🌊 | `custom_swords:tidal_sword` | 8 | Repulse — forward wave in a cone, kb 2.6 (7.5 s) | Bolster — water breathing 15 s | ✅ | ✅ | ✅ | ☐ |
 | Nature 🌿 | `custom_swords:nature_sword` | 7 | Strike — execute below 40 % health (5.5 s) | Bolster — regeneration 4 s | ✅ | ✅ | ✅ | ☐ |
 | Shadow 🌑 | `custom_swords:shadow_sword` | 8 | Shadow Step — 6-block validated dash, light strike on arrival (7 s) | Shadow Edge — +6 and 2 lifesteal within 4 s of a step | ✅ | ✅ | ✅ | ☐ |
 | Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
+| Crystal 🔮 | `custom_swords:crystal_sword` | 8 | Crystal Burst — 4.5 m ring, +1.2 damage to **every** target per extra target, capped at +4.2 (8 s) | Crystal Guard — Resistance 5 s below 60 % health, II below 30 %, once per 7 s | ✅ | ✅ | ✅ | ☐ |
+| Void 🕳️ | `custom_swords:void_sword` | 9 | Void Rift — collapse at the aimed point up to 10 m, 3.5 m radius, 5→9 damage with reach, pulls inward (9 s) | Void Drain — up to 3 HP back, scaled by how little the target has left | ✅ | ✅ | ✅ | ☐ |
+| Solar ☀️ | `custom_swords:solar_sword` | 9 | Solar Flare — 120° cone at 6 m, 3 damage at midnight rising to 11 at noon, blinds only in daylight (8.5 s) | Solar Radiance — +6 against undead at noon, +1.5 at midnight, nothing against the living | ✅ | ✅ | ✅ | ☐ |
+| Gravity 🪐 | `custom_swords:gravity_sword` | 10 | Gravity Crush — 6 m well, pulls in and presses down, 5 damage on the floor rising to 12 five blocks up (10 s) | Heavy Force — pins straight down, +up to 3 scaled by the target's maximum health | ✅ | ✅ | ✅ | ☐ |
+| Poison 🧪 | `custom_swords:poison_sword` | 6 | Venom Burst — 4 m ring, 4 damage +3 per venom tier the target carries, to 13; spends the venom (6.5 s) | Venomous Edge — deepens the target's poison one tier per hit, to Poison III | ✅ | ✅ | ✅ | ☐ |
+| Time ⏳ | `custom_swords:time_sword` | 9 | Time Freeze — 4 m hold, 2 s spent on cooldown rising to 8 s at a full charge banked by waiting (12 s) | Temporal Edge — every hit winds the charge 3 s, plus a brief drag on the target | ✅ | ✅ | ✅ | ☐ |
+| Storm 🌩️ | `custom_swords:storm_sword` | 9 | Storm Surge — 130° cone at 6 m, 4 damage standing still rising to 11 at a full sprint through the air (7.5 s) | Storm Momentum — Speed to the wielder, and knockback that scales with their motion | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
 
@@ -250,7 +294,7 @@ For **each** of the eight items:
       this is the check the texture linter cannot perform
 - [ ] It renders as a held tool in first and third person
 - [ ] Its melee damage matches `SWORD_CATALOG.md` (Inferno 9, Thunder 9,
-      Frost 7, Wind 6, Earth 10, Tidal 8, Nature 7, Ember Blade 6)
+      Frost 7, Wind 6, Earth 10, Ocean 8, Nature 7, Ember Blade 6)
 - [ ] Its durability bar depletes when it is used to attack
 - [ ] It can be enchanted at an enchanting table
 - [ ] It can be repaired at an anvil with the material named in the catalogue
@@ -263,7 +307,7 @@ For **each** of the eight items:
       `8 registered — 8 shipped, 0 diagnostic` and lists all eight
 - [ ] `/scriptevent custom_swords:abilities` reports nine abilities and, for
       each, the swords that bind it — `repulse` must list **both** Wind and
-      Tidal
+      Ocean
 - [ ] Holding each sword, `/scriptevent custom_swords:held` reports a
       **registered custom sword** with the right melee damage and lists its
       activations
@@ -427,7 +471,7 @@ appear.
 - [ ] It has the highest melee damage of the collection (10) and the slowest
       active
 
-**Tidal 🌊 (`use` → repulse, 7.5 s):**
+**Ocean 🌊 (`use` → repulse, 7.5 s):**
 
 - [ ] Right-click pushes everything **forward, along the look direction**, in a
       cone — visibly different from Wind's outward scatter, despite both being
@@ -446,6 +490,186 @@ appear.
 - [ ] Each sword's cooldown matches `SWORD_CATALOG.md`
 - [ ] No sword damages its own wielder
 - [ ] No content-log errors from any activation
+
+### F3. Crystal Sword — the crowd, and the guard
+
+Two mechanics that both need a *situation*, so neither can be checked by
+swinging at one pig on flat ground.
+
+**Crystal Burst (`use`, 8 s) — bring a crowd:**
+
+- [ ] Against **one** mob within 4.5 blocks, right-click deals about 5 damage
+- [ ] Against **four** mobs, each of them takes visibly more (about 8.6)
+- [ ] Against **eight** mobs, each takes about 9.2 and no more — the cap holds
+- [ ] Everything caught is Slowed for 3 seconds
+- [ ] Everything caught is nudged outward, not thrown apart
+- [ ] The amethyst chime plays and the mystical motes are visible
+- [ ] With nothing in range, right-click costs no cooldown
+
+**Crystal Guard (`attack`) — you have to be losing:**
+
+- [ ] At **full health**, hitting mobs repeatedly grants no Resistance at all
+- [ ] Below **12 hearts**, the next hit grants Resistance for 5 seconds
+- [ ] Below **6 hearts**, it grants Resistance **II** instead
+- [ ] It never goes above Resistance II however low you drop
+- [ ] After it forms, swinging again does not re-form it for ~7 seconds
+- [ ] The **mob** never gains Resistance — check its behaviour, or hit a
+      second player in a PvP world and watch their effects
+- [ ] The guard forming is *noticeable* — there is no action-bar message by
+      design, so the sound and particles are the whole cue. If it is not
+      noticeable, that is a finding, not a nitpick
+
+### F4. Void Sword — reach, and the drain
+
+**Void Rift (`use`, 9 s) — aim it:**
+
+- [ ] Right-click while looking at a mob **ten blocks away**: the rift opens
+      there and damages it
+- [ ] A mob standing **next to you** while you aim far away is *not* hit
+- [ ] A rift opened at your feet (look at the ground) hits for noticeably less
+      than one opened at full reach
+- [ ] Mobs caught are dragged **toward** the rift, not away from it
+- [ ] Mobs caught are Weakened for 4 seconds
+- [ ] The tether and ring particles make the rift's location readable — if you
+      cannot tell where it landed, that is a finding
+- [ ] **No blocks are broken, placed or changed.** Fire the rift into a build
+      and confirm the build is untouched
+- [ ] Nothing is left behind after the activation — no lingering entity, no
+      portal, no particles that outlive the cast by more than a moment
+- [ ] Aiming at open sky with nothing in range costs no cooldown
+
+**Void Drain (`attack`):**
+
+- [ ] Hitting a **full-health** mob restores nothing
+- [ ] Hitting a mob at **1 heart** restores health, up to about 1.5 hearts
+- [ ] It never takes you above your maximum health
+- [ ] Repeatedly hitting one high-health mob (a ravager, an iron golem) does
+      **not** sustain you — this is the abuse case the mechanic is shaped to
+      prevent, and it is the single most important line in this section
+
+### F5. Solar Sword — the sword that keeps office hours
+
+The only sword whose power depends on something outside the fight, so this
+section needs `/time set` and a trip to the Nether.
+
+**Solar Flare (`use`, 8.5 s):**
+
+- [ ] `/time set noon` — the flare hits for about 11 and **blinds** what it hits
+- [ ] `/time set midnight` — the same flare hits for about 3 and blinds nothing
+- [ ] Dawn and dusk land somewhere in between rather than snapping between the two
+- [ ] The action bar names the sun percentage, so the difference reads as a
+      mechanic rather than as a broken sword. **If it does not, that is a
+      finding**
+- [ ] In the **Nether** at any hour, the flare is at its floor
+- [ ] In the **End** at any hour, the flare is at its floor
+- [ ] **Nothing catches fire.** Fire the flare into dry grass, a wooden build and
+      a group of mobs, and confirm no ignition anywhere. This is the line that
+      separates Solar from Inferno and Ember Blade
+
+**Solar Radiance (`attack`):**
+
+- [ ] At noon, zombies and skeletons die markedly faster than creepers or pigs
+- [ ] At midnight the undead bonus is small but not zero
+- [ ] A **husk, drowned, stray or wither skeleton** is smitten too — the bonus
+      reads Bedrock's undead type family, not a list, so all of them should work
+- [ ] A creeper, spider or villager gets no bonus at any hour
+
+### F6. Gravity Sword — fighting upward
+
+Needs something airborne. A phantom at night, a blaze in a fortress, or a mob
+standing on a two-block pillar all work.
+
+**Gravity Crush (`use`, 10 s):**
+
+- [ ] Against a mob at your feet, about 5 damage
+- [ ] Against a mob roughly five blocks above you, about 12
+- [ ] Against a mob *below* you, the floor — this is altitude, not distance
+- [ ] Everything caught is dragged **towards** you and **downwards**, never
+      scattered or launched
+- [ ] The ring particle makes the well's reach readable — if you cannot tell
+      what was inside it, that is a finding
+- [ ] No blocks move, fall, or change. Fire it inside a build and confirm
+
+**Heavy Force (`attack`):**
+
+- [ ] Mobs are pressed **down** rather than knocked back — they should stay
+      roughly where they were
+- [ ] An iron golem or ravager takes visibly more than a chicken or a bat
+- [ ] A *wounded* iron golem still takes the full bonus (mass is its maximum
+      health, not what is left of it)
+- [ ] Hitting the Ender Dragon or a Warden is worth no more than an iron golem
+
+### F7. Poison Sword — the meter kept on the enemy
+
+**Venomous Edge (`attack`):**
+
+- [ ] The first hit on a fresh mob applies Poison I
+- [ ] The second applies Poison II, the third Poison III
+- [ ] It stops at Poison III however long you keep swinging
+- [ ] Walking away and letting it expire loses the stack — a mob left alone for
+      six seconds is back to nothing
+
+**Venom Burst (`use`, 6.5 s):**
+
+- [ ] Against a clean mob, about 4 damage
+- [ ] Against a mob you have worked to Poison III, about 13
+- [ ] Immediately after a burst, a **second** burst on the same mob is weak
+      again — the venom was spent, not just read
+- [ ] The burst leaves its targets poisoned, not cured
+- [ ] **The exploit check:** poison a mob with a splash potion or let a witch do
+      it, then burst. If the sword pays out for poison it did not apply, note
+      it — that is a known open question, not a surprise
+
+### F8. Time Sword — the sword you are not supposed to use
+
+The only sword in the collection where holding the button is the wrong play, so
+this section needs a stopwatch more than it needs mobs.
+
+**Time Freeze (`use`, 12 s):**
+
+- [ ] A freshly given sword, fired once, holds for the **full** eight seconds —
+      a sword never fired has been waiting forever
+- [ ] Fire it again the instant the cooldown lifts: the hold is about **two**
+      seconds
+- [ ] Wait a full minute and fire: the hold is eight seconds again
+- [ ] The action bar reports the charge percentage on every cast. **If you cannot
+      tell from playing that waiting matters, that is a finding**, not a nitpick
+- [ ] Fire it at empty air on a full charge, then immediately at a mob — the mob
+      still gets the full hold. Losing a banked minute to a mistimed click would
+      feel terrible
+- [ ] Die on a full charge, respawn, fire: the hold is **short**. Dying must not
+      be a way to reload
+- [ ] Held mobs stop moving, then recover on their own. Nothing stays slowed
+- [ ] Held mobs are not shoved anywhere
+- [ ] Reload the world mid-freeze: nothing is left frozen, and no errors appear
+
+**Temporal Edge (`attack`):**
+
+- [ ] Landing twenty hits and then firing gives roughly a full-charge hold
+- [ ] Every hit leaves a brief drag on the target — every hit, not some
+
+### F9. Storm Sword — never stand still
+
+**Storm Surge (`use`, 7.5 s):**
+
+- [ ] Standing still, the surge is a shove — about 4 damage
+- [ ] **Sprinting** into the group, it is noticeably harder
+- [ ] Sprinting **and falling** into them, it is hardest — about 11
+- [ ] The knockback grows with your speed too, not just the damage
+- [ ] Everything caught is slowed as well as thrown
+- [ ] **No lightning bolt appears.** Surge into dry grass, a wooden build and a
+      creeper: nothing ignites, nothing is charged, no block changes
+- [ ] The weather does not change
+
+**Storm Momentum (`attack`):**
+
+- [ ] **You** get Speed on a landed hit. The mob does not
+- [ ] Hitting while sprinting throws the target further than hitting still
+- [ ] The loop works: hit, gain speed, sprint, surge harder
+
+**If the surge feels identical whatever you are doing**, `isSprinting` /
+`isFalling` are not reporting the way this sword assumes. That is the single most
+valuable thing this checklist can find.
 
 ### G. Combat safety layer
 
@@ -479,7 +703,7 @@ them within 5 blocks of each other with several mobs between them.
       targets, neither is refused because of the other, and no mob takes double
       damage
 - [ ] Give both players the **same** sword: their cooldowns run independently
-- [ ] Give A the Wind Sword and B the Tidal Sword and fire both at the same mob
+- [ ] Give A the Wind Sword and B the Ocean Sword and fire both at the same mob
       group: the two knockback directions are visibly different
 - [ ] A disconnects and reconnects: no leftover cooldown, and B is unaffected
       throughout
@@ -526,6 +750,337 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v1.3.0 — back to the vanilla tilt, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed — unchanged, no gameplay code touched |
+| Blade proportion | 67-80% across all sixteen, floor 65%; leanest is Ember Blade at 67% |
+| Crossguard | wider than its blade on every sword, measured perpendicular to each weapon's own axis |
+| Silhouette | worst overlap 94% (Ember/Storm), ceiling 95% |
+| Colour | closest pair Nature/Poison at 63.2, floor 50 — the best margin any set has had |
+| Recipes | all 16 re-listed and re-verified: one crafting-table recipe per sword, every pattern inside 3×3, every key used |
+| Packages | `.mcaddon` 141 entries, BP `.mcpack` 120, RP `.mcpack` 21 — CRC-clean, manifests `[1,3,0]` |
+
+**The proportion gate itself was the bug this time.** The rule added in v1.2.0
+counted pixels per screen row and looked for the row where the icon suddenly got
+wider — correct for an upright sword, meaningless for a tilted one, where every
+row is about equally wide and the crossguard is smeared across several. It
+measures along each weapon's own principal axis now, so one rule grades both
+orientations. Its first version also decided which end was the tip by comparing
+which end looked narrower, which reads a blunt blade backwards: Earth Sword
+measured 33% blade that way. Orienting by the widest slice — the crossguard,
+which is unambiguously at the hilt — fixed it.
+
+**Three geometric dead ends preceded the working diagonal**, and they are
+recorded because none was obvious in advance. Drawing the blade as a true 45°
+lattice, with one step along the blade being `(-1,+1)` and one across it
+`(+1,+1)`, only reaches cells of one parity and renders a checkerboard — half
+the pixels are unreachable. Pinning the blade's right edge while the left edge
+marched produced a wedge rather than a band. Centring each row's run on a moving
+centre line while the width was still growing made the left edge jump by one
+plus the taper step, which is the wobble that made earlier blades look bent. The
+blade is a stack of horizontal runs, each shifted one column left of the row
+above; only the guard is a real diagonal.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. The icons were rendered and looked at, at hotbar scale and enlarged,
+against each other. That is not the same as seeing them in an inventory.
+
+### v1.2.0 — the silhouette correction, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed — unchanged, because no gameplay code changed |
+| Blade proportion | 67-87% blade across all sixteen, floor 65%; leanest is Ember Blade at 67% |
+| Crossguard | wider than its blade on every sword, from 8-vs-4 to 14-vs-7 |
+| Silhouette | worst overlap 95% (Inferno/Crystal), ceiling 95% |
+| Colour | closest pair Frost/Wind at 50.7, floor 50 |
+| Registration | re-verified on the built archives after the art change: 16 identifiers, names, icons, recipes and lang keys all intact |
+| Packages | `.mcaddon` 141 entries, BP `.mcpack` 120, RP `.mcpack` 21 — all CRC-clean, all manifests `[1,2,0]` |
+
+**The defect this release fixed was one the pipeline could not see.** Every
+texture rule in the project graded an icon's colour, contrast, palette
+discipline or silhouette *overlap* with its neighbours. Not one of them could
+distinguish a sword from a knife, so sixteen icons whose handles were longer
+than their blades passed a clean build. The measurement now exists, and
+shortening a blade back to the old proportion was confirmed to trip it.
+
+**Three orientations were tried before one worked**, and the failures are worth
+recording because they were not arbitrary. A diagonal blade long enough to be
+70% of the icon runs off the edge of a sixteen-pixel canvas before there is
+room for a hilt — which is why vanilla's own blade stops at eight rows — and
+both attempts to buy the length back (pinning one blade edge, leaning the blade
+harder) produced a curved shape that read as a flame standing on a plinth. A
+procedurally generated hilt produced a pedestal. Upright, with a horizontal
+crossguard, is what reads.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. The icons were rendered and looked at, at hotbar scale and enlarged,
+against each other — which is the closest this environment gets to seeing them
+in an inventory, and is not the same thing. In particular, whether an upright
+sword sits well beside vanilla's diagonal ones in a real hotbar is a judgement
+only a client can settle.
+
+### v1.1.0 — the art pass, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed |
+| Textures | 16 redrawn; closest colour pair Frost/Wind at 60.0 (floor 50); widest silhouette overlap Thunder/Ocean at 93% (ceiling 95%) |
+| Registration | verified **on the built archives**: 16 unique identifiers, all in the equipment/sword category, every display name resolving through `.lang`, every icon wired to the atlas |
+| Recipes | 16, one per item, all `crafting_table`, every pattern within 3×3, every key used, every result one of our items |
+| Vanilla safety | the resource pack contains 16 namespaced PNGs, one additive atlas file and one `.lang` whose every key is `item.custom_swords:*` or `pack.*` — nothing vanilla is overridden |
+| Manifests | both format_version 2, both `[1,1,0]`, min engine `[1,21,120]`, BP→RP dependency resolving to the RP's real UUID, `@minecraft/server` 2.0.0 |
+| Sounds | worst case cut from 13 in one frame to 4 |
+| Effects | 27 applications, all finite, longest 15 s, ceiling now 30 s |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — unchanged since v0.9.0 |
+
+**Three things were re-audited and found correct**, and are recorded here
+because "we checked and there was nothing wrong" is a result:
+
+1. **No re-entrancy path exists for ability damage.** `applyDamage` does not
+   re-fire the item component — that fires on a player's melee swing, not on
+   scripted damage — and the addon subscribes to no damage event at all, so
+   there is no signal an ability could feed back into itself.
+2. **No unused imports** anywhere in the behaviour pack.
+3. **Nothing permanent.** Every one of the 27 effect applications carries a
+   finite duration; the longest is Ocean Sword's 15-second water breathing, on
+   its own wielder.
+
+**One test in this release was wrong before it was right.** The sound-cap
+regression asserted `impacts.length <= CONFIG.combat.maxImpactSoundsPerStrike` —
+comparing the cap against itself, which passes at any setting. Rewritten against
+a literal and against the number of targets actually struck, it fails with 12
+sounds when the cap is lifted. A regression test that cannot fail is worse than
+no test, because it reports safety.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. Not the sixteen new textures, not the renamed Ocean Sword, not the
+sound cap. Every number above comes from static validation, from unit tests
+against a mocked engine, or from unzipping the built packages and reading them.
+The icons were rendered and looked at, at both enlarged and hotbar scale, which
+is the closest this environment gets to seeing them in a hotbar — and it is not
+the same thing.
+
+### v1.0.0 — the final engineering pass, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** — the first release with a completely clean validate |
+| `npm test` | **540 passed**, 0 failed |
+| Ability parameters | **32 of 32 bindings validated** — previously 0, see below |
+| Recipes | 16 recipes, 69 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 16 swords, 28 abilities, none orphaned |
+| Shared state | 5 state keys, 4 cross-binding pairings agreed, no collisions between swords |
+| Textures | 16 sources, 0 errors, 0 warnings; closest icon pair Frost/Ocean at 62.3 against a floor of 50 |
+| Particles | worst single activation 72, median 28, budget 120 |
+| Cost curve | 9× tier 2, 4× tier 3, 3× tier 4 |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, seven swords ago |
+| World mutation | **0 call sites** across the whole behaviour pack, now enforced |
+
+**The defect that defined this milestone was in the testing itself.**
+`tools/validate.mjs` ran each ability's `validateParams` against `sword.active`
+and `sword.passive` — fields no sword definition has ever carried, since all
+sixteen keep their bindings in `sword.abilities`. The loop found `undefined`
+every time and skipped, so twenty-five abilities' worth of parameter constraints
+had never once run against real sword data. Every build reported a clean pass
+for it.
+
+Wiring it up correctly turned up **no** hidden violations: all 32 bindings pass.
+That is a good outcome and a slightly uncomfortable one — the gate was dead for
+eleven milestones and nothing went wrong in the meantime, which is precisely why
+nobody noticed. The gate now reports how many bindings it checked, so the
+silence has a number attached to it.
+
+**A second defect was found by reading rather than by any check.**
+`CombatSystem.strike` read `target.location` for the impact particles and sound
+immediately after `damage.apply` may have killed that target. `Entity.location`
+throws on a handle the engine has already released, and a throw there escaped
+`strike` entirely — abandoning every target still in the list. Drawing the blow
+that killed something is the most common moment in the game, so this was the
+worst possible place in the codebase to read without a guard. The same pattern
+appeared in three passives.
+
+Both fixes are covered by tests that were confirmed to **fail without them**,
+which is the only way to know a regression test is doing anything. The mock now
+models the engine releasing a handle on a lethal hit; that fidelity is what made
+the combat case testable at all.
+
+**What this release did not do, and cannot claim:**
+
+- Nothing was tested in Minecraft. Not the fixes, not the re-priced Ember Blade,
+  not the repainted Earth Sword, not one of the sixteen swords.
+- The icon-distinctness floor (50) and the particle budget (120) were chosen
+  from the collection as it stands rather than from any measurement of what a
+  low-end device actually struggles with. They are calibrated guesses that will
+  catch a regression and should not be mistaken for device testing.
+- The balance table is arithmetic on declared values. Whether Ember Blade *feels*
+  right at 4.5 seconds is a question only play answers.
+
+### v0.12.0 — Time and Storm, the roster complete, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | 0 errors, **1 warning** (see below) |
+| `npm test` | **529 passed**, 0 failed |
+| Recipes | 16 recipes, 68 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 16 swords, 28 abilities, none orphaned |
+| Textures | 16 sources, 0 errors, 0 warnings; Time 11 colours / 36 % / spread 230, Storm 12 / 36 % / 231 |
+| Sounds | 42 presets verified against 1824 vanilla sound events |
+| Cost curve | 10× tier 2, 3× tier 3, 3× tier 4 — published in `SWORD_CATALOG.md` |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, seven swords ago |
+
+**The one warning is deliberate.** Thunder Sword is Legendary but its costliest
+ingredient is a lightning rod (tier 2), below the floor its rarity implies. It
+is a pre-existing shipped recipe and a balance judgement rather than a defect,
+so it is recorded for the balance pass rather than redesigned alongside two new
+swords.
+
+**Two defects were caught before shipping, both by work done in this milestone
+rather than by the existing gates:**
+
+1. **Time Freeze held targets the combat layer had refused.** The first draft
+   struck the whole target list in one call, then applied the hold to every
+   target in a second pass — so a target outside the binding's allowed
+   categories, or inside another player's hit-protection window, would have been
+   frozen by an ability that never touched it. A filter bypass, found by the
+   optimization pass, fixed by striking one at a time.
+2. **Storm Sword was drafted a Legendary on entirely tier-2 materials.** The new
+   crafting-progression audit caught it on its first run. Fixed by accepting the
+   tier its ingredients actually describe, not by re-tiering the ingredients.
+
+**Two things are new in kind, and each has a failure mode no check here can
+see:**
+
+1. **Time Sword is the first sword where not pressing the button is a play.**
+   The tests prove the hold scales with the wait. Nothing proves a player
+   *notices* — the action bar reports the charge percentage on every cast for
+   exactly that reason, and whether it lands is a client question.
+2. **Storm Sword reads the wielder's motion.** `isSprinting` and
+   `isOnGround`/`isFalling` were chosen over `getVelocity()` because server-side
+   player velocity in Bedrock is unreliable. Whether *these* report reliably
+   mid-combat is the single most important thing to check: if they do not, the
+   sword silently works at its floor and never feels like anything.
+
+Specifically to check:
+
+- [ ] Time Freeze held straight off cooldown is noticeably shorter than one held
+      after a minute of carrying the sword
+- [ ] The action bar names the charge percentage, and it reads as a mechanic
+- [ ] Firing into empty air does **not** empty the charge
+- [ ] Dying does **not** refill the charge
+- [ ] Held mobs recover on their own with no lingering slowness
+- [ ] Twenty landed hits get you roughly the same charge as a minute of waiting
+- [ ] Storm Surge sprinting is visibly stronger than standing still
+- [ ] Storm Surge while falling into a group is stronger again
+- [ ] **No lightning bolt is ever spawned** — surge into dry grass and a wooden
+      build and confirm nothing catches fire and no creeper is charged
+- [ ] Storm Momentum gives *you* Speed, never the mob
+- [ ] Both new recipes work in survival and produce exactly one sword
+- [ ] The Mythic name colour (red) renders for Time Sword
+
+### v0.11.0 — Solar, Gravity and Poison, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **492 passed**, 0 failed |
+| Recipes | 14 recipes, 59 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 14 swords, 24 abilities, none orphaned |
+| Textures | 14 sources, 0 errors, 0 warnings; Solar 11 colours / 34 % / spread 233, Gravity 11 / 38 % / 233, Poison 12 / 34 % / 209 |
+| Sounds | 36 presets verified against 1824 vanilla sound events |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, five swords ago |
+
+**Two defects were caught by the automated layer this milestone, and both are
+worth recording because they are the kind that ship silently:**
+
+1. **`glowing` is not a Bedrock effect.** Solar Radiance's first draft applied
+   it. `core/effect_catalogue.js` rejected it at build time; without that
+   catalogue, `addEffect` would have failed quietly on every single swing and
+   the only symptom would have been a mark that never appeared.
+2. **Gravity Crush advertised a ceiling it could not reach.** A five-block well
+   paired with a six-block full-height bonus meant anything high enough to earn
+   the maximum was already outside the entity query. The sword would have worked
+   — it would just never have dealt its stated damage. A unit test caught it;
+   nothing else would have.
+
+**Three things are new in kind, and each has a failure mode no check here can
+see:**
+
+1. **Solar is the first sword that is deliberately weak half the time.** The
+   tests prove the damage tracks the clock. Nothing proves a player reads that
+   as a mechanic rather than as a broken sword — which is why the action bar
+   names the sun percentage, and whether that is enough is a client question.
+2. **Gravity Crush is aimed upward.** The tests prove damage scales with height
+   against a mocked entity at a set coordinate. Whether the well's ring particle
+   makes its reach legible, and whether phantoms are actually inside it in a real
+   fight, is not something a mock can answer.
+3. **Poison stores its meter in the poison effect itself.** That means a
+   *different* source of poison — a witch, a cave spider, a splash potion —
+   feeds the sword's meter. It is arguably correct and arguably an exploit, and
+   only play settles it.
+
+Specifically to check:
+
+- [ ] Solar Flare is visibly stronger at noon than at midnight
+- [ ] Solar Flare is weak in the Nether **at every hour**
+- [ ] Solar Flare sets **nothing** on fire — swing it into dry grass and a
+      wooden build and confirm
+- [ ] Solar Radiance kills zombies and skeletons markedly faster than creepers
+- [ ] Gravity Crush hits a phantom or a blaze harder than a zombie at your feet
+- [ ] Gravity Crush pulls inward and downward, never scattering
+- [ ] Heavy Force pins mobs rather than knocking them back
+- [ ] Venomous Edge visibly deepens poison over three hits on one mob
+- [ ] Venom Burst hurts a well-poisoned mob far more than a fresh one
+- [ ] A second Venom Burst straight after the first is weak (the venom was spent)
+- [ ] All three new recipes work in survival and produce exactly one sword
+- [ ] None of the nine new particles or seven new sounds are silent or missing
+
+### v0.10.0 — Crystal and Void, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **436 passed**, 0 failed |
+| Recipes | 11 recipes, 44 ingredient/repair items verified against 1607 vanilla items |
+| Registry | 11 swords, 18 abilities, none orphaned |
+| Textures | 11 sources, 0 errors, 0 warnings; Crystal 13 colours / 37 % / spread 238, Void 12 colours / 39 % / spread 240 |
+| Sounds | 29 presets verified against 1824 vanilla sound events |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — unchanged from v0.9.0 despite two more swords |
+
+**Three things here are new in kind, not just in number, and each has a way to
+fail that no automated check in this repository can see:**
+
+1. **Crystal Guard is the first mechanic with no action-bar feedback.** `attack`
+   activations deliberately get none, so the only signal that the guard formed
+   is the `resonate.amethyst_block` cue plus caster particles. The tests prove
+   the effect is applied; nothing proves a player *notices*.
+2. **Void Rift is the first ability that acts somewhere the player is not.** The
+   tests prove it detonates at the resolved point and that damage rises with
+   reach — against a mocked raycast. Whether ten blocks is aimable on touch
+   controls, and whether the tether and ring particles make the rift's location
+   readable, is a client question.
+3. **Two new particle vocabularies.** `lab_table_misc_mystical_particle`,
+   `magnesium_salts_emitter`, `dragon_breath_trail`, `obsidian_tear_particle`
+   and `end_chest` are all in the usable catalogue and all previously unused by
+   this project. The catalogue says they *can* be spawned standalone; only a
+   client says they look like anything.
+
+Specifically to check:
+
+- [ ] Crystal Burst visibly hits harder against a crowd than against one mob
+- [ ] Crystal Guard forms when you drop below ~12 hearts and is noticeable
+- [ ] Crystal Guard does **not** form at full health, however much you swing
+- [ ] Void Rift opens where you are looking, not at your feet
+- [ ] Void Rift drags mobs toward the rift rather than scattering them
+- [ ] Void Drain heals visibly more from a nearly-dead mob than a fresh one
+- [ ] Both new recipes work in survival and produce exactly one sword
+- [ ] Neither new sword's particles or sounds are silent or missing
 
 ### v0.9.0 — crafting, not yet tested in Minecraft
 

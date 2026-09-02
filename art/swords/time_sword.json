@@ -1,0 +1,32 @@
+{
+  "name": "Time Sword",
+  "description": "A long slender chrono-steel blade in warm brass fittings, hung from a pierced pocket-watch pommel.",
+  "palette": {
+    "o": "#12100a",
+    "C": "#fff6d8",
+    "W": "#e0c47e",
+    "b": "#9c7228",
+    "A": "#c9a94f",
+    "B": "#54431a",
+    "K": "#2a2210",
+    "P": "#f5e3a8"
+  },
+  "pixels": [
+    "..............oC",
+    "............oCWo",
+    "..........oCWbo.",
+    ".........oCWbo..",
+    "........oCWbo...",
+    ".......oCWbo....",
+    ".......oCWo.....",
+    "......oCWo......",
+    ".oABooCWo.......",
+    "..oABCWo........",
+    "...oABo.........",
+    "..oKKABo........",
+    ".oKKooABo.......",
+    "oKKo............",
+    "PPo.............",
+    "Po.............."
+  ]
+}

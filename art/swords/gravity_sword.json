@@ -1,0 +1,33 @@
+{
+  "name": "Gravity Sword",
+  "description": "A long dark blade on the heaviest hilt in the collection — it looks like it wants to fall.",
+  "palette": {
+    "o": "#050510",
+    "H": "#9aa0c8",
+    "B": "#5a5f8a",
+    "S": "#363a5c",
+    "D": "#1c1e33",
+    "M": "#b892ff",
+    "A": "#7d82a8",
+    "K": "#141628",
+    "P": "#a8aed0"
+  },
+  "pixels": [
+    "..............oH",
+    "............oHSo",
+    "..........oHBSo.",
+    "........oHBMDo..",
+    "......oHHBSDo...",
+    ".....oHHBSDo....",
+    "ABo..oHBSDo.....",
+    "oABooHBSDo......",
+    ".oABHBSDo.......",
+    "..oABSDo........",
+    "...oABo.........",
+    "..oKKABo........",
+    ".oKKooABo.......",
+    "oKKo..oABo......",
+    "PPo....oABo.....",
+    "PPo............."
+  ]
+}

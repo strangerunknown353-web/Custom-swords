@@ -92,6 +92,13 @@ export class ParticleService {
     ring(dimension, spec, center, radius, points) {
         const total = clamp(Math.floor(points), 0, this.config.particles.maxPerEmit);
         if (total === 0 || radius <= 0) return 0;
+        // `emit` and `line` both screen their inputs; this one did not, so a
+        // centre computed from an entity that had gone away would have asked
+        // the engine for a ring of NaN.
+        if (!isFinitePoint(center)) {
+            this.log.debug('particles.ring refused a non-finite centre.');
+            return 0;
+        }
         const molang = this.buildMolang(spec);
         let spawned = 0;
         for (let i = 0; i < total; i++) {

@@ -27,6 +27,9 @@
  * the easiest to waste: one target in the open pays 12 for a ten-second wait,
  * where Earth's burst pays 11 to everything around it every nine.
  *
+ * The recipe asks for netherite because a Legendary should: it is a tier under
+ * Void and Solar, which both want a boss drop, and a tier above every Epic.
+ *
  * @type {import('../core/types.js').SwordDefinition}
  */
 export const thunderSword = {
@@ -44,14 +47,20 @@ export const thunderSword = {
         glint: true,
     },
 
-    // Legendary: the most expensive recipe in the collection — a lightning rod
-    // quenched between copper, on a diamond core.
+    // Legendary: a lightning rod quenched between copper, on a netherite core.
+    //
+    // The core was a diamond for eleven milestones, which left this the only
+    // sword in the collection priced below the floor its rarity implies — a
+    // Legendary buildable without leaving the Nether, while Void and Solar
+    // both ask for a boss drop. Netherite is the honest reading of
+    // "storm-iron" anyway, and it puts Thunder a tier under those two rather
+    // than three, which is where the entry-level Legendary belongs.
     recipe: {
         pattern: [' L ', 'CDC', ' I '],
         key: {
             L: 'minecraft:lightning_rod',
             C: 'minecraft:copper_ingot',
-            D: 'minecraft:diamond',
+            D: 'minecraft:netherite_ingot',
             I: 'minecraft:blaze_rod',
         },
         unlockedBy: 'minecraft:lightning_rod',

@@ -19,6 +19,7 @@ import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
 import { TARGET_CATEGORY_IDS, isTargetCategory } from './target_categories.js';
 import { isVanillaEffect, suggestEffect } from './effect_catalogue.js';
 import { explainParticle } from './particle_catalogue.js';
+import { isVanillaDamageCause, suggestDamageCause } from './damage_cause_catalogue.js';
 import { isVisualProfile, PROFILE_NAMES } from './visual_profiles.js';
 import { SOUND_PRESETS } from '../systems/sounds.js';
 
@@ -73,6 +74,11 @@ export function validateAbilityDefinition(ability) {
     }
     if (ability.defaults !== undefined && !isPlainObject(ability.defaults)) {
         problems.push(`${label}: 'defaults' must be an object when present.`);
+    } else if (ability.defaults !== undefined) {
+        // Both halves of the merge are checked: a binding that overrides
+        // `cause` above, and the default it would otherwise inherit here.
+        // Checking only one leaves the other free to be wrong.
+        problems.push(...validateDamageCause(ability.defaults.cause, `${label}.defaults`));
     }
     if (ability.validateParams !== undefined && typeof ability.validateParams !== 'function') {
         problems.push(`${label}: 'validateParams' must be a function when present.`);
@@ -128,6 +134,15 @@ export function validateTargeting(targeting, label) {
  * @param {string} label
  * @returns {string[]}
  */
+/**
+ * The longest a sword may leave anything on an entity, in ticks (30 seconds).
+ *
+ * The collection's real maximum is 300 — Ocean Sword's water breathing, on its
+ * own wielder — so this is a guard rail rather than a constraint anyone is
+ * working against.
+ */
+const MAX_EFFECT_TICKS = 600;
+
 export function validateEffects(effects, label) {
     if (effects === undefined) return [];
     if (!Array.isArray(effects)) return [`${label}.effects: must be an array.`];
@@ -153,6 +168,16 @@ export function validateEffects(effects, label) {
         }
         if (!isPositiveNumber(effect.durationTicks)) {
             problems.push(`${where}: 'durationTicks' must be a positive number.`);
+        } else if (Number(effect.durationTicks) > MAX_EFFECT_TICKS) {
+            // Nothing a sword does should outlive the fight it was used in.
+            // There is no API to hand a player a permanent effect by accident,
+            // but a definition asking for twenty minutes of Slowness IV is the
+            // same thing from the receiving end.
+            problems.push(
+                `${where}: 'durationTicks' is ${effect.durationTicks} ` +
+                    `(${Number(effect.durationTicks) / 20}s). The ceiling is ${MAX_EFFECT_TICKS / 20}s — ` +
+                    'an effect that outlasts the fight is a curse, not an ability.',
+            );
         }
         if (effect.amplifier !== undefined && (!Number.isInteger(effect.amplifier) || Number(effect.amplifier) < 0)) {
             problems.push(`${where}: 'amplifier' must be a non-negative integer when present.`);
@@ -201,6 +226,31 @@ export function validateParticles(particles, label) {
         }
     });
     return problems;
+}
+
+/**
+ * A damage cause the engine will actually recognise.
+ *
+ * Bedrock accepts an unknown cause without complaint and applies the damage
+ * anyway, so a typo here is invisible in play: the hit lands, but every
+ * cause-specific mitigation and message stops matching it. See
+ * `core/damage_cause_catalogue.js` for why this is the fourth gate of its kind.
+ *
+ * @param {unknown} cause
+ * @param {string} label
+ * @returns {string[]}
+ */
+export function validateDamageCause(cause, label) {
+    if (cause === undefined) return [];
+    if (typeof cause !== 'string') {
+        return [`${label}: 'params.cause' must be a string when present.`];
+    }
+    if (isVanillaDamageCause(cause)) return [];
+    const suggestion = suggestDamageCause(cause);
+    return [
+        `${label}: 'params.cause' is '${cause}', which is not an EntityDamageCause` +
+            `${suggestion === undefined ? '.' : ` — did you mean '${suggestion}'?`}`,
+    ];
 }
 
 /**
@@ -367,6 +417,13 @@ export function validateBinding(binding, label, abilityExists) {
     }
     if (binding.params !== undefined && !isPlainObject(binding.params)) {
         problems.push(`${label}: 'params' must be an object when present.`);
+    } else if (binding.params !== undefined) {
+        // `params.cause` is the one parameter the framework itself consumes:
+        // the damage layer hands it straight to `applyDamage`. Checked here
+        // rather than in each ability's own `validateParams` because every
+        // ability that deals damage takes it, and 25 copies of the same check
+        // is 25 chances to leave one out.
+        problems.push(...validateDamageCause(binding.params.cause, label));
     }
 
     problems.push(...validateTargeting(binding.targeting, label));

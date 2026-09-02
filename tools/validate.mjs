@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 
 import { PATHS, MODULES, artFile, resourceFile } from './lib/project.mjs';
 import { verifyPng } from './lib/png.mjs';
-import { inspectQuality, validateSource } from './lib/texture.mjs';
+import { inspectQuality, renderPixels, validateSource } from './lib/texture.mjs';
 
 const {
     NAMESPACE,
@@ -40,6 +40,8 @@ const {
 } =
     await import(MODULES.identifiers);
 const { RARITIES } = await import(MODULES.rarity);
+const { CONFIG } = await import(MODULES.config);
+const CONFIG_PARTICLE_CAP = CONFIG.particles.maxPerEmit;
 const { describeAll } = await import(MODULES.swordStats);
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -426,6 +428,238 @@ function validateItemsAndResources(swords) {
  *
  * @param {readonly any[]} swords
  */
+/**
+ * How confusable two 16×16 icons are, as the mean per-pixel colour distance
+ * over the pixels both of them paint.
+ *
+ * Silhouette is deliberately not weighted: every icon in the collection is a
+ * sword pointing the same way, so shape overlap runs 78–99% for every pair and
+ * separates nothing. Colour is what a player actually picks a hotbar slot by,
+ * and the number below is what "these two look alike" reduces to.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} a
+ * @param {Uint8ClampedArray | Uint8Array} b
+ * @returns {number} 0 for identical; the collection's median sits near 135.
+ */
+function iconDistance(a, b) {
+    let sum = 0;
+    let counted = 0;
+    for (let pixel = 0; pixel < 16 * 16; pixel++) {
+        const offset = pixel * 4;
+        if (a[offset + 3] === 0 || b[offset + 3] === 0) continue;
+        const dr = a[offset] - b[offset];
+        const dg = a[offset + 1] - b[offset + 1];
+        const db = a[offset + 2] - b[offset + 2];
+        sum += Math.sqrt(dr * dr + dg * dg + db * db);
+        counted++;
+    }
+    return counted === 0 ? 0 : sum / counted;
+}
+
+/** Below this share of blade, an icon reads as a dagger rather than a sword. */
+const BLADE_FLOOR = 0.65;
+
+/**
+ * How much of an icon is blade rather than hilt, without assuming which way the
+ * sword points.
+ *
+ * The first version counted pixels per screen row and looked for the row where
+ * the icon suddenly got wider. That works for an upright sword and is nonsense
+ * for a tilted one: on a diagonal blade every row is about equally wide and the
+ * crossguard is smeared across several rows rather than spiking any one of them.
+ *
+ * So the weapon's own long axis is found first — the principal axis of its
+ * opaque pixels — and the cross-section perpendicular to that axis is measured
+ * along it. The crossguard is the widest slice, which also says which end is the
+ * hilt; orienting by "which end looks narrower" instead gets a blunt or broad
+ * blade backwards, which is exactly how a chisel-ended sword once measured 33%.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} pixels
+ * @returns {{ share: number, guard: number, blade: number }}
+ */
+function bladeShare(pixels) {
+    /** @type {[number, number][]} */
+    const points = [];
+    for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) if (pixels[(y * 16 + x) * 4 + 3] > 0) points.push([x, y]);
+    }
+    if (points.length < 8) return { share: 1, guard: 0, blade: 0 };
+
+    const n = points.length;
+    const mx = points.reduce((a, p) => a + p[0], 0) / n;
+    const my = points.reduce((a, p) => a + p[1], 0) / n;
+    let sxx = 0;
+    let syy = 0;
+    let sxy = 0;
+    for (const [x, y] of points) {
+        sxx += (x - mx) ** 2;
+        syy += (y - my) ** 2;
+        sxy += (x - mx) * (y - my);
+    }
+    const theta = 0.5 * Math.atan2((2 * sxy) / n, (sxx - syy) / n);
+    const ax = Math.cos(theta);
+    const ay = Math.sin(theta);
+
+    const along = [];
+    const across = [];
+    for (const [x, y] of points) {
+        along.push((x - mx) * ax + (y - my) * ay);
+        across.push(-(x - mx) * ay + (y - my) * ax);
+    }
+    const lo = Math.min(...along);
+    const hi = Math.max(...along);
+    if (hi - lo < 1e-6) return { share: 1, guard: 0, blade: 0 };
+
+    const BINS = 16;
+    /** @type {number[][]} */
+    const slices = Array.from({ length: BINS }, () => []);
+    for (let i = 0; i < along.length; i++) {
+        const k = Math.min(BINS - 1, Math.floor(((along[i] - lo) / (hi - lo)) * BINS));
+        slices[k].push(across[i]);
+    }
+    let widths = slices.map((v) => (v.length === 0 ? 0 : Math.max(...v) - Math.min(...v) + 1));
+
+    // The widest slice is the crossguard, and it sits at the hilt end.
+    if (widths.indexOf(Math.max(...widths)) < BINS / 2) widths = widths.slice().reverse();
+    const guard = widths.indexOf(Math.max(...widths));
+
+    return {
+        share: guard / (BINS - 1),
+        guard: widths[guard],
+        blade: widths[Math.max(0, guard - 2)],
+    };
+}
+
+/** Above this share of a common silhouette, two swords are the same weapon. */
+const SILHOUETTE_CEILING = 0.95;
+
+/**
+ * How much of two icons' shape is the same, as intersection over union of their
+ * opaque masks.
+ *
+ * Not "share of the 256 pixels that agree", which sounds equivalent and is
+ * useless: both icons leave most of the canvas empty, so that measure reads
+ * 90%+ for every pair in the collection and separates nothing. Union as the
+ * denominator throws the background away and asks only about the weapons.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} a
+ * @param {Uint8ClampedArray | Uint8Array} b
+ * @returns {number} 0 for disjoint shapes, 1 for identical ones.
+ */
+function silhouetteOverlap(a, b) {
+    let both = 0;
+    let either = 0;
+    for (let pixel = 0; pixel < 16 * 16; pixel++) {
+        const inA = a[pixel * 4 + 3] > 0;
+        const inB = b[pixel * 4 + 3] > 0;
+        if (inA && inB) both++;
+        if (inA || inB) either++;
+    }
+    return either === 0 ? 0 : both / either;
+}
+
+/**
+ * No two swords may be hard to tell apart in a hotbar slot.
+ *
+ * Every other texture rule in this file grades an icon on its own — colour
+ * count, coverage, luminance spread — and a collection can pass all of them
+ * while containing two icons nobody can distinguish at 16 pixels. This is the
+ * only check that looks at a texture *relative to the others*, which is the
+ * form the problem actually takes: Earth and Nature scored 47 against a median
+ * of 135 and read as the same brown-hilted green-bladed sword on the bar.
+ *
+ * @param {any[]} swords
+ */
+function validateIconDistinctness(swords) {
+    /** Below this, two icons are close enough to be worth looking at. */
+    const FLOOR = 50;
+
+    const icons = [];
+    for (const sword of swords) {
+        const file = artFile(sword.texture ?? localNameOf(sword.id));
+        if (!fs.existsSync(file)) continue;
+        try {
+            icons.push({ id: sword.id, pixels: renderPixels(readJson(file)) });
+        } catch {
+            // A texture that will not render is already an error elsewhere.
+        }
+    }
+
+    // Proportion is a property of one icon, so it is checked before the pairwise
+    // work rather than inside it.
+    let leanest = 1;
+    let leanestId = 'none';
+    for (const icon of icons) {
+        const { share, guard, blade } = bladeShare(icon.pixels);
+        if (share < leanest) {
+            leanest = share;
+            leanestId = icon.id;
+        }
+        if (share < BLADE_FLOOR) {
+            warn(
+                `${icon.id} is only ${(share * 100).toFixed(0)}% blade (floor ` +
+                    `${(BLADE_FLOOR * 100).toFixed(0)}%). A weapon whose handle rivals its blade reads ` +
+                    'as a dagger — lengthen the blade or shorten the hilt.',
+            );
+        }
+        if (guard <= blade + 0.5) {
+            warn(
+                `${icon.id} has a crossguard ${guard.toFixed(1)} wide against a blade ` +
+                    `${blade.toFixed(1)} wide. A guard no wider than its blade does not read as a ` +
+                    'guard at sixteen pixels.',
+            );
+        }
+    }
+
+    let closest = Number.POSITIVE_INFINITY;
+    let closestPair = 'none';
+    let widest = 0;
+    let widestPair = 'none';
+    for (let i = 0; i < icons.length; i++) {
+        for (let j = i + 1; j < icons.length; j++) {
+            // Silhouette first. Two icons can be far apart in colour and still
+            // be the same weapon painted twice, which is what a recolour *is*;
+            // the existing rule only caught grids that matched pixel for pixel.
+            const overlap = silhouetteOverlap(icons[i].pixels, icons[j].pixels);
+            if (overlap > widest) {
+                widest = overlap;
+                widestPair = `${icons[i].id} / ${icons[j].id}`;
+            }
+            if (overlap > SILHOUETTE_CEILING) {
+                warn(
+                    `${icons[i].id} and ${icons[j].id} share ${(overlap * 100).toFixed(0)}% of their ` +
+                        `silhouette (ceiling ${(SILHOUETTE_CEILING * 100).toFixed(0)}%). Same weapon, ` +
+                        'different paint — give one of them its own blade, guard or pommel.',
+                );
+            }
+
+            const distance = iconDistance(icons[i].pixels, icons[j].pixels);
+            if (distance < closest) {
+                closest = distance;
+                closestPair = `${icons[i].id} / ${icons[j].id}`;
+            }
+            if (distance < FLOOR) {
+                warn(
+                    `${icons[i].id} and ${icons[j].id} score ${distance.toFixed(1)} on icon distance ` +
+                        `(floor ${FLOOR}). They will be hard to tell apart in a hotbar slot.`,
+                );
+            }
+        }
+    }
+
+    if (icons.length > 1) {
+        note(`icon distinctness: closest pair is ${closestPair} at ${closest.toFixed(1)} (floor ${FLOOR}).`);
+        note(
+            `silhouette overlap: widest pair is ${widestPair} at ${(widest * 100).toFixed(0)}% ` +
+                `(ceiling ${(SILHOUETTE_CEILING * 100).toFixed(0)}%).`,
+        );
+        note(
+            `blade proportion: leanest is ${leanestId} at ${(leanest * 100).toFixed(0)}% blade ` +
+                `(floor ${(BLADE_FLOOR * 100).toFixed(0)}%).`,
+        );
+    }
+}
+
 function validateTextures(swords) {
     /** @type {Map<string, string>} Signature -> the sword that used it first. */
     const signatures = new Map();
@@ -497,6 +731,12 @@ async function validateDefinitions() {
 
     /** @type {Set<string>} */
     const swordIds = new Set();
+    /** @type {Map<string, string>} binding label -> the sword that uses it */
+    const labels = new Map();
+    // Counted and reported below. A gate that silently checks nothing looks
+    // exactly like a gate that passes, which is how the previous version of
+    // this loop went unnoticed; the count makes "it ran" visible on every build.
+    let checked = 0;
     for (const sword of SWORDS) {
         for (const problem of validateSwordDefinition(sword, (/** @type {string} */ id) => abilityIds.has(id))) {
             error(`sword: ${problem}`);
@@ -506,17 +746,45 @@ async function validateDefinitions() {
 
         // Ability-specific parameter validation, using the same merge the
         // executor performs at runtime.
-        for (const [trigger, binding] of [
-            ['active', sword.active],
-            ['passive', sword.passive],
-        ]) {
-            if (binding === undefined) continue;
+        //
+        // This reads `sword.abilities`, which is where bindings actually live.
+        // An earlier version read `sword.active` and `sword.passive` — fields no
+        // definition has ever carried — so the loop found `undefined` every
+        // time and skipped silently. The effect was that every ability's
+        // `validateParams` was dead code: a mis-authored parameter would have
+        // sailed through the build and failed in-game, which is the exact
+        // failure mode this gate exists to prevent. Iterate the real shape, and
+        // fail loudly if it is ever missing.
+        if (!Array.isArray(sword.abilities)) {
+            error(`sword: ${sword.id} has no 'abilities' array; parameter validation cannot run.`);
+            continue;
+        }
+        for (const binding of sword.abilities) {
+            if (binding === undefined || binding === null) continue;
+            const trigger = binding.activation ?? 'unknown';
+
+            // The label is what the player reads on the action bar when the
+            // ability fires. The framework falls back to the ability's own name
+            // when a binding omits one, which is why two swords shipped for
+            // eleven milestones announcing themselves as 'Cleave' and 'Brand'
+            // — correct, and anonymous. A shipped sword names its own moves.
+            if (typeof binding.label !== 'string' || binding.label.length === 0) {
+                error(`sword: ${sword.id}.${trigger} has no 'label'; the action bar would fall back to the ability name.`);
+            } else {
+                const owner = labels.get(binding.label);
+                if (owner !== undefined) {
+                    error(`sword: ability label '${binding.label}' is used by both ${owner} and ${sword.id}.`);
+                }
+                labels.set(binding.label, sword.id);
+            }
+
             const ability = ABILITIES.find((/** @type {any} */ a) => a.id === binding.abilityId);
             if (ability?.validateParams === undefined) continue;
             const merged = { ...(ability.defaults ?? {}), ...(binding.params ?? {}) };
             for (const problem of ability.validateParams(merged)) {
                 error(`sword: ${sword.id}.${trigger} -> ${ability.id}: ${problem}`);
             }
+            checked++;
         }
     }
 
@@ -526,6 +794,11 @@ async function validateDefinitions() {
             `${testItems.length} diagnostic (${testItems.map((/** @type {any} */ s) => s.id).join(', ') || 'none'}).`,
     );
     note(`${ABILITIES.length} ability definition(s): ${[...abilityIds].join(', ')}.`);
+    if (checked === 0) {
+        error('No ability parameters were validated. The binding shape changed and this gate is not reading it.');
+    } else {
+        note(`${checked} binding(s) passed their ability's own parameter validation.`);
+    }
 
     // A compact roster, so balance outliers are visible on every build rather
     // than only when someone goes looking. Uses the same resolver the runtime
@@ -550,9 +823,189 @@ async function validateDefinitions() {
     return SWORDS;
 }
 
+/**
+ * Cross-binding agreement on shared state.
+ *
+ * A sword's two bindings often talk to each other through the player-state
+ * store: Time Sword's passive banks charge that its active spends, Ember
+ * Blade's edge builds the heat its burst releases, Shadow Sword's step opens
+ * the window its edge exploits. All three are held together by nothing but two
+ * string literals in different files matching, and several of the definitions
+ * carry a comment saying so — which is not a gate.
+ *
+ * When they stop matching nothing errors, nothing logs, and nothing looks
+ * broken. The passive charges a meter no one reads and the active reads a meter
+ * no one fills, so the sword just quietly never pays out. That is the exact
+ * failure the ability-parameter gate above was supposed to catch and could not,
+ * because each binding's params are individually valid — it is the *pairing*
+ * that is wrong, and only the sword can see it.
+ *
+ * Two rules:
+ *
+ *  - **Within a sword**, every `*Key` and `*ChargeTicks` parameter that appears
+ *    in more than one binding must carry the same value. These name a shared
+ *    clock; disagreeing about it is always a bug.
+ *  - **Across swords**, a state key value must be unique. Keys are scoped to
+ *    the *player*, not the sword, so two swords sharing `'charge'` would fight
+ *    over one slot in the inventory of anyone carrying both.
+ *
+ * @param {any[]} swords
+ * @param {any[]} abilities
+ */
+function validateSharedState(swords, abilities) {
+    /** Params that name a shared store or clock rather than a local tuning value. */
+    const SHARED = /(Key|ChargeTicks)$/;
+
+    /** @type {Map<string, string>} key value -> the sword that claimed it */
+    const owners = new Map();
+    let pairs = 0;
+
+    for (const sword of swords) {
+        /** @type {Map<string, { value: unknown, where: string }>} */
+        const seen = new Map();
+
+        for (const binding of sword.abilities ?? []) {
+            const ability = abilities.find((/** @type {any} */ a) => a.id === binding.abilityId);
+            const merged = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+            const where = `${binding.activation} -> ${binding.abilityId}`;
+
+            for (const [name, value] of Object.entries(merged)) {
+                if (!SHARED.test(name)) continue;
+
+                const previous = seen.get(name);
+                if (previous === undefined) {
+                    seen.set(name, { value, where });
+                } else {
+                    pairs++;
+                    if (previous.value !== value) {
+                        error(
+                            `${sword.id}: '${name}' disagrees between bindings — ` +
+                                `${previous.where} says ${JSON.stringify(previous.value)} but ` +
+                                `${where} says ${JSON.stringify(value)}. They share one store; ` +
+                                'a mismatch makes the pairing silently never pay out.',
+                        );
+                    }
+                }
+
+                // Cross-sword uniqueness, for the keys that name a store.
+                if (!name.endsWith('Key') || typeof value !== 'string') continue;
+                const owner = owners.get(value);
+                if (owner === undefined) owners.set(value, sword.id);
+                else if (owner !== sword.id) {
+                    error(
+                        `state key '${value}' is claimed by both ${owner} and ${sword.id}. ` +
+                            'Keys are scoped to the player, so both swords would share one slot.',
+                    );
+                }
+            }
+        }
+    }
+
+    note(`${owners.size} shared state key(s), ${pairs} cross-binding pairing(s) agreed.`);
+}
+
+/**
+ * The per-activation particle budget.
+ *
+ * `config.particles.maxPerEmit` caps a single `emit`, `ring` or `line` call at
+ * 64 — but an ability makes several of those calls, and the ones marked
+ * `at: 'target'` are made once per target. A binding drawing 20 particles at
+ * each of 12 targets is inside every individual cap and still asks the client
+ * for 240 in one frame, which is what a low-end device notices.
+ *
+ * Nothing in the collection is close to that today; the point of counting it
+ * here is that the ceiling is invisible from any one definition, so the number
+ * has to be assembled from the whole binding to be seen at all.
+ *
+ * @param {any[]} swords
+ * @param {any[]} abilities
+ */
+function validateVisualBudget(swords, abilities) {
+    /** Above this, one activation is worth a second look on a low-end device. */
+    const BUDGET = 120;
+    /** How the geometry each ability draws scales: once per cast, or per target. */
+    const GEOMETRY = {
+        ringPoints: 'once',
+        arcPoints: 'once',
+        tetherPoints: 'once',
+        trailPoints: 'perTarget',
+        dischargeParticleCount: 'perTarget',
+        empoweredParticleCount: 'perTarget',
+        smiteParticleCount: 'perTarget',
+    };
+
+    let worst = 0;
+    let worstLabel = 'none';
+
+    for (const sword of swords) {
+        for (const binding of sword.abilities ?? []) {
+            const ability = abilities.find((/** @type {any} */ a) => a.id === binding.abilityId);
+            const params = { ...(ability?.defaults ?? {}), ...(binding.params ?? {}) };
+            const targeting = binding.targeting ?? { type: 'self' };
+
+            // The most entities this binding can reach. `self` and `point`
+            // resolve no entities, so their ability's own params carry the cap.
+            const maxTargets =
+                targeting.type === 'self'
+                    ? params.arrivalMaxTargets ?? 0
+                    : targeting.type === 'point'
+                      ? params.maxTargets ?? 1
+                      : targeting.type === 'single' || targeting.type === 'ray'
+                        ? 1 + (params.maxJumps ?? 0)
+                        : targeting.maxTargets ?? 1;
+
+            const cap = CONFIG_PARTICLE_CAP;
+            let total = 0;
+            for (const particle of binding.particles ?? []) {
+                const count = Math.min(particle.count ?? 1, cap);
+                total += (particle.at ?? 'caster') === 'target' ? count * maxTargets : count;
+            }
+            for (const [name, mode] of Object.entries(GEOMETRY)) {
+                const points = params[name];
+                if (typeof points !== 'number' || points <= 0) continue;
+                total += Math.min(points, cap) * (mode === 'perTarget' ? maxTargets : 1);
+            }
+
+            if (total > worst) {
+                worst = total;
+                worstLabel = `${sword.id}.${binding.activation}`;
+            }
+            if (total > BUDGET) {
+                warn(
+                    `${sword.id}.${binding.activation} can draw ${total} particles in one activation ` +
+                        `(budget ${BUDGET}). Every individual call is inside its own cap; the total is not.`,
+                );
+            }
+        }
+    }
+
+    note(`particle budget: worst single activation is ${worst} (${worstLabel}), budget ${BUDGET}.`);
+}
+
 // ---------------------------------------------------------------------------
 // 5. Architecture rules
 // ---------------------------------------------------------------------------
+
+/**
+ * Source with comments and string literals blanked out, so a scan for a banned
+ * API does not trip over the doc comments explaining why it was never called.
+ * Several definitions discuss `spawnEntity` and `setTimeOfDay` at length for
+ * exactly that reason.
+ *
+ * Crude but adequate: it only has to be right about whether an identifier
+ * appears in executable position, and it errs toward blanking.
+ *
+ * @param {string} source
+ * @returns {string}
+ */
+function stripCommentsAndStrings(source) {
+    return source
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/\/\/[^\n]*/g, ' ')
+        .replace(/'(?:[^'\\\n]|\\.)*'/g, "''")
+        .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+        .replace(/`(?:[^`\\]|\\.)*`/g, '``');
+}
 
 function validateArchitecture() {
     const scriptFiles = filesMatching(PATHS.bpScripts, /\.js$/);
@@ -577,6 +1030,43 @@ function validateArchitecture() {
         for (const banned of ['setTimeout(', 'setInterval(', 'requestAnimationFrame(']) {
             if (source.includes(banned)) {
                 error(`scripts/${path.relative(PATHS.bpScripts, file)}: uses '${banned}', which does not exist in Bedrock scripting.`);
+            }
+        }
+    }
+
+    // 5b-ii. Terrain and world safety. The addon reads blocks — the dash needs
+    //     to know where the ground is — but it never writes one, never spawns
+    //     an entity, never touches the clock or the weather, and never shells
+    //     out to a command. That is what makes every sword safe to hand to a
+    //     stranger on a shared world, and it has been true only by convention
+    //     since v0.1.0. A ban list is how a convention becomes a guarantee.
+    //
+    //     Several sword and ability docs discuss these APIs at length to
+    //     explain why they were not used, so the check looks at code with
+    //     comments and strings stripped rather than at raw source.
+    const WORLD_MUTATION = [
+        ['setType', 'places a block'],
+        ['setPermutation', 'changes a block'],
+        ['fillBlocks', 'rewrites terrain'],
+        ['setBlockPermutation', 'changes a block'],
+        ['spawnEntity', 'spawns an entity'],
+        ['spawnItem', 'drops an item'],
+        ['createExplosion', 'destroys terrain'],
+        ['setTimeOfDay', "changes everyone's sky"],
+        ['setWeather', "changes everyone's weather"],
+        ['setGameRule', 'changes the world rules'],
+        ['runCommand', 'escapes every safety rule in this framework'],
+        ['runCommandAsync', 'escapes every safety rule in this framework'],
+    ];
+    for (const file of scriptFiles) {
+        const relative = path.relative(PATHS.bpScripts, file);
+        const code = stripCommentsAndStrings(fs.readFileSync(file, 'utf8'));
+        for (const [api, why] of WORLD_MUTATION) {
+            if (new RegExp(`\\.${api}\\s*\\(`).test(code)) {
+                error(
+                    `scripts/${relative}: calls '${api}()', which ${why}. Custom Swords does not modify the ` +
+                        'world — it reads blocks and applies damage, effects and knockback, and nothing else.',
+                );
             }
         }
     }
@@ -814,6 +1304,78 @@ function validateRecipes(swords) {
     }
 
     note(`${swords.length} recipe(s), ${ingredientsChecked} ingredient/repair item(s) verified against ${vanillaItems.size} vanilla items.`);
+
+    validateCraftingProgression(swords);
+}
+
+/**
+ * The crafting cost curve against the rarity curve.
+ *
+ * A collection where a Rare costs a diamond and an Epic costs a stick does not
+ * feel intentional, and nothing else in the toolchain can see it: every such
+ * recipe is individually valid, and the problem only exists in the comparison.
+ *
+ * Ingredients carry an acquisition tier (`tools/data/ingredient_tiers.json`) and
+ * each rarity declares the lowest tier its recipes should demand. A sword whose
+ * rarest ingredient falls below its floor is **cheaper than its tier claims**,
+ * which is reported as a warning rather than an error: it is a balance
+ * judgement, not a defect, and the fix belongs to whoever is doing the balance
+ * pass rather than to whoever is adding a sword.
+ *
+ * @param {readonly any[]} swords
+ */
+function validateCraftingProgression(swords) {
+    const tierFile = path.join(PATHS.root, 'tools', 'data', 'ingredient_tiers.json');
+    if (!fs.existsSync(tierFile)) {
+        warn('tools/data/ingredient_tiers.json is missing — the crafting cost curve cannot be checked.');
+        return;
+    }
+    const data = readJson(tierFile);
+    if (data === undefined) return;
+
+    /** @type {Map<string, number>} item -> acquisition tier */
+    const tierOf = new Map();
+    /** @type {Map<number, string>} tier -> label */
+    const labelOf = new Map([[0, 'starting materials']]);
+    for (const group of data.tiers ?? []) {
+        labelOf.set(group.tier, group.label);
+        for (const item of group.items ?? []) tierOf.set(item, group.tier);
+    }
+
+    /** @type {{ rarity: string, id: string, tier: number, floor: number, rarest: string }[]} */
+    const rows = [];
+    for (const sword of swords) {
+        const floor = data.expected?.[sword.rarity];
+        if (typeof floor !== 'number') continue;
+
+        let tier = 0;
+        let rarest = '(starting materials)';
+        for (const item of Object.values(sword.recipe?.key ?? {})) {
+            const itemTier = tierOf.get(item) ?? 0;
+            if (itemTier > tier) {
+                tier = itemTier;
+                rarest = item;
+            }
+        }
+        rows.push({ rarity: sword.rarity, id: sword.id, tier, floor, rarest });
+    }
+
+    for (const row of rows.sort((a, b) => a.tier - b.tier)) {
+        if (row.tier >= row.floor) continue;
+        warn(
+            `${row.id} is ${row.rarity} but its costliest ingredient is '${row.rarest}' ` +
+                `(tier ${row.tier}, ${labelOf.get(row.tier)}), below the tier-${row.floor} floor its rarity implies. ` +
+                'Cheaper than its rarity claims — a balance judgement, not a defect.',
+        );
+    }
+
+    const byTier = new Map();
+    for (const row of rows) byTier.set(row.tier, (byTier.get(row.tier) ?? 0) + 1);
+    const spread = [...byTier.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([tier, count]) => `${count}x tier ${tier} (${labelOf.get(tier)})`)
+        .join(', ');
+    note(`crafting cost curve: ${spread}.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -865,10 +1427,14 @@ async function main() {
     validateManifests();
     validateAllJson();
     const swords = await validateDefinitions();
+    const { ABILITIES } = await import(MODULES.abilities);
+    validateSharedState(swords, ABILITIES);
+    validateVisualBudget(swords, ABILITIES);
     validateUniqueness(swords);
     validateRecipes(swords);
     validateItemsAndResources(swords);
     validateTextures(swords);
+    validateIconDistinctness(swords);
     await validateSoundLibrary();
     validateArchitecture();
 

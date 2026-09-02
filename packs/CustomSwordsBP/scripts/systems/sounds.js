@@ -80,6 +80,58 @@ export const SOUND_LIBRARY = Object.freeze({
     shadow_cast: { id: 'mob.endermen.portal', volume: 0.8, pitch: 0.7 },
     shadow_impact: { id: 'mob.shulker.teleport', volume: 0.6, pitch: 0.8 },
 
+    // Crystal: the amethyst resonance chime, which is the closest thing vanilla
+    // has to a struck lattice, and a sharp mineral tick where it lands. Nature
+    // already uses `break.amethyst_cluster`, so this family stays on `chime.`
+    // and `hit.` to keep the two apart by more than pitch.
+    crystal_cast: { id: 'chime.amethyst_block', volume: 0.9, pitch: 1.3 },
+    crystal_impact: { id: 'hit.amethyst_cluster', volume: 0.6, pitch: 1.6 },
+    // The guard forming. `resonate.amethyst_block` is the block's own answering
+    // note — the one cue in the collection that means "something closed around
+    // you" rather than "something went out from you".
+    crystal_ward: { id: 'resonate.amethyst_block', volume: 0.7, pitch: 0.9 },
+
+    // Void: dimensional, not dark. A portal warp pitched well down for the tear
+    // opening, a beacon powering down for what it takes with it. Deliberately
+    // nothing from the enderman family, which shadow already owns.
+    void_cast: { id: 'portal.trigger', volume: 0.9, pitch: 0.6 },
+    void_impact: { id: 'beacon.deactivate', volume: 0.6, pitch: 0.7 },
+    // The drain: a respawn anchor losing a charge, which is exactly the sound
+    // of something being emptied.
+    void_drain: { id: 'respawn_anchor.deplete', volume: 0.5, pitch: 0.8 },
+
+    // Solar: a beacon coming alive, then a conduit's bright strike. Deliberately
+    // nothing from the blaze or fire families, which Inferno and Ember own —
+    // solar is a *tone*, not a roar.
+    solar_cast: { id: 'beacon.activate', volume: 0.9, pitch: 1.2 },
+    solar_impact: { id: 'conduit.attack', volume: 0.6, pitch: 1.4 },
+    // The undead bonus landing: a beacon's power note, pitched up.
+    solar_smite: { id: 'beacon.power', volume: 0.6, pitch: 1.5 },
+
+    // Gravity: the dragon's wingbeat pitched right down for the well opening —
+    // the heaviest single sound in the vanilla set — and ancient debris landing
+    // for the crush.
+    gravity_cast: { id: 'mob.enderdragon.flap', volume: 0.9, pitch: 0.6 },
+    gravity_impact: { id: 'fall.ancient_debris', volume: 0.7, pitch: 0.8 },
+
+    // Venom: a witch's throw for the burst, brewing for what it leaves behind.
+    venom_cast: { id: 'mob.witch.throw', volume: 0.9, pitch: 0.9 },
+    venom_impact: { id: 'random.potion.brewed', volume: 0.6, pitch: 1.2 },
+
+    // Chrono: a vault mechanism engaging for the hold, a clean note-block chime
+    // as each target stops, and the escapement tick the passive makes when a hit
+    // winds the sword a little further.
+    chrono_cast: { id: 'vault.activate', volume: 0.9, pitch: 1.1 },
+    chrono_impact: { id: 'note.chime', volume: 0.6, pitch: 1.6 },
+    chrono_wind: { id: 'block.click', volume: 0.4, pitch: 1.8 },
+
+    // Tempest: the weather itself. Thunder Sword took `item.trident.thunder`
+    // and `ambient.weather.lightning.impact`; this takes the two the game uses
+    // for an actual storm, which is the distinction the swords make too.
+    tempest_cast: { id: 'ambient.weather.thunder', volume: 0.9, pitch: 1.2 },
+    tempest_impact: { id: 'ambient.weather.rain', volume: 0.7, pitch: 1.3 },
+    tempest_gust: { id: 'wind_charge.burst', volume: 0.5, pitch: 1.4 },
+
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },

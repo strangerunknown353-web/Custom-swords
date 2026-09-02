@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:storm_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "PBP",
+      " L ",
+      " C "
+    ],
+    "key": {
+      "P": {
+        "item": "minecraft:phantom_membrane"
+      },
+      "B": {
+        "item": "minecraft:breeze_rod"
+      },
+      "L": {
+        "item": "minecraft:lightning_rod"
+      },
+      "C": {
+        "item": "minecraft:copper_block"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:breeze_rod"
+      }
+    ],
+    "result": "custom_swords:storm_sword"
+  }
+}

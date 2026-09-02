@@ -1,0 +1,33 @@
+{
+  "name": "Solar Sword",
+  "description": "A long noon-bright blade widening as it falls, on quillons thrown wide like a struck sun.",
+  "palette": {
+    "o": "#20140a",
+    "W": "#fffdf0",
+    "Y": "#ffe98a",
+    "y": "#f5b820",
+    "r": "#c07a10",
+    "A": "#e0c060",
+    "B": "#5e4818",
+    "K": "#33260c",
+    "P": "#f0c85a"
+  },
+  "pixels": [
+    "..............oW",
+    "............oWyo",
+    "..........oWYyo.",
+    "........oWYyro..",
+    ".......oWYyro...",
+    "......oWYyro....",
+    "....oWWYyro.....",
+    "...oWWYyro......",
+    "ABoWWYyro.......",
+    "oABWYyro........",
+    "oWAByro.........",
+    "..oABo..........",
+    ".oKKABo.........",
+    "oKKooABo........",
+    "PPo..oABo.......",
+    "PPo............."
+  ]
+}

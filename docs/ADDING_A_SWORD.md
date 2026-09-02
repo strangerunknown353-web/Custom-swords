@@ -106,7 +106,9 @@ Do not write particle ids and sound names into a binding by hand. Name a
 profile:
 
 ```js
-visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember | arcane
+visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember
+                       // shadow | crystal | void | solar | gravity | venom
+                       // chrono | tempest | arcane
 ```
 
 That supplies the caster particle, the target particle, the trail used for arcs
@@ -126,6 +128,51 @@ Two rules, and they are not stylistic:
   sound event list.
 
 Adding a new theme means adding a profile, not editing seven swords.
+
+### Reading how hurt something is
+
+`services.effects.healthFraction(entity)` returns 1 at full health down to 0 at
+death, for the caster or for a target, and never throws:
+
+```js
+// A passive that only pays off once its wielder is in trouble:
+if (services.effects.healthFraction(ctx.player) > params.guardThreshold) {
+    return { ok: true, message: 'strike' };
+}
+
+// A passive that pays out most against what is nearly gone. Read BEFORE the
+// strike, so the ability's own damage cannot inflate its own payout:
+const fraction = services.effects.healthFraction(target);
+```
+
+An unreadable entity reports **1 — unhurt**, which is deliberate: both shipped
+consumers only grant something *below* a threshold, so failing to 1 withholds
+the benefit rather than handing it out for free. If you write a mechanic that
+pays out *above* a threshold, invert your own default rather than changing this
+one.
+
+### Reading the world
+
+`services.environment` answers questions about the world rather than about an
+entity — currently one:
+
+```js
+// 1 at noon, easing to 0 across the night; 0 in the Nether and the End
+// whatever the clock says.
+const sun = services.environment.daylight(ctx.dimension);
+const damage = params.nightDamage + params.sunBonus * sun;
+```
+
+Two rules, both learned from Solar Sword:
+
+- **Pass the dimension.** `daylight()` without it ignores the dimension check,
+  which is almost never what you want — a sun-powered ability that works
+  identically in the Nether is a sun-powered ability in name only.
+- **Ramp, do not switch.** A condition that flips at a threshold is a rule the
+  player has to memorise. One that fades is something they feel. Solar Flare's
+  action-bar message names the current sun percentage for the same reason:
+  a sword doing a third of its usual damage should say why, or it reads as a
+  bug.
 
 ### State that carries between activations
 
@@ -159,6 +206,67 @@ Two rules for the ability itself:
 
 Ember Blade is the worked example — see `swords/ember_blade.js` and both
 `abilities/builtin/ember_*.js`.
+
+### State that must survive death
+
+`mark`/`sinceMark` are life-scoped by default, so a combo window cannot outlast
+the death that ended it. Some clocks must not be:
+
+```js
+// A charge that belongs to the SWORD, not the body carrying it.
+services.state.mark(ctx.playerId, 'temporal_charge', ctx.currentTick, { lifeScoped: false });
+const waited = services.state.sinceMark(ctx.playerId, 'temporal_charge', ctx.currentTick, {
+    lifeScoped: false,
+});
+```
+
+The rule to apply: **anything a player would benefit from resetting must not be
+life-scoped.** A life-scoped charge clock is cleared on death, `sinceMark` then
+reports `Infinity` — "has been waiting forever", a full meter — and dying
+becomes a way to reload the weapon. It is the same reasoning that keeps
+cooldowns out of the life scope.
+
+Pass the same `lifeScoped` value to both calls, or the read looks in a different
+key and reports `Infinity`.
+
+### State that belongs to the target, not the player
+
+If a sword builds something up on **a particular enemy**, do not reach for a
+`Map` from entity id to a count. Entities die, despawn, unload with their chunk
+and cross dimensions, and every one of those leaves a key nothing will ever
+remove — a leak that grows with playtime.
+
+Store it in an effect instead, and let the game be the source of truth:
+
+```js
+// In the passive, on a landed hit: read what is there, apply one tier deeper.
+const carried = services.effects.amplifierOf(target, 'poison');   // -1 when absent
+services.effects.apply(target, {
+    effect: 'poison',
+    durationTicks: params.venomTicks,
+    amplifier: Math.min(carried + 1, params.maxAmplifier),
+});
+
+// In the active: read the tiers, pay out for them, then SPEND them.
+const tiers = services.effects.amplifierOf(target, 'poison') + 1;
+services.effects.remove(target, 'poison');
+```
+
+`amplifierOf` returns `-1` for a target carrying nothing, so `+ 1` starts a
+fresh target at 0 without a special case. The count expires when the effect
+does, cleans itself up when the mob dies, and costs nothing between
+activations.
+
+Two rules for the ability:
+
+- **Read before striking.** Otherwise the tier this hit applies counts towards
+  the tier this hit is deciding.
+- **Spend what you read.** An active that pays out for banked stacks without
+  removing them turns the button into a free bonus on cooldown, and the build-up
+  stops being a decision.
+
+Poison Sword is the worked example — see `swords/poison_sword.js` and
+`abilities/builtin/{envenom,rupture}.js`.
 
 ### Sword feel: swing duration
 
@@ -380,12 +488,60 @@ The colour is applied as a section code on the generated display name rather
 than via `minecraft:rarity`, which only supports four tiers and escalates on
 enchant. See `docs/API_NOTES.md`.
 
+## Crafting cost
+
+Recipes carry a **cost tier** as well as ingredients.
+`tools/data/ingredient_tiers.json` gives every vanilla item an acquisition tier
+(0 = starting materials, 4 = a boss drop) and every rarity a floor. `npm run
+validate` warns when a sword's rarest ingredient sits below the floor its rarity
+implies, and `SWORD_CATALOG.md` publishes the whole curve.
+
+It is a warning rather than an error on purpose: costing less than your tier
+suggests is a balance judgement, not a defect, and the fix belongs to whoever is
+doing a balance pass. But take it seriously when adding a sword — Storm Sword
+was drafted as a Legendary and shipped as an Epic because the audit pointed out
+that every one of its ingredients was a trial chamber away, not an End away.
+
+If a new ingredient is not in the tier file, it defaults to tier 0. Add it.
+
+## What the build will refuse
+
+Most of these you will never meet, because the shapes they forbid are ones you
+would not naturally write. They are listed because each exists in response to
+something that actually happened, and knowing which is which saves you arguing
+with an error message.
+
+| The build fails if | Because |
+|---|---|
+| a binding has no `label` | the action bar falls back to the ability's generic name, and two swords shipped for eleven milestones announcing themselves as 'Cleave' and 'Brand' |
+| two bindings share a label | the player cannot tell which sword fired |
+| `params.cause` is not a real `EntityDamageCause` | Bedrock applies the damage anyway and only its classification is wrong — invisible in play |
+| a binding deals damage the catalogue cannot describe | `SWORD_CATALOG.md` would publish your sword as dealing none, which happened twice |
+| your sword's two bindings disagree about a `*Key` or `*ChargeTicks` | they share one store; a mismatch leaves the passive filling a meter nothing reads |
+| a state key you chose is already used by another sword | keys are scoped to the player, so both swords would collide in one inventory |
+| any script calls `setType`, `spawnEntity`, `runCommand` or the like | the addon reads the world and never writes it, and that is what makes it safe on a shared server |
+| your icon scores under 50 on distance to any existing icon | it will be indistinguishable in a hotbar slot |
+
+Two more are warnings rather than errors, because they are judgements:
+
+- **Your recipe costs less than your rarity implies.** Tiers live in
+  `tools/data/ingredient_tiers.json`. Raise the recipe or lower the rarity —
+  both have been the right answer at least once.
+- **One activation draws more than 120 particles.** `maxPerEmit` caps each call,
+  but a binding drawing at each of twelve targets is inside every individual cap
+  and still asks the client for hundreds in a frame. The collection's worst is
+  72.
+
 ## Checklist
 
 - [ ] Definition file created and exported from `swords/index.js`
+- [ ] Both bindings carry a `label` — the name the player reads when it fires
 - [ ] Ability reused, or new ability added to `abilities/index.js`
-- [ ] `npm run all` is green
+- [ ] `npm run all` is green, with **zero warnings** as well as zero errors
 - [ ] Texture source authored in `art/swords/`, rendered, inspected and passing
       the quality gate with zero errors and zero warnings
+- [ ] Looked at the icon next to its nearest neighbours at hotbar scale — the
+      distance score is a floor, not a substitute for looking
+- [ ] Checked where the sword lands on the output curve in `SWORD_CATALOG.md`
 - [ ] Tested in-game and the result recorded
 - [ ] `CHANGELOG.md` updated

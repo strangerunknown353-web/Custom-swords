@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:gravity_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " A ",
+      "OSO",
+      " I "
+    ],
+    "key": {
+      "A": {
+        "item": "minecraft:ancient_debris"
+      },
+      "O": {
+        "item": "minecraft:obsidian"
+      },
+      "S": {
+        "item": "minecraft:shulker_shell"
+      },
+      "I": {
+        "item": "minecraft:iron_block"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:ancient_debris"
+      }
+    ],
+    "result": "custom_swords:gravity_sword"
+  }
+}

@@ -30,6 +30,45 @@ Only items actually finished are ticked.
       still the right way to mark a sword. The two bugs found suggest others of
       the same shape may be sitting in the same file.
 
+## Completed in Solar, Gravity and Poison (v0.11.0)
+
+- [x] Three swords, taking the collection to fourteen.
+- [x] Six abilities on three axes the framework had never had: world state
+      (`flare`, `radiance`), altitude and mass (`crush`, `weigh`), and a
+      resource banked on the enemy (`envenom`, `rupture`).
+- [x] `systems/environment.js` — the first service answering a question about
+      the world rather than about an entity.
+- [x] `EffectService.maxHealth` / `.amplifierOf` / `.remove`, and
+      `TargetingService.isCategory`.
+- [x] **Performance and duplication pass.** Confirmed every entity query in the
+      project still goes through `systems/targeting.js` (two call sites, no
+      global scans, no per-sword loops); consolidated five hand-rolled distance
+      helpers into `abilities/support.js` with no behaviour change.
+- [x] `tools/catalog.mjs` reports daylight, altitude and venom scaling, so no
+      sword's published damage understates it.
+- [x] Texture preview and contact-sheet tooling used again — see the Tooling
+      note below, which is now overdue.
+
+### Still open from this milestone
+
+- [ ] **Nothing here has been in a client.** Solar in particular has a mechanic
+      no automated check can evaluate: whether a player *notices* the sword is
+      weaker at night, or just concludes it is broken. The action-bar message
+      names the sun percentage for exactly that reason, and whether that is
+      enough is a question only a player can answer.
+- [ ] Gravity Crush's altitude ramp assumes the wielder is below the target.
+      Fighting downward off a cliff at something on the ground gets the floor,
+      which is correct but may read as the ability failing. Worth watching in a
+      client before deciding whether a symmetric version is better.
+- [ ] Venom stacks are stored in the poison effect itself, which means a
+      *different* source of poison — a witch, a cave spider, a potion — feeds
+      the sword's meter. That is arguably correct and arguably an exploit; it
+      needs play, not reasoning, to settle.
+- [ ] `EnvironmentService` has one reader. Weather (`world.getDynamicProperty`
+      is not it — there is no weather query in the 2.0.0 API surface this
+      project targets) and depth are the obvious next two, and neither has a
+      sword asking for it yet.
+
 ## Completed in Crystal and Void (v0.10.0)
 
 - [x] Crystal Sword and Void Sword, taking the collection to eleven.
@@ -244,10 +283,13 @@ Only items actually finished are ticked.
 - [ ] Optional type-check step (`npm i -D @minecraft/server && tsc -p jsconfig.json`)
       wired into CI. Skipped for now to keep the project dependency-free.
 - [ ] Texture preview command — render an art source enlarged, next to a 1:1
-      copy, so a reviewer can judge it without importing the pack. Contact
-      sheets were rendered by hand for a **third** milestone running, and both
-      v0.10.0 textures needed four revisions each that only the contact sheet
-      caught. This is the highest-value tooling item on the list.
+      copy and beside the rest of the set, so a reviewer can judge it without
+      importing the pack. Contact sheets have now been re-created by hand for a
+      **fourth** milestone running, and all three v0.11.0 textures needed
+      revisions that only the contact sheet caught — Gravity's and Poison's
+      hilts both vanished at hotbar scale in their first drafts and neither the
+      linter nor the stats had anything to say about it. This is the
+      highest-value tooling item on the list and it is overdue.
 - [ ] Balance report beyond the catalogue. `tools/catalog.mjs` publishes the
       roster; a damage-per-second and cooldown-uptime comparison would make the
       milestone 13 tuning pass evidence-driven.

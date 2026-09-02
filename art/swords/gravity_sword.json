@@ -1,0 +1,35 @@
+{
+  "name": "Gravity Sword",
+  "description": "A heavy squared slab of gunmetal with a cold white core seam and a flat chisel end rather than a point — a hammer that happens to have an edge. The guard is a plain bronze bar straight across, the only horizontal guard in the collection, over a short grip and a dense counterweight pommel. Entirely achromatic apart from the bronze, so it can never be mistaken for the Void Sword's indigo and cyan.",
+  "palette": {
+    "o": "#0b0c0e",
+    "X": "#f2f6f8",
+    "H": "#9fa9b2",
+    "B": "#6a737d",
+    "S": "#414850",
+    "D": "#23272c",
+    "G": "#d4a860",
+    "g": "#9a7539",
+    "e": "#5c4318",
+    "W": "#4a4238",
+    "k": "#2a251e"
+  },
+  "pixels": [
+    "..........oooo..",
+    ".........oHXBSo.",
+    "........oHXBSDo.",
+    ".......oHXBSDo..",
+    ".......oHXBSDo..",
+    "......oHXBSDo...",
+    "......oHXBSDo...",
+    ".....oHXBSDo....",
+    "....ooHXBSo.....",
+    "...oGgGgGgo.....",
+    "....oeggeo......",
+    "....oWkoo.......",
+    "..ooWko.........",
+    ".oGGgo..........",
+    ".oggeo..........",
+    "..ooo..........."
+  ]
+}

@@ -100,6 +100,24 @@ export const SOUND_LIBRARY = Object.freeze({
     // of something being emptied.
     void_drain: { id: 'respawn_anchor.deplete', volume: 0.5, pitch: 0.8 },
 
+    // Solar: a beacon coming alive, then a conduit's bright strike. Deliberately
+    // nothing from the blaze or fire families, which Inferno and Ember own —
+    // solar is a *tone*, not a roar.
+    solar_cast: { id: 'beacon.activate', volume: 0.9, pitch: 1.2 },
+    solar_impact: { id: 'conduit.attack', volume: 0.6, pitch: 1.4 },
+    // The undead bonus landing: a beacon's power note, pitched up.
+    solar_smite: { id: 'beacon.power', volume: 0.6, pitch: 1.5 },
+
+    // Gravity: the dragon's wingbeat pitched right down for the well opening —
+    // the heaviest single sound in the vanilla set — and ancient debris landing
+    // for the crush.
+    gravity_cast: { id: 'mob.enderdragon.flap', volume: 0.9, pitch: 0.6 },
+    gravity_impact: { id: 'fall.ancient_debris', volume: 0.7, pitch: 0.8 },
+
+    // Venom: a witch's throw for the burst, brewing for what it leaves behind.
+    venom_cast: { id: 'mob.witch.throw', volume: 0.9, pitch: 0.9 },
+    venom_impact: { id: 'random.potion.brewed', volume: 0.6, pitch: 1.2 },
+
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },

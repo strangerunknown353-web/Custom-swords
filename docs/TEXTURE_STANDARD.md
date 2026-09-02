@@ -66,6 +66,9 @@ same outline discipline — but each sword carries its own theme:
 | Shadow | matte near-black, violet rim light, ragged edge | Shadow — narrow blade, violet seam on the cutting edge, wide crescent guard |
 | Crystal | cut amethyst, faceted rather than forged, warm metal against a cool stone | Crystal — broad shard, alternating specular and rose facets, rose-gold cross guard, pale grip |
 | Void | deep indigo void-metal, cold cyan rift-light, high contrast | Void — long narrow blade with the light in its *centre*, clipped chisel point, gem set in the guard |
+| Solar | white-gold light, not heat — pale steel against warm gold fittings | Solar — bright tapering blade, a solid gold sun-disc guard, the only round guard in the set |
+| Gravity | achromatic gunmetal and dust, industrial rather than cosmic | Gravity — heavy chisel-ended slab, a plain bronze bar straight across, a counterweight pommel |
+| Poison | sickly yellow-green venom sitting *on* bruised violet-grey steel | Poison — the narrowest blade in the set, corroded bronze fangs, a venom bead in the pommel |
 | Dragon | ancient bronze and bone, scaled guard, warm patina | *(not yet)* |
 
 **Two swords must never be distinguishable only by hue.** Every sword in the
@@ -231,3 +234,20 @@ Reach for that before reaching for the colour picker.
 |---|---:|---:|---:|
 | Void Sword | 12 | 39% | 240 |
 | Crystal Sword | 13 | 37% | 238 |
+
+**A fourth rule, learned the hard way in v0.11.0: a dark hilt disappears.**
+
+Gravity's and Poison's first drafts both had bronze guards around luminance 60
+and dark grips beneath them. Rendered at 16×16 on a dark inventory background,
+both hilts simply vanished — each sword read as a blade floating over a smudge.
+Every automated check passed: the palettes were well spread, the silhouettes
+were unbroken, the coverage was in range. The linter measures the spread of the
+*whole* palette and has nothing to say about the spread *within one component*.
+
+Both were fixed by lightening the guard and grip tones by roughly 40% and
+widening the guard by a pixel, and the check that caught it is the one the gate
+cannot run:
+
+> Render the icon at hotbar scale, on a dark ground, and **cover the blade with
+> your thumb**. If what is left is not recognisably a hilt, the hilt is not
+> finished.

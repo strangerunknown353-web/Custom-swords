@@ -259,6 +259,7 @@
  * @property {import('../systems/effects.js').EffectService} effects
  * @property {import('../systems/particles.js').ParticleService} particles
  * @property {import('../systems/movement.js').MovementService} movement Safe repositioning of the caster.
+ * @property {import('../systems/environment.js').EnvironmentService} environment World conditions — daylight, dimension.
  * @property {import('../systems/sounds.js').SoundService} sounds
  * @property {import('../systems/feedback.js').FeedbackService} feedback
  * @property {import('../systems/combat.js').CombatSystem} combat

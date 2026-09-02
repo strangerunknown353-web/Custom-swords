@@ -1,3 +1,5 @@
+import { round1 } from '../support.js';
+
 /**
  * Drain — the void is paid in what is nearest to gone.
  *
@@ -119,14 +121,3 @@ export const drain = {
         return { ok: true, message: `drained ${round1(healed)}` };
     },
 };
-
-/**
- * One decimal place, without a trailing `.0`. Inlined because abilities import
- * nothing — every dependency arrives through `ctx.services`.
- *
- * @param {number} value
- * @returns {string}
- */
-function round1(value) {
-    return String(Math.round(value * 10) / 10);
-}

@@ -13,6 +13,107 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [0.11.0] — 2026-09-02
+
+**Solar, Gravity and Poison Swords**, taking the collection to fourteen. Each is
+built on a question the framework had never been able to ask: what the *world*
+is doing, how far *up* a target is, and what happens when a sword's resource is
+banked on the **enemy** rather than the wielder.
+
+### Added
+
+- **Solar Sword ☀️** (`custom_swords:solar_sword`, Legendary, 9 melee, 1000
+  durability, enchantability 24 — the highest in the collection, matching
+  vanilla's soft gold).
+  - **Solar Flare** (`custom_swords:flare`, 8.5 s): a 120° cone whose damage is
+    drawn from the sky — 3 at midnight rising to 11 at noon, the widest gap
+    between a sword's best and worst case here. Worth its floor and nothing more
+    in the Nether and the End, whatever the clock says. Its payload is
+    `blindness`, and it **never ignites anything**: light is not fire, which is
+    the whole separation from Inferno and Ember Blade.
+  - **Solar Radiance** (`custom_swords:radiance`): the first passive that asks
+    *what a target is* rather than what state it is in. Bonus damage against a
+    declared target **category** — undead here — scaled by the same daylight.
+    The category is binding data, so a later sword can bind the same ability
+    against `arthropod` with no new code, and it reads Bedrock's own
+    `minecraft:type_family` rather than a hard-coded mob list that would go
+    silently stale.
+- **Gravity Sword 🪐** (`custom_swords:gravity_sword`, Epic, 10 melee — tying
+  Earth for the heaviest — 1500 durability, 0.5 s swing).
+  - **Gravity Crush** (`custom_swords:crush`, 10 s): a well that drags
+    everything inward *and downward*, with damage scaled by **how far above the
+    caster** each target was: 5 on the floor, 12 at five blocks up. The
+    collection's answer to phantoms, blazes and ledges — thirteen other swords
+    treat "five blocks up" exactly like "five blocks sideways".
+  - **Heavy Force** (`custom_swords:weigh`): every swing presses its target into
+    the ground — straight down, no horizontal component, so a crowd stays
+    gathered for the next crush — and deals bonus damage scaled by the target's
+    **maximum** health, the closest thing Bedrock offers to mass. Capped at 60
+    max health, so a golem, a ravager, a warden and the dragon are all worth the
+    same 3.
+- **Poison Sword 🧪** (`custom_swords:poison_sword`, Rare, 6 melee, 750
+  durability, 0.26 s swing).
+  - **Venomous Edge** (`custom_swords:envenom`): the framework's **fourth shape
+    of state, and the first that is not the player's**. Each landed hit reads
+    the poison the target already carries and applies it one amplifier deeper,
+    to Poison III. The count lives in the effect itself — the game is the store
+    — so there is no per-target map to leak, nothing to clean up when a mob dies
+    or despawns, and no bytes held between activations.
+  - **Venom Burst** (`custom_swords:rupture`, 6.5 s): spends it. Each target
+    takes 4 plus 3 per venom tier it was carrying, up to 13, and the venom is
+    stripped and replaced with a short residual dose. Banked on the enemy rather
+    than the wielder, which makes this the one sword that punishes *switching
+    targets*.
+- **`systems/environment.js`** — the first service that answers a question about
+  the world rather than about an entity. `daylight(dimension)` is one engine
+  call per activation, a cosine over the day so dusk fades rather than
+  switching off at an hour, and 0 outside the Overworld.
+- **`EffectService.maxHealth` / `.amplifierOf` / `.remove`** — mass, banked
+  stacks, and spending them. `amplifierOf` returns `-1` for a target carrying
+  nothing so `+ 1` starts a fresh target at 0.
+- **`TargetingService.isCategory`** — the category filter, exposed as a
+  question so an ability can branch on what a target is.
+- **Three visual profiles** (`solar`, `gravity`, `venom`) and **seven sound
+  presets**, each verified against the vanilla sound event list.
+- **`tests/unit/solar_gravity_poison.test.mjs`** (33 tests) and
+  **`tests/unit/shared_services.test.mjs`** (20 tests): daylight scaling and the
+  dimension check, the undead bonus by family, altitude scaling and its cap,
+  mass scaling and its cap, downward-only knockback, venom deepening one tier
+  per hit and stopping at the cap, the burst spending what was banked, and
+  per-player isolation for all of it.
+
+### Changed
+
+- **`abilities/support.js`** — a duplication audit for the performance pass
+  found five abilities had each written their own guarded "how far away is this
+  target" helper (`falloff`, `angleFalloff`, `nearnessOf`, `reachFraction`,
+  `safeLocation`). The duplication was cheap; the **guard** was not — each copy
+  independently decided what a dead entity handle means, and getting that wrong
+  throws out of the middle of combat resolution. The measurement is now shared
+  and the *meaning* stays with each ability, since "no bonus" and "full bonus"
+  are both right answers depending on which way the mechanic should fail.
+  Behaviour is unchanged and the existing 436 tests proved it.
+- `tools/catalog.mjs` reports the two new scaling shapes (daylight and
+  altitude), so the published catalogue does not understate a sword.
+- The mock gained `world.getTimeOfDay` and `MockEntity.removeEffect`, both real
+  APIs it had simply never needed.
+
+### Fixed
+
+- **Gravity Crush advertised a ceiling it could not reach.** The first draft
+  paired a five-block well with a six-block full-height bonus, so anything high
+  enough to earn the maximum was already outside the query and the sword quietly
+  never dealt its stated damage. Caught by a unit test, fixed in the sword
+  (reach 6, full height 5) rather than in the test.
+- **`glowing` is not a Bedrock effect.** Solar Radiance's first draft used it;
+  `core/effect_catalogue.js` rejected it at build time. `addEffect` would have
+  failed silently on every swing.
+
+### Not tested in Minecraft
+
+Everything above passes `npm run all` and none of it has been in a client.
+`docs/TESTING.md` records what that does and does not mean.
+
 ## [0.10.0] — 2026-09-02
 
 **Crystal Sword and Void Sword**, taking the collection to eleven. Both are

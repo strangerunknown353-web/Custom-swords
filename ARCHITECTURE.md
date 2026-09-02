@@ -27,7 +27,7 @@ code path.**
 │               diagnostics  bootstrap                                 │
 ├──────────────────────────────────────────────────────────────────────┤
 │ SYSTEMS       targeting  damage  combat  effects  particles          │
-│               sounds     feedback  movement                          │
+│               sounds     feedback  movement  environment             │
 ├──────────────────────────────────────────────────────────────────────┤
 │ UTIL          vec3  mathx  ticks                                     │
 ├──────────────────────────────────────────────────────────────────────┤
@@ -114,11 +114,11 @@ A sword is **pure data**: no code, no conditionals, no engine calls. This is
 Ember Blade, and it is also the shape every one of the eventual 20–25 swords
 takes.
 
-Eleven swords are registered today, all shipped: the seven Elemental Collection
-blades (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus Ember Blade,
-Shadow, Crystal and Void. The project no longer ships a diagnostic item — the
+Fourteen swords are registered today, all shipped: the seven Elemental
+Collection blades (Inferno, Thunder, Frost, Wind, Earth, Tidal, Nature) plus
+Ember Blade, Shadow, Crystal, Void, Solar, Gravity and Poison. The project no longer ships a diagnostic item — the
 former Test Blade became Ember Blade — though `isTestItem` remains in the data
-model for future use. Not one of the eleven required a new engine call:
+model for future use. Not one of the fourteen required a new engine call:
 everything a sword can do is expressed as a binding envelope over an ability,
 and every ability goes through the same combat pipeline. `SWORD_CATALOG.md` is
 generated from those definitions by `tools/catalog.mjs`, so the published stats
@@ -758,6 +758,11 @@ question, which is the test a new ability has to pass to justify existing:
 | `rift` | how far from the caster it was opened | Void |
 | `ward` | the **caster's** remaining health | Crystal |
 | `drain` | the **target's** remaining health | Void |
+| `flare` | the time of day and the dimension | Solar |
+| `radiance` | what *kind* of thing the target is | Solar |
+| `crush` | how far **above** the caster the target is | Gravity |
+| `weigh` | the target's **maximum** health, as mass | Gravity |
+| `rupture` | venom the target is already carrying | Poison |
 
 None of these reads ever throws — `getEffect` and `getComponent` both raise on a
 dead handle, and they run inside combat resolution where a throw would abandon
@@ -810,6 +815,70 @@ Three details worth stating:
 
 `config.movement.maxDashDistance` caps every dash at 10 blocks regardless of
 what a definition asks for.
+
+### Reading the world, not the fight
+
+`systems/environment.js` (v0.11.0) is the first service that answers a question
+about neither the caster nor the target. `daylight(dimension)` reports how high
+the sun stands, as 1 at noon falling to 0 across the night, and 0 anywhere the
+sun does not reach.
+
+That is a genuinely different *kind* of condition, and it is worth naming as
+one:
+
+| Condition on | Example | Read through |
+|---|---|---|
+| The caster | Crystal Guard forms only when wounded | `effects.healthFraction(ctx.player)` |
+| The target | Void Drain pays out on what is nearly gone | `effects.healthFraction(target)` |
+| The fight | Crystal Burst rings louder for a crowd | the resolved target list |
+| **The world** | **Solar Flare is worth a third of itself at night** | **`environment.daylight(ctx.dimension)`** |
+
+Three design notes that generalise:
+
+- **A ramp, not a switch.** The daylight curve is a cosine over the day, so dusk
+  fades. A sword that switched off at a fixed hour would be a rule to memorise;
+  one that fades is something a player feels.
+- **The dimension is part of the question.** `daylight` takes the dimension and
+  returns 0 for the Nether and the End regardless of the clock, because a solar
+  weapon that worked identically underground would be a solar weapon in name
+  only. That check lives in the service rather than in the ability, so the next
+  sun-reading sword inherits it.
+- **It fails to zero.** An unreadable clock reports no sun, matching every other
+  conditional read in the framework: the failure mode is "no bonus", never
+  "free bonus".
+
+Nothing here polls. One engine call at the moment an ability fires, and never
+again.
+
+### Storing state on the target instead of the player
+
+`PlayerStateStore` holds three shapes of state, all keyed by `player.id`.
+Poison Sword needed a fourth that belongs to nobody: how much venom **a
+particular mob** is carrying.
+
+The obvious implementation is a `Map` from entity id to a stack count, and it is
+a memory leak wearing a hat. Entities die, despawn, unload with their chunk and
+cross dimensions; every one of those leaves a key that nothing will ever remove,
+and the leak grows with playtime on a busy server.
+
+So the count is stored in **the effect itself**. `envenom` reads
+`effects.amplifierOf(target, 'poison')` and applies the same effect one
+amplifier higher; `rupture` reads the tiers, pays out for them, and calls
+`effects.remove` to spend them.
+
+| | Player-side (`PlayerStateStore`) | Target-side (the effect) |
+|---|---|---|
+| Keyed by | `player.id` | nothing — it *is* the entity's state |
+| Cleared by | death, disconnect, the 30-second sweep | the effect's own expiry |
+| Survives the mob dying | n/a | no, and correctly so |
+| Bytes held between activations | one map entry per active player | **zero** |
+| Spending it | `spendCharges` | `effects.remove` |
+
+The trade is that the game is now the source of truth, which means a *different*
+source of the same effect feeds the meter — a witch's poison counts as venom.
+That is recorded in `TODO.md` as a question for play rather than reasoning; it
+is arguably correct and arguably an exploit, and it is not the sort of thing
+static analysis settles.
 
 ### Acting where the caster is not
 
@@ -1111,9 +1180,9 @@ and the action bar and catalogue both show the label. Without this the choice
 was between reusable abilities and evocative names; there is no reason to lose
 either.
 
-Twelve profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
-`grove`, `ember`, `shadow`, `crystal`, `void`, and `arcane` as the framework's
-neutral default. A test asserts no two share a caster particle or a cast sound,
+Fifteen profiles ship: `fire`, `storm`, `frost`, `gale`, `stone`, `tide`,
+`grove`, `ember`, `shadow`, `crystal`, `void`, `solar`, `gravity`, `venom`, and
+`arcane` as the framework's neutral default. A test asserts no two share a caster particle or a cast sound,
 so "distinct look per theme" is enforced rather than intended — which is what
 keeps `ember` and `fire` from converging as more fire-themed swords arrive.
 
@@ -1125,6 +1194,9 @@ temptation is to reach for the same vocabulary at a different brightness:
 | `fire` / `ember` | open flame and molten spatter versus spark motes and a single candle flame |
 | `frost` / `crystal` | snow and rime versus mystical motes and a mineral flare — no snowflake anywhere in `crystal` |
 | `shadow` / `void` | portal motes marking where the wielder *was* versus dragon-breath wisps and End-sparkle marking somewhere else *arriving*; the two share not one identifier |
+| `fire` / `ember` / `solar` | the third warm theme takes the one warm vocabulary neither of the first two uses — totem sparkle and a pale spike, never flame or spatter |
+| `void` / `gravity` | cosmic and bright against dark versus entirely achromatic dust and debris |
+| `grove` / `venom` | villager-happy motes and blossom, unmistakably benign, versus a thrown toxic puff and a sour pulse |
 
 ### Why this layer exists
 

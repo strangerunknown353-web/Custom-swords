@@ -5,19 +5,19 @@ reusable framework rather than a pile of one-off scripts. The finished add-on
 will contain 20–25 swords with genuinely distinct powers, effects, particles,
 sounds and cooldowns.
 
-> **Status: v0.10.0 — eleven swords, all craftable.**
-> Crystal 🔮 and Void 🕳️ join Shadow 🌑, Ember Blade 🔥 and the seven Elemental
-> Collection blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨,
-> Tidal 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster and
-> `ROADMAP.md` for what comes next.
+> **Status: v0.11.0 — fourteen swords, all craftable.**
+> Solar ☀️, Gravity 🪐 and Poison 🧪 join Crystal 🔮, Void 🕳️, Shadow 🌑,
+> Ember Blade 🔥 and the seven Elemental Collection blades: Inferno 🔥,
+> Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and Nature 🌿. See
+> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
 >
 > **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
 > icon, name, rendering, attack animation, abilities, particles, sounds and
 > cooldowns all confirmed working. That followed two failed client tests and two
 > rounds of fixes, recorded honestly in `docs/TESTING.md`.
 >
-> Ember Blade, Frost, Thunder, Shadow, Crystal and Void have **not** been
-> client-tested.
+> Everything after v0.5.2 — Ember Blade, Frost, Thunder, Shadow, Crystal, Void,
+> Solar, Gravity and Poison — has **not** been client-tested.
 
 ---
 
@@ -58,6 +58,9 @@ both packs enabled, then give yourself a sword and right-click:
 /give @s custom_swords:shadow_sword      dash through the dark, then hit hard
 /give @s custom_swords:crystal_sword     hits harder the more of them there are
 /give @s custom_swords:void_sword        tear a rift where you are looking
+/give @s custom_swords:solar_sword       strong at noon, weak at night, no use in the Nether
+/give @s custom_swords:gravity_sword     drags things down; hits airborne targets hardest
+/give @s custom_swords:poison_sword      work venom into one target, then burst it
 ```
 
 Every sword is craftable at a crafting table — `SWORD_CATALOG.md` shows each
@@ -154,7 +157,7 @@ Stated plainly:
   exercised. Every "Tested" cell in the sword test matrix is still empty. The
   code passes static validation and a full test suite against a *mocked*
   engine — v0.5.0 proved that is not the same as working.
-- **11 of 20–25 swords.** The remaining 9–14 arrive in milestones 7, 9 and 10.
+- **14 of 20–25 swords.** The remaining 6–11 arrive in milestones 7, 9 and 10.
 - **No custom particles or sounds.** Both services reference vanilla identifiers
   only; custom assets arrive in milestone 11.
 - **No loot tables or trades.** Every sword is craftable at a table, but none

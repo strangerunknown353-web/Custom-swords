@@ -334,6 +334,23 @@ export class MockEntity {
         return { typeId: match.effect, duration: match.duration, amplifier: match.options?.amplifier ?? 0 };
     }
 
+    /**
+     * Strips every instance of an effect, as the engine does.
+     *
+     * The mock records applications as a history so a test can assert how a
+     * stack was built up; removing therefore has to drop every matching entry,
+     * or `getEffect` would keep reporting an earlier tier that the game would
+     * consider gone.
+     *
+     * @param {string} effectId
+     */
+    removeEffect(effectId) {
+        if (!this.isValid) throw new Error('Entity is not valid.');
+        const before = this.effects.length;
+        this.effects = this.effects.filter((e) => e.effect !== effectId);
+        return this.effects.length !== before;
+    }
+
     getEffects() {
         if (!this.isValid) throw new Error('Entity is not valid.');
         return this.effects.map((e) => ({ typeId: e.effect, duration: e.duration, amplifier: e.options?.amplifier ?? 0 }));
@@ -540,6 +557,15 @@ export const world = {
     },
     /** @type {any[]} */
     messages: [],
+
+    /**
+     * World time, 0-23999. Defaults to 6000 — noon — so a test that does not
+     * care about the clock gets full daylight, and one that does sets it.
+     */
+    timeOfDay: 6000,
+    getTimeOfDay() {
+        return this.timeOfDay;
+    },
 };
 
 /** Resets every mutable global between tests. */
@@ -555,6 +581,7 @@ export function resetMocks() {
     world.afterEvents.worldLoad = new Signal();
     world.players = [];
     world.messages = [];
+    world.timeOfDay = 6000;
 }
 
 /** Registry stand-in passed to `InputRouter.register`. */

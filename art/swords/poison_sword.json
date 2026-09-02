@@ -1,0 +1,36 @@
+{
+  "name": "Poison Sword",
+  "description": "The narrowest blade in the collection — a stiletto of bruised violet-grey steel with sickly yellow-green venom pooled unevenly along the cutting edge, so the toxin sits on the metal rather than the blade being made of it. Corroded bronze guard swept forward, bound cord grip, and a bead of raw venom set in the pommel.",
+  "palette": {
+    "o": "#0d0f0a",
+    "V": "#d4f24a",
+    "v": "#93b81f",
+    "B": "#5c5468",
+    "S": "#3a3346",
+    "G": "#c9a24f",
+    "g": "#86682a",
+    "W": "#b0a078",
+    "k": "#6a5c40",
+    "P": "#b8d94a",
+    "p": "#6d8a1c",
+    "D": "#241f2c"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oVo",
+    "............oVBo",
+    "...........oVBSo",
+    "..........ovVBSo",
+    ".........oVvBSDo",
+    ".....oooovVBSDo.",
+    "....oGGgoVvBSDo.",
+    ".....oGGgVBSoo..",
+    ".....oogGooo....",
+    "....oWkoo.......",
+    "..ooWko.........",
+    ".oPVPo..........",
+    ".opPpo..........",
+    "..ooo...........",
+    "................"
+  ]
+}

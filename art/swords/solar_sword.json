@@ -1,0 +1,35 @@
+{
+  "name": "Solar Sword",
+  "description": "A tapering lance of pale blue-white sun-steel, lit along the edge and brighter overall than any other blade in the set — light rather than heat. The guard is a solid gold sun-disc, the only round guard in the collection, with a smaller disc repeated as the pommel and a plain worn grip between them.",
+  "palette": {
+    "o": "#14161f",
+    "X": "#ffffff",
+    "H": "#e2eeff",
+    "B": "#a8c2dd",
+    "S": "#6d87a4",
+    "D": "#3d5169",
+    "Y": "#ffe27a",
+    "R": "#d99a1e",
+    "e": "#8a5c10",
+    "W": "#a08560",
+    "k": "#5a4630"
+  },
+  "pixels": [
+    "..............o.",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHBo",
+    "..........oXHBSo",
+    ".........oXHBSDo",
+    "........oXHBSDo.",
+    ".......oXHBSDo..",
+    "......ooXHBSo...",
+    ".....oYXYooo....",
+    "....oRYXYRo.....",
+    ".....oReRo......",
+    "...ooWkoo.......",
+    "..oWWko.........",
+    ".oYXYo..........",
+    ".oRYRo.........."
+  ]
+}

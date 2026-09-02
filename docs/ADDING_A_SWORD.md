@@ -106,7 +106,8 @@ Do not write particle ids and sound names into a binding by hand. Name a
 profile:
 
 ```js
-visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember | shadow | crystal | void | arcane
+visual: 'fire',        // fire | storm | frost | gale | stone | tide | grove | ember
+                       // shadow | crystal | void | solar | gravity | venom | arcane
 ```
 
 That supplies the caster particle, the target particle, the trail used for arcs
@@ -149,6 +150,29 @@ the benefit rather than handing it out for free. If you write a mechanic that
 pays out *above* a threshold, invert your own default rather than changing this
 one.
 
+### Reading the world
+
+`services.environment` answers questions about the world rather than about an
+entity — currently one:
+
+```js
+// 1 at noon, easing to 0 across the night; 0 in the Nether and the End
+// whatever the clock says.
+const sun = services.environment.daylight(ctx.dimension);
+const damage = params.nightDamage + params.sunBonus * sun;
+```
+
+Two rules, both learned from Solar Sword:
+
+- **Pass the dimension.** `daylight()` without it ignores the dimension check,
+  which is almost never what you want — a sun-powered ability that works
+  identically in the Nether is a sun-powered ability in name only.
+- **Ramp, do not switch.** A condition that flips at a threshold is a rule the
+  player has to memorise. One that fades is something they feel. Solar Flare's
+  action-bar message names the current sun percentage for the same reason:
+  a sword doing a third of its usual damage should say why, or it reads as a
+  bug.
+
 ### State that carries between activations
 
 If a sword should build something up as you fight with it — heat, a combo,
@@ -181,6 +205,45 @@ Two rules for the ability itself:
 
 Ember Blade is the worked example — see `swords/ember_blade.js` and both
 `abilities/builtin/ember_*.js`.
+
+### State that belongs to the target, not the player
+
+If a sword builds something up on **a particular enemy**, do not reach for a
+`Map` from entity id to a count. Entities die, despawn, unload with their chunk
+and cross dimensions, and every one of those leaves a key nothing will ever
+remove — a leak that grows with playtime.
+
+Store it in an effect instead, and let the game be the source of truth:
+
+```js
+// In the passive, on a landed hit: read what is there, apply one tier deeper.
+const carried = services.effects.amplifierOf(target, 'poison');   // -1 when absent
+services.effects.apply(target, {
+    effect: 'poison',
+    durationTicks: params.venomTicks,
+    amplifier: Math.min(carried + 1, params.maxAmplifier),
+});
+
+// In the active: read the tiers, pay out for them, then SPEND them.
+const tiers = services.effects.amplifierOf(target, 'poison') + 1;
+services.effects.remove(target, 'poison');
+```
+
+`amplifierOf` returns `-1` for a target carrying nothing, so `+ 1` starts a
+fresh target at 0 without a special case. The count expires when the effect
+does, cleans itself up when the mob dies, and costs nothing between
+activations.
+
+Two rules for the ability:
+
+- **Read before striking.** Otherwise the tier this hit applies counts towards
+  the tier this hit is deciding.
+- **Spend what you read.** An active that pays out for banked stacks without
+  removing them turns the button into a free bonus on cooldown, and the build-up
+  stops being a decision.
+
+Poison Sword is the worked example — see `swords/poison_sword.js` and
+`abilities/builtin/{envenom,rupture}.js`.
 
 ### Sword feel: swing duration
 

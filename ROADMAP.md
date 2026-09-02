@@ -148,13 +148,36 @@ detonation with pull arrived with Void Sword (`abilities/builtin/rift.js`), so
 what is left is block-aware targeting beyond the `point` mode and effects that
 persist for a few seconds rather than resolving in one activation.
 
-### 7. Swords 12–13 (planned)
-Swords 8 through 11 landed early in the interludes above — Ember Blade, Shadow,
-Crystal and Void — so this step is the two that remain of the forged and mystic
-tiers, leaning on the spatial library. They are also where the first swords
-carrying three or four activation methods at once belong, which stress-tests
-whether the activation fallback rules hold up under real bindings; every sword
-so far binds exactly two.
+### Interlude — Solar, Gravity and Poison (v0.11.0) — **done**
+Swords twelve through fourteen, and three axes the framework had never had.
+Solar reads the **world** — the time of day and the dimension — which is the
+first condition on a sword that is not about the caster, the target or the
+fight. Gravity reads **altitude**, filling the collection's one obvious gap:
+thirteen swords measured distance in a straight line and were all equally poor
+against anything flying. Poison banks its resource **on the enemy**, storing the
+count in the effect itself so there is no per-target map to leak.
+
+The milestone also carried the performance pass the growing roster needed. It
+found no duplicated queries — every entity search in the project still goes
+through `systems/targeting.js`, at exactly two call sites — but five abilities
+had each written their own guarded distance helper, so those were consolidated
+into `abilities/support.js` with no behaviour change.
+
+**Milestone 7 is complete**: swords 8 through 14 have all landed across the
+interludes. What follows is the exotic ability library and the epic and
+legendary tiers built on it.
+
+### 7. Swords 8–14 — **done**
+Delivered across the interludes above rather than as one step: Ember Blade
+(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0), Solar, Gravity and Poison
+(v0.11.0). The one item it planned that has not happened is a sword binding
+three or four activation methods at once — every sword so far binds exactly two,
+and no design has yet needed a third. Carried into step 9 rather than invented
+for its own sake.
+
+### 7b. Swords 15–16 (planned)
+The last two of the forged and mystic tiers, leaning on the spatial library and
+on the exotic one below.
 
 ### 8. Ability library — exotic and ultimates (planned)
 Shadow and light, time-based effects, meteors, and the multi-stage

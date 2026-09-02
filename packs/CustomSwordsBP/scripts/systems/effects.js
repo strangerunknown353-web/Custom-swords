@@ -159,6 +159,90 @@ export class EffectService {
     }
 
     /**
+     * An entity's maximum health — the closest thing Bedrock offers to a
+     * measure of **mass**.
+     *
+     * Gravity Sword's `weigh` reads it so a heavier thing is harder to move and
+     * takes more from being pressed down. It is a proxy, not physics: an iron
+     * golem has 100 and a zombie 20, which is the ordering the mechanic wants,
+     * and the alternative (there is no mass in the API) is no mechanic at all.
+     *
+     * Returns 0 when unreadable, so a bonus computed from it becomes nothing
+     * rather than becoming NaN.
+     *
+     * @param {Entity} target
+     * @returns {number}
+     */
+    maxHealth(target) {
+        if (target === undefined || target === null) return 0;
+        try {
+            if (!target.isValid) return 0;
+            const health = target.getComponent('minecraft:health');
+            if (health === undefined) return 0;
+            const max = /** @type {import('@minecraft/server').EntityHealthComponent} */ (health).effectiveMax;
+            return Number.isFinite(max) && max > 0 ? max : 0;
+        } catch (error) {
+            this.log.debug('effects.maxHealth failed:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * The amplifier of an effect a target currently carries, or `-1` when it
+     * carries none.
+     *
+     * This is what lets a status effect be used as **storage**. Poison Sword's
+     * passive deepens the venom already on a target by one tier per hit, and the
+     * only place that count lives is the effect itself — no per-target map, no
+     * cleanup, no memory that outlives the mob. The game is the store.
+     *
+     * `-1` rather than `undefined` or `0` so `amplifierOf(...) + 1` is the
+     * natural "one tier deeper" expression and starts a fresh target at 0.
+     *
+     * @param {Entity} target
+     * @param {string} effectId
+     * @returns {number} -1 when absent.
+     */
+    amplifierOf(target, effectId) {
+        if (target === undefined || target === null) return -1;
+        try {
+            if (!target.isValid) return -1;
+            const effect = target.getEffect(effectId);
+            if (effect === undefined) return -1;
+            const amplifier = effect.amplifier;
+            return typeof amplifier === 'number' && Number.isFinite(amplifier) ? amplifier : 0;
+        } catch (error) {
+            this.log.debug('effects.amplifierOf failed:', error);
+            return -1;
+        }
+    }
+
+    /**
+     * Strips an effect from a target.
+     *
+     * The counterpart to {@link amplifierOf}: an ability that reads banked
+     * stacks and pays out for them must also be able to **spend** them, or the
+     * bank only ever grows. `spendCharges` does the same job for the player-side
+     * store; this is the target-side equivalent.
+     *
+     * @param {Entity} target
+     * @param {string} effectId
+     * @returns {boolean} Whether an effect was actually removed.
+     */
+    remove(target, effectId) {
+        if (target === undefined || target === null) return false;
+        try {
+            if (!target.isValid) return false;
+            if (target.getEffect(effectId) === undefined) return false;
+            target.removeEffect(effectId);
+            return true;
+        } catch (error) {
+            this.log.debug('effects.remove skipped:', error);
+            return false;
+        }
+    }
+
+    /**
      * Restores health, clamped to the entity's maximum.
      *
      * Uses the health attribute component directly rather than an instant-health

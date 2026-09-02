@@ -157,6 +157,57 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'void_impact',
     }),
 
+    /**
+     * Solar: radiance, not combustion. Golden totem motes gather at the hand
+     * and a pale spike of light lands on the target.
+     *
+     * The profile that had to work hardest to avoid a neighbour: `fire` and
+     * `ember` already own warm colours, so solar takes the one warm vocabulary
+     * neither uses — sparkle and spike rather than flame and spatter — and
+     * never emits anything that reads as burning.
+     */
+    solar: Object.freeze({
+        caster: 'minecraft:totem_particle',
+        target: 'minecraft:evocation_fang_particle',
+        trail: 'minecraft:totem_particle',
+        castSound: 'solar_cast',
+        impactSound: 'solar_impact',
+    }),
+
+    /**
+     * Gravity: force made visible. Dust dragged upward at the wielder as the
+     * well opens, a heavy block-shatter where it closes, grey motes marking its
+     * edge.
+     *
+     * `void` is the profile it must not be mistaken for, and the split is
+     * deliberate: void is End-sparkle and dragon breath, cosmic and bright
+     * against dark; gravity is dust and debris, entirely achromatic. One is
+     * somewhere else arriving, the other is this place pressing down.
+     */
+    gravity: Object.freeze({
+        caster: 'minecraft:rising_border_dust_particle',
+        target: 'minecraft:dragon_destroy_block',
+        trail: 'minecraft:mycelium_dust_particle',
+        castSound: 'gravity_cast',
+        impactSound: 'gravity_impact',
+    }),
+
+    /**
+     * Venom: spit and sickness. A thrown toxic puff at the hand, a sour green
+     * pulse on whatever it lands on.
+     *
+     * `grove` is the neighbour to stay away from, and the two are opposites by
+     * design: grove is villager-happy motes and blossom shower — growth, and
+     * unmistakably benign. Nothing in venom is pleasant to look at.
+     */
+    venom: Object.freeze({
+        caster: 'minecraft:llama_spit_smoke',
+        target: 'minecraft:sculk_sensor_redstone_particle',
+        trail: 'minecraft:llama_spit_smoke',
+        castSound: 'venom_cast',
+        impactSound: 'venom_impact',
+    }),
+
     /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',

@@ -1,3 +1,5 @@
+import { round1 } from '../support.js';
+
 /**
  * Resonate — a lattice struck once, ringing louder for every body it finds.
  *
@@ -132,15 +134,3 @@ export const resonate = {
         };
     },
 };
-
-/**
- * One decimal place, without a trailing `.0`. Inlined rather than imported
- * because abilities import nothing — every dependency arrives through
- * `ctx.services`, which is what keeps them engine-free and trivially testable.
- *
- * @param {number} value
- * @returns {string}
- */
-function round1(value) {
-    return String(Math.round(value * 10) / 10);
-}

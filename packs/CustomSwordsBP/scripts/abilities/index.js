@@ -30,6 +30,12 @@ import { resonate } from './builtin/resonate.js';
 import { rift } from './builtin/rift.js';
 import { ward } from './builtin/ward.js';
 import { drain } from './builtin/drain.js';
+import { flare } from './builtin/flare.js';
+import { radiance } from './builtin/radiance.js';
+import { crush } from './builtin/crush.js';
+import { weigh } from './builtin/weigh.js';
+import { rupture } from './builtin/rupture.js';
+import { envenom } from './builtin/envenom.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -51,4 +57,10 @@ export const ABILITIES = Object.freeze([
     rift,
     ward,
     drain,
+    flare,
+    radiance,
+    crush,
+    weigh,
+    rupture,
+    envenom,
 ]);

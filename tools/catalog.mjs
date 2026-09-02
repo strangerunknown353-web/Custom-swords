@@ -198,21 +198,39 @@ if (existing === content) {
 function describeDamage(params, sword) {
     const round = (n) => String(Math.round(n * 10) / 10);
 
-    // A remote ability whose damage ramps with how far it was placed.
-    if (typeof params.nearDamage === 'number') {
-        const top = params.nearDamage + (params.reachBonus ?? 0);
-        return top > params.nearDamage
-            ? `${round(params.nearDamage)}-${round(top)} ability damage (scales with reach)`
-            : `${round(params.nearDamage)} ability damage`;
+    // Abilities whose damage ramps over a world or spatial condition. Each pairs
+    // a floor with a bonus under its own names, so the catalogue reports the
+    // range rather than silently publishing nothing.
+    for (const [floor, bonus, why] of [
+        ['nearDamage', 'reachBonus', 'scales with reach'],
+        ['nightDamage', 'sunBonus', 'scales with daylight'],
+        ['groundDamage', 'heightBonus', 'scales with the target’s height'],
+    ]) {
+        if (typeof params[floor] !== 'number') continue;
+        const top = params[floor] + (params[bonus] ?? 0);
+        return top > params[floor]
+            ? `${round(params[floor])}-${round(top)} ability damage (${why})`
+            : `${round(params[floor])} ability damage`;
     }
 
     if (typeof params.damage !== 'number' || params.damage <= 0) return undefined;
     const base = params.damage;
 
-    // A conditional bonus: a combo window, or a target already afflicted.
-    const bonus = params.empoweredDamage ?? params.escalationDamage ?? params.shatterBonus;
-    if (typeof bonus === 'number' && bonus > 0) {
-        return `${round(base)}-${round(base + bonus)} ability damage (conditional)`;
+    // A conditional bonus: a combo window, a target already afflicted, a target
+    // of the right kind, or a target heavy enough to be worth pressing on.
+    const conditional =
+        params.empoweredDamage ?? params.escalationDamage ?? params.shatterBonus ?? params.smiteDamage ?? params.maxBonus;
+    if (typeof conditional === 'number' && conditional > 0) {
+        return `${round(base)}-${round(base + conditional)} ability damage (conditional)`;
+    }
+
+    // Venom banked on the target rather than the wielder: the ceiling is the
+    // tier cap the sword's own passive declares.
+    if (typeof params.damagePerTier === 'number' && params.damagePerTier > 0) {
+        const tiers = maxVenomTiersFor(sword, params.venomEffect);
+        return tiers === undefined
+            ? `${round(base)}+ ability damage (scales with banked venom)`
+            : `${round(base)}-${round(base + params.damagePerTier * tiers)} ability damage (scales with banked venom)`;
     }
 
     // A resource the wielder banks. The ceiling lives on whichever binding of
@@ -245,6 +263,26 @@ function maxChargesFor(sword, chargeKey) {
     for (const binding of sword?.abilities ?? []) {
         const params = binding.params ?? {};
         if (params.chargeKey === chargeKey && typeof params.maxCharges === 'number') return params.maxCharges;
+    }
+    return undefined;
+}
+
+/**
+ * How many venom tiers a sword can build on one target, read from whichever of
+ * its bindings does the building. Mirrors {@link maxChargesFor}, for the
+ * resource that is banked on the enemy rather than on the wielder.
+ *
+ * @param {any} sword
+ * @param {string | undefined} venomEffect
+ * @returns {number | undefined}
+ */
+function maxVenomTiersFor(sword, venomEffect) {
+    if (venomEffect === undefined) return undefined;
+    for (const binding of sword?.abilities ?? []) {
+        const params = binding.params ?? {};
+        if (params.venomEffect === venomEffect && typeof params.maxAmplifier === 'number') {
+            return params.maxAmplifier + 1;
+        }
     }
     return undefined;
 }

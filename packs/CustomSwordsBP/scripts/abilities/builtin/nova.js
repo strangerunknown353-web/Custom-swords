@@ -1,3 +1,5 @@
+import { distanceTo, spanFraction } from '../support.js';
+
 /**
  * Nova — a radial burst whose control scales with proximity, and whose damage
  * scales with what the target is already suffering.
@@ -127,9 +129,8 @@ export const nova = {
 
 /**
  * How close a target is to the caster, as 1 at the centre falling to 0 at the
- * rim. Computed inline rather than pulled from `util/vec3.js` because
- * abilities import nothing — every dependency arrives through `ctx.services`,
- * which is what keeps them trivially testable and engine-free.
+ * rim — the inverse of the fraction `burst` ramps damage over, which is why
+ * both now read the same measurement from `abilities/support.js`.
  *
  * @param {{ x: number, y: number, z: number }} origin
  * @param {import('@minecraft/server').Entity} target
@@ -137,18 +138,7 @@ export const nova = {
  * @returns {number} 0..1
  */
 function nearnessOf(origin, target, range) {
-    if (!(range > 0)) return 1;
-    try {
-        const { x, y, z } = target.location;
-        const dx = x - origin.x;
-        const dy = y - origin.y;
-        const dz = z - origin.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (!Number.isFinite(distance)) return 1;
-        return Math.max(0, Math.min(1, 1 - distance / range));
-    } catch {
-        // The handle went invalid between the strike and this read. Treat it as
-        // a centre hit rather than abandoning the target's effects.
-        return 1;
-    }
+    // A handle that went invalid between the strike and this read is treated as
+    // a centre hit rather than abandoning the target's effects.
+    return 1 - (spanFraction(distanceTo(origin, target), range) ?? 0);
 }

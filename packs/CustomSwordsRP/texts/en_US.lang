@@ -57,3 +57,18 @@ item.custom_swords:crystal_sword.description=Struck once, it rings until everyth
 item.custom_swords:void_sword=§6Void Sword§r
 item.custom_swords:void_sword.name=§6Void Sword§r
 item.custom_swords:void_sword.description=The edge is a seam. What it opens does not stay open.
+
+## custom_swords:solar_sword - Legendary
+item.custom_swords:solar_sword=§6Solar Sword§r
+item.custom_swords:solar_sword.name=§6Solar Sword§r
+item.custom_swords:solar_sword.description=Sharpened at noon. It remembers, and it is much less at night.
+
+## custom_swords:gravity_sword - Epic
+item.custom_swords:gravity_sword=§dGravity Sword§r
+item.custom_swords:gravity_sword.name=§dGravity Sword§r
+item.custom_swords:gravity_sword.description=Everything it touches remembers which way is down.
+
+## custom_swords:poison_sword - Rare
+item.custom_swords:poison_sword=§9Poison Sword§r
+item.custom_swords:poison_sword.name=§9Poison Sword§r
+item.custom_swords:poison_sword.description=The wound is the smaller half of what it leaves behind.

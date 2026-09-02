@@ -1,3 +1,5 @@
+import { distanceBetween, spanFraction } from '../support.js';
+
 /**
  * Rift — a collapse torn open somewhere the caster is only *looking*.
  *
@@ -156,7 +158,7 @@ export const rift = {
 
 /**
  * How far the rift was torn, as 0 at the caster rising to 1 at the binding's
- * full reach. Computed inline because abilities import nothing.
+ * full reach.
  *
  * @param {{ x: number, y: number, z: number }} origin
  * @param {{ x: number, y: number, z: number }} centre
@@ -164,11 +166,5 @@ export const rift = {
  * @returns {number} 0..1
  */
 function reachFraction(origin, centre, reach) {
-    if (!(reach > 0)) return 0;
-    const dx = centre.x - origin.x;
-    const dy = centre.y - origin.y;
-    const dz = centre.z - origin.z;
-    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    if (!Number.isFinite(distance)) return 0;
-    return Math.max(0, Math.min(1, distance / reach));
+    return spanFraction(distanceBetween(origin, centre), reach) ?? 0;
 }

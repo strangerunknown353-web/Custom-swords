@@ -18,7 +18,7 @@ Only the checklist below is.
 ```bash
 npm run generate    # rebuild derived pack content from sword definitions
 npm run validate    # manifests, UUIDs, JSON, cross-references, architecture rules
-npm test            # 436 unit + integration tests against a mocked @minecraft/server
+npm test            # 492 unit + integration tests against a mocked @minecraft/server
 npm run build       # produce dist/*.mcaddon and dist/*.mcpack
 
 npm run catalog     # regenerate SWORD_CATALOG.md (`-- --check` to fail on drift)
@@ -174,8 +174,8 @@ the item-and-presentation layer on that basis.
 
 What is **not** ticked is per-sword ability behaviour: the client test exercised
 the add-on, not each sword's individual actives and passives. Ember Blade
-(v0.6.0), Shadow (v0.8.0) and Crystal and Void (v0.10.0) have not been in a
-client at all.
+(v0.6.0), Shadow (v0.8.0), Crystal and Void (v0.10.0) and Solar, Gravity and
+Poison (v0.11.0) have not been in a client at all.
 
 The other columns record what is verified *statically*.
 
@@ -192,6 +192,9 @@ The other columns record what is verified *statically*.
 | Ember Blade 🔥 | `custom_swords:ember_blade` | 6 | Ember Burst — spends banked heat, 3 m radius (3.5 s) | Ember Edge — banks 1 heat per hit, max 5 | ✅ | ✅ | ✅ | ☐ |
 | Crystal 🔮 | `custom_swords:crystal_sword` | 8 | Crystal Burst — 4.5 m ring, +1.2 damage to **every** target per extra target, capped at +4.2 (8 s) | Crystal Guard — Resistance 5 s below 60 % health, II below 30 %, once per 7 s | ✅ | ✅ | ✅ | ☐ |
 | Void 🕳️ | `custom_swords:void_sword` | 9 | Void Rift — collapse at the aimed point up to 10 m, 3.5 m radius, 5→9 damage with reach, pulls inward (9 s) | Void Drain — up to 3 HP back, scaled by how little the target has left | ✅ | ✅ | ✅ | ☐ |
+| Solar ☀️ | `custom_swords:solar_sword` | 9 | Solar Flare — 120° cone at 6 m, 3 damage at midnight rising to 11 at noon, blinds only in daylight (8.5 s) | Solar Radiance — +6 against undead at noon, +1.5 at midnight, nothing against the living | ✅ | ✅ | ✅ | ☐ |
+| Gravity 🪐 | `custom_swords:gravity_sword` | 10 | Gravity Crush — 6 m well, pulls in and presses down, 5 damage on the floor rising to 12 five blocks up (10 s) | Heavy Force — pins straight down, +up to 3 scaled by the target's maximum health | ✅ | ✅ | ✅ | ☐ |
+| Poison 🧪 | `custom_swords:poison_sword` | 6 | Venom Burst — 4 m ring, 4 damage +3 per venom tier the target carries, to 13; spends the venom (6.5 s) | Venomous Edge — deepens the target's poison one tier per hit, to Poison III | ✅ | ✅ | ✅ | ☐ |
 
 Legend: ✅ = verified by `npm run check`. ☐ = not verified; requires a client.
 
@@ -506,6 +509,79 @@ swinging at one pig on flat ground.
       **not** sustain you — this is the abuse case the mechanic is shaped to
       prevent, and it is the single most important line in this section
 
+### F5. Solar Sword — the sword that keeps office hours
+
+The only sword whose power depends on something outside the fight, so this
+section needs `/time set` and a trip to the Nether.
+
+**Solar Flare (`use`, 8.5 s):**
+
+- [ ] `/time set noon` — the flare hits for about 11 and **blinds** what it hits
+- [ ] `/time set midnight` — the same flare hits for about 3 and blinds nothing
+- [ ] Dawn and dusk land somewhere in between rather than snapping between the two
+- [ ] The action bar names the sun percentage, so the difference reads as a
+      mechanic rather than as a broken sword. **If it does not, that is a
+      finding**
+- [ ] In the **Nether** at any hour, the flare is at its floor
+- [ ] In the **End** at any hour, the flare is at its floor
+- [ ] **Nothing catches fire.** Fire the flare into dry grass, a wooden build and
+      a group of mobs, and confirm no ignition anywhere. This is the line that
+      separates Solar from Inferno and Ember Blade
+
+**Solar Radiance (`attack`):**
+
+- [ ] At noon, zombies and skeletons die markedly faster than creepers or pigs
+- [ ] At midnight the undead bonus is small but not zero
+- [ ] A **husk, drowned, stray or wither skeleton** is smitten too — the bonus
+      reads Bedrock's undead type family, not a list, so all of them should work
+- [ ] A creeper, spider or villager gets no bonus at any hour
+
+### F6. Gravity Sword — fighting upward
+
+Needs something airborne. A phantom at night, a blaze in a fortress, or a mob
+standing on a two-block pillar all work.
+
+**Gravity Crush (`use`, 10 s):**
+
+- [ ] Against a mob at your feet, about 5 damage
+- [ ] Against a mob roughly five blocks above you, about 12
+- [ ] Against a mob *below* you, the floor — this is altitude, not distance
+- [ ] Everything caught is dragged **towards** you and **downwards**, never
+      scattered or launched
+- [ ] The ring particle makes the well's reach readable — if you cannot tell
+      what was inside it, that is a finding
+- [ ] No blocks move, fall, or change. Fire it inside a build and confirm
+
+**Heavy Force (`attack`):**
+
+- [ ] Mobs are pressed **down** rather than knocked back — they should stay
+      roughly where they were
+- [ ] An iron golem or ravager takes visibly more than a chicken or a bat
+- [ ] A *wounded* iron golem still takes the full bonus (mass is its maximum
+      health, not what is left of it)
+- [ ] Hitting the Ender Dragon or a Warden is worth no more than an iron golem
+
+### F7. Poison Sword — the meter kept on the enemy
+
+**Venomous Edge (`attack`):**
+
+- [ ] The first hit on a fresh mob applies Poison I
+- [ ] The second applies Poison II, the third Poison III
+- [ ] It stops at Poison III however long you keep swinging
+- [ ] Walking away and letting it expire loses the stack — a mob left alone for
+      six seconds is back to nothing
+
+**Venom Burst (`use`, 6.5 s):**
+
+- [ ] Against a clean mob, about 4 damage
+- [ ] Against a mob you have worked to Poison III, about 13
+- [ ] Immediately after a burst, a **second** burst on the same mob is weak
+      again — the venom was spent, not just read
+- [ ] The burst leaves its targets poisoned, not cured
+- [ ] **The exploit check:** poison a mob with a splash potion or let a witch do
+      it, then burst. If the sword pays out for poison it did not apply, note
+      it — that is a known open question, not a surprise
+
 ### G. Combat safety layer
 
 - [ ] Spam-clicking any sword as fast as possible produces refusals, never
@@ -585,6 +661,63 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
+
+### v0.11.0 — Solar, Gravity and Poison, not yet tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | OK — 0 errors, 0 warnings |
+| `npm test` | **492 passed**, 0 failed |
+| Recipes | 14 recipes, 59 ingredient/repair items verified against 1607 vanilla items; no two swords craft from the same grid |
+| Registry | 14 swords, 24 abilities, none orphaned |
+| Textures | 14 sources, 0 errors, 0 warnings; Solar 11 colours / 34 % / spread 233, Gravity 11 / 38 % / 233, Poison 12 / 34 % / 209 |
+| Sounds | 36 presets verified against 1824 vanilla sound events |
+| Performance | 6 engine subscriptions, 1 recurring interval, 0 gameplay tick loops — **unchanged since v0.9.0**, five swords ago |
+
+**Two defects were caught by the automated layer this milestone, and both are
+worth recording because they are the kind that ship silently:**
+
+1. **`glowing` is not a Bedrock effect.** Solar Radiance's first draft applied
+   it. `core/effect_catalogue.js` rejected it at build time; without that
+   catalogue, `addEffect` would have failed quietly on every single swing and
+   the only symptom would have been a mark that never appeared.
+2. **Gravity Crush advertised a ceiling it could not reach.** A five-block well
+   paired with a six-block full-height bonus meant anything high enough to earn
+   the maximum was already outside the entity query. The sword would have worked
+   — it would just never have dealt its stated damage. A unit test caught it;
+   nothing else would have.
+
+**Three things are new in kind, and each has a failure mode no check here can
+see:**
+
+1. **Solar is the first sword that is deliberately weak half the time.** The
+   tests prove the damage tracks the clock. Nothing proves a player reads that
+   as a mechanic rather than as a broken sword — which is why the action bar
+   names the sun percentage, and whether that is enough is a client question.
+2. **Gravity Crush is aimed upward.** The tests prove damage scales with height
+   against a mocked entity at a set coordinate. Whether the well's ring particle
+   makes its reach legible, and whether phantoms are actually inside it in a real
+   fight, is not something a mock can answer.
+3. **Poison stores its meter in the poison effect itself.** That means a
+   *different* source of poison — a witch, a cave spider, a splash potion —
+   feeds the sword's meter. It is arguably correct and arguably an exploit, and
+   only play settles it.
+
+Specifically to check:
+
+- [ ] Solar Flare is visibly stronger at noon than at midnight
+- [ ] Solar Flare is weak in the Nether **at every hour**
+- [ ] Solar Flare sets **nothing** on fire — swing it into dry grass and a
+      wooden build and confirm
+- [ ] Solar Radiance kills zombies and skeletons markedly faster than creepers
+- [ ] Gravity Crush hits a phantom or a blaze harder than a zombie at your feet
+- [ ] Gravity Crush pulls inward and downward, never scattering
+- [ ] Heavy Force pins mobs rather than knocking them back
+- [ ] Venomous Edge visibly deepens poison over three hits on one mob
+- [ ] Venom Burst hurts a well-poisoned mob far more than a fresh one
+- [ ] A second Venom Burst straight after the first is weak (the venom was spent)
+- [ ] All three new recipes work in survival and produce exactly one sword
+- [ ] None of the nine new particles or seven new sounds are silent or missing
 
 ### v0.10.0 — Crystal and Void, not yet tested in Minecraft
 

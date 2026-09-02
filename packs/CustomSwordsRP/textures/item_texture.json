@@ -34,6 +34,15 @@
     },
     "void_sword": {
       "textures": "textures/items/custom_swords/swords/void_sword"
+    },
+    "solar_sword": {
+      "textures": "textures/items/custom_swords/swords/solar_sword"
+    },
+    "gravity_sword": {
+      "textures": "textures/items/custom_swords/swords/gravity_sword"
+    },
+    "poison_sword": {
+      "textures": "textures/items/custom_swords/swords/poison_sword"
     }
   }
 }

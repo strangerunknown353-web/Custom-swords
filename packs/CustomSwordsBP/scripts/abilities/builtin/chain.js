@@ -1,3 +1,5 @@
+import { locationOf } from '../support.js';
+
 /**
  * Chain — a precise strike on one target that arcs to nearby others.
  *
@@ -130,12 +132,10 @@ export const chain = {
  * @returns {{ x: number, y: number, z: number }}
  */
 function safeLocation(entity) {
-    try {
-        const { x, y, z } = entity.location;
-        return { x, y: y + 1, z };
-    } catch {
-        return { x: 0, y: 0, z: 0 };
-    }
+    // Chest height, so an arc drawn between two mobs runs through their bodies
+    // rather than along the floor. A dead handle collapses the arc to the
+    // origin, which draws nothing — better than throwing mid-chain.
+    return locationOf(entity, 1) ?? { x: 0, y: 0, z: 0 };
 }
 
 /**

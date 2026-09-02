@@ -8,15 +8,19 @@ and from CI artifacts.
 
 | File | What it is |
 |---|---|
-| `CustomSwords-v1.1.0.mcaddon` | **The one to install.** Both packs in a single file — open it and Minecraft imports the behaviour pack and the resource pack together. |
-| `CustomSwordsBP-v1.1.0.mcpack` | Behaviour pack alone: the sixteen item definitions, their recipes and the whole script framework. Needs the resource pack alongside it, or the swords have no icons or names. |
-| `CustomSwordsRP-v1.1.0.mcpack` | Resource pack alone: the sixteen icons, the atlas entry and the English strings. |
+| `CustomSwords-v1.2.0.mcaddon` | **The one to install.** Both packs in a single file — open it and Minecraft imports the behaviour pack and the resource pack together. |
+| `CustomSwordsBP-v1.2.0.mcpack` | Behaviour pack alone: the sixteen item definitions, their recipes and the whole script framework. Needs the resource pack alongside it, or the swords have no icons or names. |
+| `CustomSwordsRP-v1.2.0.mcpack` | Resource pack alone: the sixteen icons, the atlas entry and the English strings. |
 
-**v1.1.0 — the art pass.** All sixteen icons redrawn so each is its own weapon
-rather than the same blade in a different colour: sixteen blade profiles across
-six hilt forms. Sword #8 is named Ocean Sword (its identifier is unchanged, so
-copies already crafted are unaffected). Impact sounds are capped at four per
-strike, down from thirteen in a single frame on the widest abilities.
+**v1.2.0 — the silhouette correction.** All sixteen icons redrawn upright so
+every weapon unmistakably reads as a sword: a long blade over a crossguard
+wider than it, a short grip and a pommel. The previous set measured 36-50%
+blade — the handle was longer than the blade — and read as daggers. This one
+is 67-87% blade, and the build checks it.
+
+**v1.1.0 before it — the art pass.** Each sword got its own weapon rather than
+the same blade in a different colour: sixteen blade profiles, six hilt forms.
+Impact sounds capped at four per strike.
 
 **v1.0.0 before it — the engineering pass.** The build gate that had been
 silently validating nothing now validates; a lethal hit no longer abandons the
@@ -85,7 +89,7 @@ Then work through the checklist in `../docs/TESTING.md`, starting with section
 and v0.5.2 builds fixed. Results are recorded in that file, honestly, including
 the failure.
 
-**Nothing in v1.1.0 has been in a client** — not the sixteen new icons, not the
+**Nothing in v1.2.0 has been in a client** — not the sixteen redrawn icons, not the
 renamed Ocean Sword, not the sound cap — and eleven of the sixteen swords have
 never been in one at all. Everything passes every check this repository can run
 without a game, which v0.5.0 proved is not the same thing as working.

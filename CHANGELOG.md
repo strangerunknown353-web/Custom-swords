@@ -13,6 +13,70 @@ together; `npm run validate` fails if they ever drift apart.
 
 Nothing yet.
 
+## [1.2.0] — 2026-09-02
+
+**The silhouette correction.** No new swords, no changed abilities, no changed
+recipes, no changed scripts beyond the texture gate. All sixteen icons are
+redrawn again, because v1.1.0 gave each sword its own weapon and got the
+proportions of that weapon wrong.
+
+### Fixed — the swords were daggers
+
+Measured, the v1.1.0 set was **36-50% blade**: on twelve of the sixteen the
+handle was longer than the blade. Nothing in the pipeline noticed, because
+every texture rule up to then graded colour, contrast or silhouette *overlap*,
+and none of them can tell a sword from a knife.
+
+All sixteen are now **67-87% blade**, against a floor of 65% that
+`npm run validate` enforces. Two changes got there:
+
+- **The blade grew and the hilt shrank.** Ten or eleven rows of blade above a
+  five-row hilt, instead of eight rows of blade under a sprawling diagonal
+  crossguard that was eating half the canvas.
+- **The swords are drawn upright.** This was geometry, not taste: at 45° a
+  ten-row blade reaches the far edge of a sixteen-pixel canvas with nothing
+  left for a hilt — which is exactly why vanilla's own blade stops at eight
+  rows — and every compromise that buys the length back bends the blade into
+  something that reads as a flame or a horn. Three attempts confirmed it before
+  the orientation changed.
+
+**The crossguard is now wider than the blade on every sword**, from 8-vs-4 up
+to 14-vs-7. A guard no wider than its blade does not read as a guard, and
+without a guard an upright blade reads as a rod. Also checked on every build.
+
+### Changed — keeping sixteen upright swords apart
+
+A shared upright skeleton makes silhouettes converge, so the blade carries a
+**taper** as well as a width: `straight`, `leaf`, `flare` or `spike`. No two
+swords share a combination of width, taper, tip, length and hilt. The first
+render of the upright set tripped thirteen warnings; the worst silhouette pair
+was 100% identical and the worst colour pair scored 26 against a floor of 50.
+After the taper work and a colour pass: **zero warnings**, worst silhouette
+overlap 95%, closest colour pair 50.7.
+
+Ember Blade is the collection's documented shading benchmark and had fallen to
+eight colours, below the set's median of nine. It carries twelve again — four
+tones down the coal plus three separate heats of live ember — rather than the
+benchmark test being lowered to meet it.
+
+### Added — gates
+
+- **Blade proportion.** The crossguard is found as the row where the icon
+  suddenly gets *wider*, not the widest row: on a sword with a slender guard
+  and a heavy pommel, "widest" finds the pommel and reports the blade as half
+  the weapon. Everything above the guard is blade.
+- **Guard width** against the blade width two rows above it.
+
+Both were confirmed to fire by shortening a blade back to the v1.1.0
+proportion and watching the build complain.
+
+### Unchanged
+
+Abilities, passives, cooldowns, damage, targeting, recipes, item registration,
+manifests and dependencies are untouched. 543 tests pass exactly as before.
+
+**None of this has been tested in Minecraft.** See `docs/TESTING.md`.
+
 ## [1.1.0] — 2026-09-02
 
 **The art pass.** No new swords, no removed swords, no reworked abilities. All

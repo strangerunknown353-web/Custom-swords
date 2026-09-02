@@ -1,6 +1,6 @@
 {
   "name": "Earth Sword",
-  "description": "A blunt deepslate slab with a chisel end and no point at all, iron-shod and weighted with stone.",
+  "description": "A long blunt slab of deepslate with a chisel end rather than a point, iron-shod and weighted with stone.",
   "palette": {
     "o": "#100e0b",
     "H": "#cfc8b6",
@@ -8,30 +8,26 @@
     "S": "#5e584c",
     "D": "#35312a",
     "M": "#3fd08a",
-    "G": "#a89e88",
-    "g": "#5a5346",
-    "e": "#3d382f",
-    "k": "#2b241b",
-    "W": "#6b5c48",
-    "P": "#d8d2c0",
-    "p": "#8a8270"
+    "A": "#a89e88",
+    "K": "#2b241b",
+    "P": "#d8d2c0"
   },
   "pixels": [
-    ".........oooooo.",
-    "........oHHBSDo.",
-    "........oHHBSDo.",
-    ".......oHHBSDo..",
-    ".....oooHMBSDo..",
-    "....ogGooHBSDo..",
-    ".....ogGoHBSo...",
-    "......ogGoBo....",
-    ".....oWoeGo.....",
-    "....oWkkoeGo....",
-    "..ooWkko.oeo....",
-    ".oPPkko...o.....",
-    "oPPPpo..........",
-    "oPPppo..........",
-    ".oppo...........",
-    "................"
+    ".....ooooooo....",
+    "......oHSo......",
+    ".....oHHBSDo....",
+    ".....oHHBSDo....",
+    ".....oHHMSDo....",
+    ".....oHHBSDo....",
+    ".....oHHBSDo....",
+    ".....oHHBSDo....",
+    ".....oHHBSDo....",
+    ".....oHHBSDo....",
+    ".ooooooHHHooooo.",
+    ".oAAAAAAAAAAAAo.",
+    ".oBBBBBBBBBBBBo.",
+    ".....oKKKKo.....",
+    "....ooPPPPoo....",
+    "....oPPPPPPo...."
   ]
 }

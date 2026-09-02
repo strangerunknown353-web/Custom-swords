@@ -12,9 +12,12 @@ sounds and cooldowns.
 > Earth 🪨, Ocean 🌊 and Nature 🌿. See `SWORD_CATALOG.md` for the roster, its
 > crafting progression and its output curve.
 >
-> v1.1.0 is the art pass: all sixteen icons redrawn so that each is its own
-> weapon rather than the same blade in a different colour, across six hilt forms
-> and sixteen blade profiles. v1.0.0 before it was the engineering pass — the
+> v1.2.0 is the silhouette correction: v1.1.0 gave each sword its own weapon and
+> got the proportions wrong — measured, that set was 36-50% blade, so the handle
+> was longer than the blade and the icons read as daggers. All sixteen are
+> redrawn upright at 67-87% blade, with a crossguard wider than the blade on
+> every one, and both are checked on every build. v1.0.0 before that was the
+> engineering pass — the
 > build gates that were silently checking nothing now check, the collection is
 > priced so the cheapest sword is not the strongest, and the properties this
 > addon has always claimed (it never modifies the world, no two icons look
@@ -49,11 +52,11 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v1.1.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v1.1.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v1.1.0.mcpack` | resource pack alone |
+| `CustomSwords-v1.2.0.mcaddon` | import both packs at once — this is the one to test with |
+| `CustomSwordsBP-v1.2.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v1.2.0.mcpack` | resource pack alone |
 
-Prefer not to build? `releases/CustomSwords-v1.1.0.mcaddon` is a committed copy
+Prefer not to build? `releases/CustomSwords-v1.2.0.mcaddon` is a committed copy
 of the same file.
 
 Open the `.mcaddon` on a device with Minecraft installed, create a world with

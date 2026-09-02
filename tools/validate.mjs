@@ -456,6 +456,53 @@ function iconDistance(a, b) {
     return counted === 0 ? 0 : sum / counted;
 }
 
+/** Below this share of blade, an icon reads as a dagger rather than a sword. */
+const BLADE_FLOOR = 0.65;
+
+/**
+ * How much of an icon is blade rather than hilt.
+ *
+ * The crossguard is found as the row where the icon suddenly gets *wider* — not
+ * the widest row, which on a sword with a slender guard and a heavy pommel
+ * finds the pommel and reports the blade as half the weapon. Everything above
+ * that row is blade.
+ *
+ * This exists because the v1.1.0 set measured 36-50%: the handle was longer
+ * than the blade on twelve of the sixteen swords, and nothing in the pipeline
+ * noticed. Every other texture rule grades colour, contrast or silhouette
+ * *overlap*; none of them can tell a sword from a knife.
+ *
+ * @param {Uint8ClampedArray | Uint8Array} pixels
+ * @returns {{ share: number, guard: number, blade: number }}
+ */
+function bladeShare(pixels) {
+    const widths = [];
+    for (let y = 0; y < 16; y++) {
+        let w = 0;
+        for (let x = 0; x < 16; x++) if (pixels[(y * 16 + x) * 4 + 3] > 0) w++;
+        widths.push(w);
+    }
+    const filled = widths.map((w, y) => ({ w, y })).filter((r) => r.w > 0);
+    if (filled.length < 3) return { share: 1, guard: 0, blade: 0 };
+    const top = filled[0].y;
+    const bottom = filled[filled.length - 1].y;
+    let waist = bottom;
+    let jump = -Infinity;
+    for (const { y } of filled) {
+        if (y <= top + (bottom - top) * 0.45) continue;
+        const delta = widths[y] - widths[y - 1];
+        if (delta > jump) {
+            jump = delta;
+            waist = y;
+        }
+    }
+    return {
+        share: (waist - top) / (bottom - top),
+        guard: widths[waist],
+        blade: widths[Math.max(0, waist - 2)],
+    };
+}
+
 /** Above this share of a common silhouette, two swords are the same weapon. */
 const SILHOUETTE_CEILING = 0.95;
 
@@ -511,6 +558,31 @@ function validateIconDistinctness(swords) {
         }
     }
 
+    // Proportion is a property of one icon, so it is checked before the pairwise
+    // work rather than inside it.
+    let leanest = 1;
+    let leanestId = 'none';
+    for (const icon of icons) {
+        const { share, guard, blade } = bladeShare(icon.pixels);
+        if (share < leanest) {
+            leanest = share;
+            leanestId = icon.id;
+        }
+        if (share < BLADE_FLOOR) {
+            warn(
+                `${icon.id} is only ${(share * 100).toFixed(0)}% blade (floor ` +
+                    `${(BLADE_FLOOR * 100).toFixed(0)}%). A weapon whose handle rivals its blade reads ` +
+                    'as a dagger — lengthen the blade or shorten the hilt.',
+            );
+        }
+        if (guard <= blade) {
+            warn(
+                `${icon.id} has a crossguard ${guard} wide against a blade ${blade} wide. ` +
+                    'A guard no wider than its blade does not read as a guard at sixteen pixels.',
+            );
+        }
+    }
+
     let closest = Number.POSITIVE_INFINITY;
     let closestPair = 'none';
     let widest = 0;
@@ -552,6 +624,10 @@ function validateIconDistinctness(swords) {
         note(
             `silhouette overlap: widest pair is ${widestPair} at ${(widest * 100).toFixed(0)}% ` +
                 `(ceiling ${(SILHOUETTE_CEILING * 100).toFixed(0)}%).`,
+        );
+        note(
+            `blade proportion: leanest is ${leanestId} at ${(leanest * 100).toFixed(0)}% blade ` +
+                `(floor ${(BLADE_FLOOR * 100).toFixed(0)}%).`,
         );
     }
 }

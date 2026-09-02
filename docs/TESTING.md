@@ -751,6 +751,42 @@ not the same as seeing it in a hotbar. Never loaded into a client.
 The combat, damage and targeting layer passed every automated check, including
 the edge-case suite. Never loaded into a client.
 
+### v1.2.0 — the silhouette correction, not tested in Minecraft
+
+| Check | Result |
+|---|---|
+| `npm run validate` | **0 errors, 0 warnings** |
+| `npm test` | **543 passed**, 0 failed — unchanged, because no gameplay code changed |
+| Blade proportion | 67-87% blade across all sixteen, floor 65%; leanest is Ember Blade at 67% |
+| Crossguard | wider than its blade on every sword, from 8-vs-4 to 14-vs-7 |
+| Silhouette | worst overlap 95% (Inferno/Crystal), ceiling 95% |
+| Colour | closest pair Frost/Wind at 50.7, floor 50 |
+| Registration | re-verified on the built archives after the art change: 16 identifiers, names, icons, recipes and lang keys all intact |
+| Packages | `.mcaddon` 141 entries, BP `.mcpack` 120, RP `.mcpack` 21 — all CRC-clean, all manifests `[1,2,0]` |
+
+**The defect this release fixed was one the pipeline could not see.** Every
+texture rule in the project graded an icon's colour, contrast, palette
+discipline or silhouette *overlap* with its neighbours. Not one of them could
+distinguish a sword from a knife, so sixteen icons whose handles were longer
+than their blades passed a clean build. The measurement now exists, and
+shortening a blade back to the old proportion was confirmed to trip it.
+
+**Three orientations were tried before one worked**, and the failures are worth
+recording because they were not arbitrary. A diagonal blade long enough to be
+70% of the icon runs off the edge of a sixteen-pixel canvas before there is
+room for a hilt — which is why vanilla's own blade stops at eight rows — and
+both attempts to buy the length back (pinning one blade edge, leaning the blade
+harder) produced a curved shape that read as a flame standing on a plinth. A
+procedurally generated hilt produced a pedestal. Upright, with a horizontal
+crossguard, is what reads.
+
+**What this release did not do, and cannot claim:** nothing here has been in
+Minecraft. The icons were rendered and looked at, at hotbar scale and enlarged,
+against each other — which is the closest this environment gets to seeing them
+in an inventory, and is not the same thing. In particular, whether an upright
+sword sits well beside vanilla's diagonal ones in a real hotbar is a judgement
+only a client can settle.
+
 ### v1.1.0 — the art pass, not tested in Minecraft
 
 | Check | Result |

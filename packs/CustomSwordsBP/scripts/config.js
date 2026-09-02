@@ -15,7 +15,7 @@ export const CONFIG = Object.freeze({
     namespace: 'custom_swords',
 
     /** Semantic version of the framework. Kept in sync by `tools/set-version.mjs`. */
-    version: '1.1.0',
+    version: '1.2.0',
 
     debug: Object.freeze({
         /** Emit lifecycle + dispatch logs to the content log. */

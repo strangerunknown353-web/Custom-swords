@@ -168,8 +168,8 @@ fails on:
 - **a sword with no authored source at all.**
 
 It warns on near-duplicate palette entries, on two icons closer than 50 in mean
-colour distance, and — since v1.1.0 — on two icons sharing more than 95% of
-their silhouette.
+colour distance, on two icons sharing more than 95% of their silhouette, on an
+icon less than 65% blade, and on a crossguard no wider than the blade above it.
 
 That last one exists because the rule above it was not enough. "Identical pixel
 grid" catches a copy-paste and nothing else, and the collection drifted into
@@ -179,6 +179,28 @@ overlap measure is intersection over union of the two opaque masks, which
 throws the empty background away — the naive version, share of all 256 pixels
 that agree, reads above 90% for every pair here and separates nothing.
 
+### Proportion, and why upright
+
+**A sword icon is at least 65% blade.** The v1.1.0 set measured 36-50%: the
+handle was longer than the blade on twelve of the sixteen, which is a dagger,
+and nothing in the pipeline noticed because every rule up to then graded
+colour, contrast or silhouette *overlap* — none of them can tell a sword from
+a knife. `npm run validate` measures it now, finding the crossguard as the row
+where the icon suddenly gets wider and calling everything above it blade.
+
+The swords are drawn **upright** rather than on vanilla's diagonal. That was
+not a style preference; it is geometry. At 45° a ten-row blade reaches the far
+edge of a sixteen-pixel canvas with nothing left for a hilt, which is why
+vanilla's own blade stops at eight rows, and every compromise that buys the
+length back — pinning one edge, leaning harder — bends the blade into a shape
+that reads as a flame or a horn. Three attempts confirmed it. Upright leaves
+the whole canvas height for the blade, and a vertical blade above a horizontal
+crossguard is the most legible sword a sixteen-pixel icon can carry.
+
+The other half of the rule: **the crossguard must be wider than the blade**,
+also checked. A guard no wider than the blade it sits under does not read as a
+guard, and without a guard an upright blade reads as a rod.
+
 ### The six hilt forms
 
 Varying the blade alone is not enough to keep the silhouettes apart, so the
@@ -186,16 +208,24 @@ collection has six hilts and every sword takes one:
 
 | Form | Reads as | Used by |
 |---|---|---|
-| `standard` | a long crossguard, round pommel | Inferno, Crystal |
-| `heavy` | a counterweight instead of a cap | Ember, Earth, Gravity, — |
-| `slim` | a collar, barely a guard | Frost, Wind, Poison |
-| `cross` | long quillons both ways, ceremonial | Thunder, Ocean, Solar |
+| `broad` | a wide bar, plainly forged | Inferno, Ocean, Solar |
+| `plain` | narrower, unadorned | Frost, Wind, Poison |
+| `swept` | flaring downward toward the hand | Shadow, Nature, Storm |
+| `ornate` | studded quillons | Thunder, Crystal |
+| `anvil` | the heaviest, with a slab pommel | Ember, Earth, Gravity |
 | `ring` | a pierced pommel — the only holes in the set | Void, Time |
-| `short` | pulled in tight, quick in the hand | Shadow, Nature, Storm |
+
+Hilts alone are not enough to keep sixteen upright swords apart, so the blade
+carries a **taper** as well — `straight`, `leaf` (widest in the middle),
+`flare` (widening toward the guard) or `spike` (narrowing toward it) — and no
+two swords share the same combination of width, taper, tip, length and hilt.
+That is what took the worst silhouette pair from 100% overlap down to 95%.
 
 The rule that follows from this: **cover the blade with your thumb, and the
 hilt should still tell you which sword it is.** The rule from v0.10.0 still
-holds too — cover the hilt, and what is left must be recognisably a hilt.
+holds too — cover the hilt, and what is left must be recognisably a hilt. And
+the one this milestone added: **squint until the icon is a black silhouette.
+If it is not obviously a sword, it is not finished.**
 
 ## 7. What the gate cannot judge
 

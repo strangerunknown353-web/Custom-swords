@@ -36,7 +36,16 @@ export const TARGET_CATEGORIES = Object.freeze({
     any: Object.freeze({ id: 'any', label: 'Any entity', families: [], excludeFamilies: [], typeIds: [] }),
 
     /** Every living mob, hostile or not. Excludes armour stands and the like. */
-    mob: Object.freeze({ id: 'mob', label: 'Mobs', families: ['mob'], excludeFamilies: ['inanimate'], typeIds: [] }),
+    mob: Object.freeze({
+        id: 'mob',
+        label: 'Mobs',
+        families: ['mob'],
+        excludeFamilies: ['inanimate'],
+        typeIds: [],
+        // Other add-ons' creatures often lack the `mob` family. Anything with
+        // health that is not a player or inanimate still counts.
+        acceptLiving: true,
+    }),
 
     /** Hostile mobs. The default for offensive abilities that specify anything. */
     hostile: Object.freeze({
@@ -116,7 +125,9 @@ export function queryFor(categories) {
 
     /** @type {{ families?: string[], excludeFamilies?: string[] }} */
     const query = {};
-    if (category.families.length > 0) query.families = [...category.families];
+    // A category that also accepts unlabelled creatures cannot push its family
+    // filter down to the engine, or those creatures would never be returned.
+    if (category.families.length > 0 && category.acceptLiving !== true) query.families = [...category.families];
     if (category.excludeFamilies.length > 0) query.excludeFamilies = [...category.excludeFamilies];
     return query;
 }
@@ -131,23 +142,34 @@ export function queryFor(categories) {
  * @param {string} typeId
  * @param {readonly string[]} families
  * @param {readonly string[]} categories
+ * @param {{ living?: () => boolean }} [traits] Lazily-read facts about the entity.
  * @returns {boolean}
  */
-export function matchesCategories(typeId, families, categories) {
+export function matchesCategories(typeId, families, categories, traits = {}) {
     if (categories.length === 0) return true;
-    return categories.some((id) => matchesCategory(typeId, families, id));
+    return categories.some((id) => matchesCategory(typeId, families, id, traits));
 }
 
 /**
  * @param {string} typeId
  * @param {readonly string[]} families
  * @param {string} categoryId
+ * @param {{ living?: () => boolean }} [traits]
  * @returns {boolean}
  */
-export function matchesCategory(typeId, families, categoryId) {
+export function matchesCategory(typeId, families, categoryId, traits = {}) {
     const category = categoryOf(categoryId);
     if (category === undefined) return false;
     if (category.id === 'any') return true;
+
+    if (
+        category.acceptLiving === true &&
+        typeId !== 'minecraft:player' &&
+        !families.includes(category.families[0] ?? '') &&
+        !category.excludeFamilies.some((family) => families.includes(family))
+    ) {
+        return traits.living?.() === true;
+    }
 
     if (category.typeIds.length > 0 && !category.typeIds.includes(typeId)) return false;
     if (!category.families.every((family) => families.includes(family))) return false;

@@ -193,11 +193,12 @@ describe('edge cases', () => {
         assert.ok(hit > 0, 'the ability should still connect');
     });
 
-    it('an entity from another add-on is never swept up by a category-filtered ability', () => {
+    it("another add-on's creature is hit even without the vanilla 'mob' family", () => {
         const { component } = install();
         const dimension = new MockDimension();
         const player = wielder(dimension, 'player-a');
-        // No minecraft:type_family — an add-on that skips the convention.
+        // No minecraft:type_family — an add-on that skips the convention, but
+        // still a creature: it has health.
         const foreign = new MockEntity({
             id: 'foreign-1',
             typeId: 'other_addon:sentinel',
@@ -209,7 +210,66 @@ describe('edge cases', () => {
 
         use(component, player); // Ember Burst allows only 'mob' and 'player'
 
-        assert.equal(foreign.damageTaken.length, 0);
+        assert.equal(foreign.damageTaken.length, 1);
+    });
+
+    it("another add-on's non-living entity is never swept up by a category-filtered ability", () => {
+        const { component } = install();
+        const dimension = new MockDimension();
+        const player = wielder(dimension, 'player-a');
+        const marker = new MockEntity({
+            id: 'foreign-2',
+            typeId: 'other_addon:marker',
+            location: { x: 0, y: 64, z: 2 },
+            dimension,
+            families: [],
+        });
+        delete marker.components['minecraft:health'];
+        dimension.entities.push(marker);
+
+        use(component, player);
+
+        assert.equal(marker.damageTaken.length, 0);
+    });
+
+    it('an inanimate entity is never hit, even with health', () => {
+        const { component } = install();
+        const dimension = new MockDimension();
+        const player = wielder(dimension, 'player-a');
+        const boat = new MockEntity({
+            id: 'boat-1',
+            typeId: 'minecraft:boat',
+            location: { x: 0, y: 64, z: 2 },
+            dimension,
+            families: ['boat', 'inanimate'],
+        });
+        dimension.entities.push(boat);
+
+        use(component, player);
+
+        assert.equal(boat.damageTaken.length, 0);
+    });
+
+    it("respects the world's PvP setting over everything else", () => {
+        const { component } = install({ worldPvp: () => false });
+        const dimension = new MockDimension();
+        const player = wielder(dimension, 'player-a');
+        const victim = new MockPlayer({ id: 'player-b', location: { x: 0, y: 64, z: 1 }, dimension });
+        dimension.entities.push(victim);
+
+        use(component, player);
+
+        assert.equal(victim.damageTaken.length, 0);
+        assert.equal(victim.effects.length, 0);
+
+        // Control: the same cast with PvP on does reach the other player.
+        const on = install({ worldPvp: () => true });
+        const arena = new MockDimension();
+        const caster = wielder(arena, 'player-c');
+        const target = new MockPlayer({ id: 'player-d', location: { x: 0, y: 64, z: 1 }, dimension: arena });
+        arena.entities.push(target);
+        use(on.component, caster);
+        assert.equal(target.damageTaken.length, 1);
     });
 
     it('a vanilla passive mob is spared by a hostile-only ability', () => {

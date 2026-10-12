@@ -126,7 +126,9 @@ export function createFramework(options = {}) {
     // --- Services ----------------------------------------------------------
     const cooldowns = new CooldownManager(clock);
     const state = new PlayerStateStore();
-    const targeting = new TargetingService(CONFIG, log);
+    const targeting = new TargetingService(CONFIG, log, {
+        worldPvp: options.worldPvp ?? (() => /** @type {any} */ (world).gameRules?.pvp !== false),
+    });
     const sounds = new SoundService(log);
     const damage = new DamageService(CONFIG, targeting, log);
     const effects = new EffectService(log);

@@ -20,6 +20,13 @@ Verified on **2026-09-01** (milestone 1), extended for milestones 2 and 3.
 the framework uses nothing added after 2.0.0, so pinning there costs nothing and
 keeps the script module compatible with more builds.
 
+**v2.0 review.** Re-checked in the v2.0 compatibility pass and kept. The
+alternative — drop `minecraft:swing_duration`, emit item `format_version`
+1.21.90 and lower `min_engine_version` to match — would admit 1.21.90–1.21.11x
+clients at the cost of every sword swinging at the vanilla speed. It is a
+one-line change in `tools/lib/project.mjs` plus the generator, should the
+project ever want it.
+
 **Why the engine minimum is nevertheless 1.21.120.** The script module and the
 item schema are versioned separately, and the item schema is the binding
 constraint: `minecraft:swing_duration` requires item `format_version` 1.21.120,

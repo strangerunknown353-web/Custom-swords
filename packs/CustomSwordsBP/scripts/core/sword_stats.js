@@ -69,6 +69,7 @@ export function repairAmountFor(durability) {
  * @typedef {Object} AbilitySummary
  * @property {import('./activation.js').ActivationMethod} activation
  * @property {string} abilityId
+ * @property {string} [label] Player-facing name, when the binding sets one.
  * @property {number} cooldownTicks
  * @property {number} cooldownSeconds
  * @property {string} targetingType
@@ -86,6 +87,7 @@ export function summariseBinding(binding) {
     return {
         activation: binding.activation,
         abilityId: binding.abilityId,
+        label: binding.label,
         cooldownTicks,
         cooldownSeconds: ticksToSeconds(cooldownTicks),
         targetingType: binding.targeting?.type ?? 'self',

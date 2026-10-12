@@ -214,10 +214,13 @@ export class Diagnostics {
         if (description.abilities.length === 0) {
             lines.push('  Abilities: none');
         }
+        let slot = 0;
         for (const ability of description.abilities) {
-            lines.push(
-                `  §e${ACTIVATION_LABELS[ability.activation] ?? ability.activation}§r: §b${ability.abilityId}§r`,
-            );
+            const how =
+                ability.activation === 'use'
+                    ? `Ability ${++slot} (crouch to select, use to cast)`
+                    : (ACTIVATION_LABELS[ability.activation] ?? ability.activation);
+            lines.push(`  §e${how}§r: §b${ability.label ?? ability.abilityId}§r §8${ability.abilityId}§r`);
             lines.push(
                 `    cooldown ${ticksToSeconds(ability.cooldownTicks)}s · ` +
                     `targeting ${ability.targetingType}${ability.range === undefined ? '' : ` r=${ability.range}`}` +

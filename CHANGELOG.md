@@ -56,6 +56,18 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
   reproduces the shipped PNGs byte for byte.
 - The cooldown message named the underlying ability instead of the sword's
   label for it.
+- **Mobs from other add-ons are now hit by abilities.** The `mob` category
+  required the vanilla `mob` type family, which many add-on creatures lack.
+  Any non-player, non-inanimate entity with health now counts.
+- **Abilities respect the world's PvP setting.** With PvP off, no ability
+  damages, knocks back or applies effects to a player.
+- Area abilities with a target cap now take the nearest targets.
+- Tapping sneak during creative flight no longer switches abilities.
+- `/scriptevent custom_swords:swordinfo` shows each ability's slot and name.
+
+### Changed
+
+- Entity searches reuse one cached exclusion list.
 
 ## [0.9.0] — 2026-09-01
 

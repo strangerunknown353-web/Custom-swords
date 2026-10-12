@@ -1,9 +1,13 @@
 # Custom Swords v2.0 — Update Plan
 
-A 5-step project from v1.3.0 (16 swords, 2 abilities each) to v2.0.0 (20 swords,
+A 7-step project from v1.3.0 (16 swords, 2 abilities each) to v2.0.0 (20 swords,
 switchable multi-ability kits). Each step ends with a commit to
 `claude/swords-mod-v2-update-et8vw9`. The final `.mcaddon` / `.mcpack` files are
-delivered at the end of Step 5.
+delivered at the end of Step 7.
+
+The plan grew from 5 steps to 6, then to 7, at the owner's request: ability
+animations and effects got a step of their own (Step 5), the texture redraw
+moved to Step 6, and Step 7 is the final polish and release.
 
 Status legend: **done** · *in progress* · (planned)
 
@@ -118,21 +122,44 @@ string allocation in the hot path.
 - Balance pass per rarity band; cooldowns per ability, shown on the HUD.
 - Updated `SWORD_CATALOG.md`, in-game `/scriptevent custom_swords:list`.
 
-## Step 4 — Compatibility, optimisation, bug fixes — (planned)
-- Lower `min_engine_version` to the oldest version the API supports
-  (target 1.21.90) and verify every API used exists there.
-- Defensive guards around optional APIs so a missing feature degrades instead
-  of crashing; no global state other mods could collide with.
-- Optimisations: type-filtered entity queries, batched particles/sounds,
-  cached lookups, no new tick loops.
-- Fix all audit bugs above; bring tests to 100 % and add tests for mode
-  switching and every new ability.
+## Step 4 — Compatibility, optimisation, bug fixes — **done**
+- **Other mods' mobs are now hit.** The `mob` target category only matched
+  entities carrying the vanilla `mob` type family, so creatures from other
+  add-ons (which often declare no family, or a custom one) were ignored by
+  every ability. Anything with health that is not a player or inanimate now
+  counts. Non-living foreign entities (markers, projectiles) are still skipped.
+- **The world's PvP setting is respected.** Abilities ignored the world's PvP
+  setting, so on a server or Realm with PvP off they could still damage,
+  knock back, levitate or blind players. They now never touch a player while
+  it is off.
+- **Area abilities take the nearest targets.** A capped area ability took the
+  first N entities the engine listed rather than the N closest.
+- Crouch-taps no longer switch abilities during creative flight, where sneak
+  means "descend".
+- `/scriptevent custom_swords:swordinfo` lists each ability's slot and name.
+- Entity searches reuse one exclusion list instead of building a new one per
+  query.
+- **Minimum version stays 1.21.120.** The Step 1 audit called this an
+  unnecessary lock-out; it is not. `minecraft:swing_duration` (each sword's
+  swing speed) needs item `format_version` 1.21.120, and an older client cannot
+  load those item files. Dropping swing speed would open 1.21.90–1.21.11x;
+  that is the owner's call, recorded in `docs/API_NOTES.md`.
 
-## Step 5 — Regenerated textures + v2.0.0 release — (planned)
+## Step 5 — Ability animations, effects and particles — (planned)
+- Richer, layered particle effects for every power: charge-up at the hand,
+  travelling shapes (rings, spirals, beams, shockwaves), and impact bursts.
+- Short multi-tick animations (expanding rings, rising spirals, trails that
+  follow the wielder), scheduled cheaply and capped for performance.
+- Sounds layered per ability; switch effect when changing ability.
+- Budgeted so busy servers stay smooth.
+
+## Step 6 — Regenerated sword textures — (planned)
 - Redraw all 20 swords at **32×32** with proper sword proportions: long blade
   running corner to corner (~70 % of the length), fuller line, distinct
   crossguard, wrapped grip and pommel, element-specific details.
 - Art sources for every sword in `art/swords/`, validator updated for 32×32.
-- Version bump to 2.0.0, CHANGELOG, README how-to-play.
+
+## Step 7 — Final polish and v2.0.0 release — (planned)
+- Balance pass, README how-to-play, CHANGELOG, version bump to 2.0.0.
 - Build and deliver `CustomSwords-v2.0.0.mcaddon`, `CustomSwordsBP.mcpack`,
   `CustomSwordsRP.mcpack`.

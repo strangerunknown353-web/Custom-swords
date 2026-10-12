@@ -43,14 +43,24 @@ export class TargetingService {
     /**
      * @param {typeof import('../config.js').CONFIG} config
      * @param {typeof import('../core/log.js').log} log
+     * @param {{ worldPvp?: () => boolean }} [options] `worldPvp` reports the
+     *   world's own PvP setting; abilities never hurt players while it is off.
      */
-    constructor(config, log) {
+    constructor(config, log, options = {}) {
         /** @private @readonly */
         this.config = config;
         /** @private @readonly */
         this.log = log;
+        /** @private @readonly */
+        this.worldPvp = options.worldPvp ?? (() => true);
         /** @private @readonly @type {Set<string>} */
         this.neverTarget = new Set(config.combat.neverTarget);
+        /**
+         * The same list as an array for engine queries, built once rather than
+         * spread into a fresh array on every search.
+         * @private @readonly @type {string[]}
+         */
+        this.excludeTypes = [...this.neverTarget];
     }
 
     /**
@@ -102,13 +112,43 @@ export class TargetingService {
         if (entity.typeId === 'minecraft:player') {
             const allowPlayers = options.includePlayers ?? this.config.combat.allowPlayerVersusPlayer;
             if (!allowPlayers) return false;
+            // The world's PvP setting outranks every binding: a server or Realm
+            // with PvP off must never see a sword ability touch a player.
+            if (!this.isWorldPvpOn()) return false;
         }
 
         const categories = options.allowedCategories ?? DEFAULT_CATEGORIES;
         if (categories.length > 0 && !categories.includes('any')) {
-            if (!matchesCategories(entity.typeId, this.familiesOf(entity), categories)) return false;
+            const traits = { living: () => this.isLiving(entity) };
+            if (!matchesCategories(entity.typeId, this.familiesOf(entity), categories, traits)) return false;
         }
         return true;
+    }
+
+    /**
+     * Whether an entity has health — i.e. is a creature rather than an item,
+     * projectile or decoration. Other add-ons' mobs often declare no
+     * `minecraft:type_family`, or one without `mob`; this is what lets the
+     * `mob` category still recognise them.
+     *
+     * @param {Entity} entity
+     * @returns {boolean}
+     */
+    isLiving(entity) {
+        try {
+            return entity.getComponent('minecraft:health') !== undefined;
+        } catch {
+            return false;
+        }
+    }
+
+    /** @private @returns {boolean} */
+    isWorldPvpOn() {
+        try {
+            return this.worldPvp() !== false;
+        } catch {
+            return true;
+        }
     }
 
     /**
@@ -273,7 +313,7 @@ export class TargetingService {
             candidates = ctx.dimension.getEntities({
                 location: origin,
                 maxDistance: range,
-                excludeTypes: [...this.neverTarget],
+                excludeTypes: /** @type {string[]} */ (this.excludeTypes),
                 // Pushed down to the engine when a single category makes it
                 // unambiguous; otherwise the union is applied below.
                 ...queryFor(categories),
@@ -283,10 +323,11 @@ export class TargetingService {
             return [];
         }
 
-        /** @type {Entity[]} */
-        const results = [];
+        // Nearest first, so a capped ability takes the enemies closest to the
+        // wielder rather than whichever the engine happened to list first.
+        /** @type {{ entity: Entity, d: number }[]} */
+        const ranked = [];
         for (const entity of candidates) {
-            if (results.length >= limit) break;
             if (
                 !this.isTargetable(entity, {
                     casterId: ctx.playerId,
@@ -297,8 +338,17 @@ export class TargetingService {
             ) {
                 continue;
             }
-            results.push(entity);
+            let d;
+            try {
+                d = Vec3.distanceSquared(entity.location, origin);
+            } catch {
+                continue;
+            }
+            ranked.push({ entity, d });
         }
+        if (ranked.length > limit) ranked.sort((a, b) => a.d - b.d);
+        const results = [];
+        for (let i = 0; i < ranked.length && i < limit; i++) results.push(ranked[i].entity);
         return results;
     }
 
@@ -340,7 +390,7 @@ export class TargetingService {
         try {
             const hits = ctx.dimension.getEntitiesFromRay(ctx.origin, ctx.viewDirection, {
                 maxDistance: range,
-                excludeTypes: [...this.neverTarget],
+                excludeTypes: /** @type {string[]} */ (this.excludeTypes),
             });
             for (const hit of hits) {
                 if (found.length >= limit) break;
@@ -373,7 +423,7 @@ export class TargetingService {
         try {
             const hits = ctx.dimension.getEntitiesFromRay(ctx.origin, ctx.viewDirection, {
                 maxDistance: range,
-                excludeTypes: [...this.neverTarget],
+                excludeTypes: /** @type {string[]} */ (this.excludeTypes),
             });
             for (const hit of hits) {
                 if (

@@ -108,6 +108,15 @@ describe('ability switching', () => {
         assert.deepEqual(casts.map((c) => c.name), ['first']);
     });
 
+    it('does not switch while flying, where sneak means descend', () => {
+        const { framework, player, use, tap } = setup();
+        subscribeSneakSwitching(framework);
+        player.isFlying = true;
+        tap();
+        use();
+        assert.deepEqual(casts.map((c) => c.name), ['first']);
+    });
+
     it('with tap switching live, crouch + use casts instead of switching', () => {
         const { framework, player, use } = setup();
         subscribeSneakSwitching(framework);

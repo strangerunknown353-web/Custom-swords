@@ -109,6 +109,9 @@ export class InputRouter {
         if (pressedAt === undefined) return;
         if (this.clock() - pressedAt > this.config.switching.tapMaxTicks) return;
 
+        // In creative flight sneak means "descend", not "switch".
+        if (this.isFlying(player)) return;
+
         const held = this.identifier.heldSword(player);
         if (held === undefined) return;
         this.switchAbility(player, held.sword);
@@ -239,6 +242,19 @@ export class InputRouter {
                 target,
             });
             return;
+        }
+    }
+
+    /**
+     * @private
+     * @param {import('@minecraft/server').Player} player
+     * @returns {boolean}
+     */
+    isFlying(player) {
+        try {
+            return /** @type {any} */ (player).isFlying === true;
+        } catch {
+            return false;
         }
     }
 

@@ -129,6 +129,7 @@ export class InputRouter {
             count: result.count,
             remainingTicks: remaining,
         });
+        this.executor.mirrorHud(player, result.binding, remaining);
         return true;
     }
 

@@ -97,6 +97,34 @@ export const emberBlade = {
             },
         },
         {
+            activation: 'use',
+            visual: 'ember',
+            label: 'Spark Lunge',
+            abilityId: 'custom_swords:leap',
+            cooldownTicks: 100,
+            hudCategory: 'custom_swords_ember_blade',
+            targeting: { type: 'self' },
+            params: { horizontal: 1.6, vertical: 0.5, pitchLift: 0.5, burstCount: 12 },
+        },
+        {
+            activation: 'use',
+            visual: 'ember',
+            label: 'Forge Line',
+            abilityId: 'custom_swords:beam',
+            cooldownTicks: 120,
+            hudCategory: 'custom_swords_ember_blade',
+            targeting: { type: 'ray', range: 8 },
+            allowedTargets: ['mob', 'player'],
+            params: {
+                damage: 4,
+                pierceFalloff: 0.8,
+                maxPierce: 3,
+                cause: 'fire',
+                igniteSeconds: 2,
+                linePoints: 18,
+            },
+        },
+        {
             // EMBER EDGE — the passive that feeds the burst. Nearly free on its
             // own; its whole purpose is the counter it builds.
             activation: 'attack',

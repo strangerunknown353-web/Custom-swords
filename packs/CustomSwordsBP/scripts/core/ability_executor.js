@@ -205,15 +205,27 @@ export class AbilityExecutor {
         if (ticks <= 0) return;
         this.services.cooldowns.start(playerId, key, ticks);
 
-        // Optional: mirror onto the vanilla item-cooldown HUD sweep so the
-        // player gets the familiar overlay. Purely cosmetic — the script
-        // cooldown above remains the single source of truth.
-        if (this.services.config.cooldown.mirrorToItemHud && binding.hudCategory !== undefined) {
-            try {
-                player.startItemCooldown(binding.hudCategory, ticks);
-            } catch (error) {
-                this.services.log.debug('startItemCooldown mirror failed:', error);
-            }
+        this.mirrorHud(player, binding, ticks);
+    }
+
+    /**
+     * Mirrors a cooldown onto the vanilla item-cooldown overlay. Purely
+     * cosmetic — the script cooldown remains the single source of truth.
+     *
+     * Called on cast, and again on switch so the overlay always shows the
+     * *selected* ability. A ready ability gets a 1-tick cooldown, which clears
+     * an overlay left over from the previous selection.
+     *
+     * @param {import('@minecraft/server').Player} player
+     * @param {AbilityBinding} binding
+     * @param {number} ticks
+     */
+    mirrorHud(player, binding, ticks) {
+        if (!this.services.config.cooldown.mirrorToItemHud || binding.hudCategory === undefined) return;
+        try {
+            player.startItemCooldown(binding.hudCategory, Math.max(1, Math.ceil(ticks)));
+        } catch (error) {
+            this.services.log.debug('startItemCooldown mirror failed:', error);
         }
     }
 

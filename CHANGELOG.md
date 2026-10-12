@@ -36,6 +36,19 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
   - **Dragon Sword** (Mythic) — Dragon Breath, Wing Gust, Ender Flame, Dragon
     Dash, Dragon Roar, Sky Crush, Draconic Fury; passive Dragon Scale.
 - Visual profiles `soul`, `blood`, `echo`, `dragon` and their sounds.
+- **Full kits for all 20 swords** — every sword now carries as many
+  selectable abilities as its rarity allows: 101 selectable abilities plus 20
+  passives across the collection. Each sword's original ability stays in slot 1.
+- **Two new ability types**:
+  - `beam` — a straight line along your aim that pierces every target in it,
+    each for less than the one before (Ice Lance, Sunbeam, Bolt Lance, …).
+  - `leap` — launches the wielder along their aim, steered by where they look,
+    with the binding's effects (usually slow falling) applied to them
+    (Updraft, Blazing Leap, Shadow Pounce, …).
+- `targeting.raycastAll` — every permitted entity along the view, nearest first.
+- The vanilla cooldown overlay on the sword now follows the *selected*
+  ability: switching to a ready ability clears it, switching to one that is
+  cooling down shows its remaining time.
 
 ### Fixed
 

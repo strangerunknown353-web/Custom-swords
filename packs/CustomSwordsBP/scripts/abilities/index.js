@@ -40,6 +40,8 @@ import { stasis } from './builtin/stasis.js';
 import { tempo } from './builtin/tempo.js';
 import { surge } from './builtin/surge.js';
 import { momentum } from './builtin/momentum.js';
+import { beam } from './builtin/beam.js';
+import { leap } from './builtin/leap.js';
 
 /** @type {readonly import('../core/types.js').AbilityDefinition[]} */
 export const ABILITIES = Object.freeze([
@@ -71,4 +73,6 @@ export const ABILITIES = Object.freeze([
     tempo,
     surge,
     momentum,
+    beam,
+    leap,
 ]);

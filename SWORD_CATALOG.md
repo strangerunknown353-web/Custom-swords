@@ -14,22 +14,22 @@ every melee hit.
 
 | Sword | Rarity | Melee | Durability | Abilities (crouch to switch) | Passive |
 |---|---|---:|---:|---|---|
-| Ember Blade | Uncommon | 6 | 500 | 1. Ember Burst (4.5s) | Ember Edge |
-| Inferno Sword | Epic | 9 | 1100 | 1. Infernal Cleave (7s) | Searing Brand |
-| Thunder Sword | Legendary | 9 | 1400 | 1. Thunder Strike (10s) | Static Charge |
-| Frost Sword | Rare | 7 | 900 | 1. Frost Nova (6s) | Frostbite |
-| Wind Sword | Rare | 6 | 800 | 1. Wind Burst (5s) | Wind Momentum |
-| Earth Sword | Epic | 10 | 1500 | 1. Earth Shock (9s) | Stone Guard |
-| Ocean Sword | Epic | 8 | 1200 | 1. Tidal Wave (7.5s) | Aqua Affinity |
-| Nature Sword | Rare | 7 | 1000 | 1. Nature's Grasp (5.5s) | Nature's Vitality |
-| Shadow Sword | Epic | 8 | 1000 | 1. Shadow Step (7s) | Shadow Edge |
-| Crystal Sword | Epic | 8 | 850 | 1. Crystal Burst (8s) | Crystal Guard |
-| Void Sword | Legendary | 9 | 1600 | 1. Void Rift (9s) | Void Drain |
-| Solar Sword | Legendary | 9 | 1000 | 1. Solar Flare (8.5s) | Solar Radiance |
-| Gravity Sword | Epic | 10 | 1500 | 1. Gravity Crush (10s) | Heavy Force |
-| Poison Sword | Rare | 6 | 750 | 1. Venom Burst (6.5s) | Venomous Edge |
-| Time Sword | Mythic | 9 | 1800 | 1. Time Freeze (12s) | Temporal Edge |
-| Storm Sword | Epic | 9 | 1250 | 1. Storm Surge (7.5s) | Storm Momentum |
+| Ember Blade | Uncommon | 6 | 500 | 1. Ember Burst (4.5s)<br>2. Spark Lunge (5s)<br>3. Forge Line (6s) | Ember Edge |
+| Inferno Sword | Epic | 9 | 1100 | 1. Infernal Cleave (7s)<br>2. Fire Nova (8s)<br>3. Flame Lance (8s)<br>4. Blazing Leap (7s)<br>5. Hellfire Rift (10s) | Searing Brand |
+| Thunder Sword | Legendary | 9 | 1400 | 1. Thunder Strike (10s)<br>2. Thunderclap (9s)<br>3. Bolt Lance (9s)<br>4. Static Field (10s)<br>5. Storm Rift (10s)<br>6. Lightning Step (7s) | Static Charge |
+| Frost Sword | Rare | 7 | 900 | 1. Frost Nova (6s)<br>2. Ice Lance (7s)<br>3. Frost Step (7s)<br>4. Glacial Ward (20s) | Frostbite |
+| Wind Sword | Rare | 6 | 800 | 1. Wind Burst (5s)<br>2. Updraft (6s)<br>3. Gale Lance (7s)<br>4. Tailwind (20s) | Wind Momentum |
+| Earth Sword | Epic | 10 | 1500 | 1. Earth Shock (9s)<br>2. Boulder Toss (8s)<br>3. Seismic Slam (10s)<br>4. Quake Pull (9s)<br>5. Stone Skin (25s) | Stone Guard |
+| Ocean Sword | Epic | 8 | 1200 | 1. Tidal Wave (7.5s)<br>2. Water Jet (7s)<br>3. Whirlpool (9s)<br>4. Riptide Leap (7s)<br>5. Tidal Blessing (20s) | Aqua Affinity |
+| Nature Sword | Rare | 7 | 1000 | 1. Nature's Grasp (5.5s)<br>2. Thorn Burst (7s)<br>3. Vine Lash (8s)<br>4. Bloom (20s) | Nature's Vitality |
+| Shadow Sword | Epic | 8 | 1000 | 1. Shadow Step (7s)<br>2. Umbral Lance (7s)<br>3. Night Veil (9s)<br>4. Shadow Pounce (6s)<br>5. Shade Cloak (25s) | Shadow Edge |
+| Crystal Sword | Epic | 8 | 850 | 1. Crystal Burst (8s)<br>2. Prism Beam (8s)<br>3. Shard Storm (8s)<br>4. Refraction Step (7s)<br>5. Crystal Shell (25s) | Crystal Guard |
+| Void Sword | Legendary | 9 | 1600 | 1. Void Rift (9s)<br>2. Void Lance (9s)<br>3. Null Step (7s)<br>4. Event Horizon (9s)<br>5. Entropy (10s)<br>6. Void Shell (30s) | Void Drain |
+| Solar Sword | Legendary | 9 | 1000 | 1. Solar Flare (8.5s)<br>2. Sunbeam (9s)<br>3. Solar Nova (9s)<br>4. Sunfall (10s)<br>5. Radiant Ascent (7s)<br>6. Dawn Blessing (30s) | Solar Radiance |
+| Gravity Sword | Epic | 10 | 1500 | 1. Gravity Crush (10s)<br>2. Singularity (9s)<br>3. Repulsor Field (8s)<br>4. Levitation Field (10s)<br>5. Gravity Leap (7s) | Heavy Force |
+| Poison Sword | Rare | 6 | 750 | 1. Venom Burst (6.5s)<br>2. Venom Spit (7s)<br>3. Toxic Cloud (9s)<br>4. Withering Hex (9s) | Venomous Edge |
+| Time Sword | Mythic | 9 | 1800 | 1. Time Freeze (12s)<br>2. Slow Field (10s)<br>3. Chrono Lance (9s)<br>4. Time Skip (7s)<br>5. Temporal Rift (11s)<br>6. Haste (25s)<br>7. Rewind (45s) | Temporal Edge |
+| Storm Sword | Epic | 9 | 1250 | 1. Storm Surge (7.5s)<br>2. Thunderhead (9s)<br>3. Lightning Lance (8s)<br>4. Squall (8s)<br>5. Storm Dash (6s) | Storm Momentum |
 | Soul Sword | Rare | 7 | 950 | 1. Soul Flame (6s)<br>2. Soul Snare (8s)<br>3. Soul Dash (7s)<br>4. Soul Ward (20s) | Soul Siphon |
 | Blood Sword | Epic | 8 | 1100 | 1. Crimson Cleave (6s)<br>2. Hemorrhage (8s)<br>3. Blood Burst (8s)<br>4. Blood Pull (9s)<br>5. Bloodlust (25s) | Vampiric Edge |
 | Echo Sword | Legendary | 9 | 1500 | 1. Sonic Boom (10s)<br>2. Shriek (9s)<br>3. Resonance (8s)<br>4. Vibration Rift (9s)<br>5. Echo Step (7s)<br>6. Sculk Shockwave (8s) | Reverberate |
@@ -67,6 +67,8 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Ember Burst | 4.5s | mob, player | 4 ability damage · knockback 0.5 · ignite 2s | redstone_torch_dust_particle, candle_flame_particle | cast: ember_cast, impact: ember_impact |
+| Use (right-click / long-press) | Spark Lunge | 5s | any | — | redstone_torch_dust_particle, candle_flame_particle | cast: ember_cast, impact: ember_impact |
+| Use (right-click / long-press) | Forge Line | 6s | mob, player | 4 ability damage · ignite 2s | redstone_torch_dust_particle, candle_flame_particle | cast: ember_cast, impact: ember_impact |
 | Melee hit | Ember Edge | 0.6s | mob, player | 1 ability damage · ignite 1s | redstone_torch_dust_particle | cast: ember_cast, impact: ember_impact |
 
 ### Inferno Sword
@@ -100,6 +102,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Infernal Cleave | 7s | mob, player | 7 ability damage · knockback 0.6 · ignite 6s · weakness 4.0s | basic_flame_particle, campfire_smoke_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
+| Use (right-click / long-press) | Fire Nova | 8s | mob, player | 7 ability damage · knockback 0.6 · ignite 5s | basic_flame_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
+| Use (right-click / long-press) | Flame Lance | 8s | mob, player | 8 ability damage · ignite 4s | basic_flame_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
+| Use (right-click / long-press) | Blazing Leap | 7s | any | fire_resistance 8.0s | basic_flame_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
+| Use (right-click / long-press) | Hellfire Rift | 10s | mob, player | knockback 1 · weakness 4.0s | basic_flame_particle, lava_particle | cast: inferno_cast, impact: inferno_impact |
 | Melee hit | Searing Brand | 3s | mob, player | ignite 3s | basic_flame_particle | cast: inferno_cast, impact: inferno_impact |
 
 ### Thunder Sword
@@ -134,6 +140,11 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Thunder Strike | 10s | mob, player | 12 ability damage · knockback 0.9 · weakness 5.0s | endrod | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Thunderclap | 9s | mob, player | 9 ability damage · knockback 1 | endrod, critical_hit_emitter | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Bolt Lance | 9s | mob, player | 10 ability damage | endrod, critical_hit_emitter | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Static Field | 10s | mob, player | 4 ability damage · knockback 0.3 · slowness 5.0s · weakness 5.0s | endrod, critical_hit_emitter | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Storm Rift | 10s | mob, player | knockback 1 | endrod, critical_hit_emitter | cast: thunder_cast, impact: thunder_impact |
+| Use (right-click / long-press) | Lightning Step | 7s | mob, player | knockback 0.4 | endrod, critical_hit_emitter | cast: thunder_cast, impact: thunder_impact |
 | Melee hit | Static Charge | 0.5s | mob, player | 1 ability damage · weakness 3.0s | endrod | cast: thunder_cast, impact: thunder_impact |
 
 ### Frost Sword
@@ -167,6 +178,9 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Frost Nova | 6s | mob, player | 4 ability damage · knockback 0.3 · slowness 7.0s · mining_fatigue 6.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
+| Use (right-click / long-press) | Ice Lance | 7s | mob, player | 6 ability damage · slowness 3.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
+| Use (right-click / long-press) | Frost Step | 7s | mob, player | knockback 0.4 · slowness 3.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
+| Use (right-click / long-press) | Glacial Ward | 20s | any | resistance 6.0s · fire_resistance 10.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
 | Melee hit | Frostbite | 2.5s | mob, player | 1 ability damage · slowness 3.0s | snowflake_particle | cast: frost_cast, impact: frost_impact |
 
 ### Wind Sword
@@ -199,6 +213,9 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Wind Burst | 5s | mob, player | 2 ability damage · knockback 2.2 | knockback_roar_particle | cast: wind_cast, impact: wind_impact |
+| Use (right-click / long-press) | Updraft | 6s | any | slow_falling 5.0s | knockback_roar_particle, spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
+| Use (right-click / long-press) | Gale Lance | 7s | mob, player | 4 ability damage · knockback 1.6 (wave) | knockback_roar_particle, spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
+| Use (right-click / long-press) | Tailwind | 20s | any | speed 8.0s · jump_boost 8.0s | knockback_roar_particle, spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
 | Melee hit | Wind Momentum | 6s | any | speed 4.0s | spore_blossom_ambient_particle | cast: wind_cast, impact: wind_impact |
 
 ### Earth Sword
@@ -232,6 +249,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Earth Shock | 9s | mob, player | 11 ability damage · knockback 1 · slowness 3.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
+| Use (right-click / long-press) | Boulder Toss | 8s | mob, player | 8 ability damage · knockback 1.2 | basic_smoke_particle, falling_border_dust_particle | cast: earth_cast, impact: earth_impact |
+| Use (right-click / long-press) | Seismic Slam | 10s | mob, player | knockback 1.2 | basic_smoke_particle, falling_border_dust_particle | cast: earth_cast, impact: earth_impact |
+| Use (right-click / long-press) | Quake Pull | 9s | mob, player | 3 ability damage · knockback 1.4 · slowness 3.0s | basic_smoke_particle, falling_border_dust_particle | cast: earth_cast, impact: earth_impact |
+| Use (right-click / long-press) | Stone Skin | 25s | any | resistance 8.0s | basic_smoke_particle, falling_border_dust_particle | cast: earth_cast, impact: earth_impact |
 | Melee hit | Stone Guard | 8s | any | resistance 5.0s | basic_smoke_particle | cast: earth_cast, impact: earth_impact |
 
 ### Ocean Sword
@@ -265,6 +286,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Tidal Wave | 7.5s | mob, player | 6 ability damage · knockback 2.6 (wave) · slowness 3.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
+| Use (right-click / long-press) | Water Jet | 7s | mob, player | 6 ability damage · knockback 1.2 (wave) | water_splash_particle_manual, water_evaporation_bucket_emitter | cast: tidal_cast, impact: tidal_impact |
+| Use (right-click / long-press) | Whirlpool | 9s | mob, player | 3 ability damage · knockback 1.6 · slowness 4.0s | water_splash_particle_manual, water_evaporation_bucket_emitter | cast: tidal_cast, impact: tidal_impact |
+| Use (right-click / long-press) | Riptide Leap | 7s | any | speed 5.0s | water_splash_particle_manual, water_evaporation_bucket_emitter | cast: tidal_cast, impact: tidal_impact |
+| Use (right-click / long-press) | Tidal Blessing | 20s | any | regeneration 5.0s · water_breathing 30.0s | water_splash_particle_manual, water_evaporation_bucket_emitter | cast: tidal_cast, impact: tidal_impact |
 | Melee hit | Aqua Affinity | 10s | any | water_breathing 15.0s | water_splash_particle_manual | cast: tidal_cast, impact: tidal_impact |
 
 ### Nature Sword
@@ -298,6 +323,9 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Nature's Grasp | 5.5s | mob, player | 3 ability damage · slowness 5.0s · weakness 5.0s | villager_happy, spore_blossom_shower_particle | cast: nature_cast, impact: nature_impact |
+| Use (right-click / long-press) | Thorn Burst | 7s | mob, player | 5 ability damage · knockback 0.6 · poison 3.0s | villager_happy, spore_blossom_shower_particle | cast: nature_cast, impact: nature_impact |
+| Use (right-click / long-press) | Vine Lash | 8s | mob, player | 2 ability damage · knockback 1.4 · slowness 3.0s | villager_happy, spore_blossom_shower_particle | cast: nature_cast, impact: nature_impact |
+| Use (right-click / long-press) | Bloom | 20s | any | regeneration 5.0s | villager_happy, spore_blossom_shower_particle | cast: nature_cast, impact: nature_impact |
 | Melee hit | Nature's Vitality | 7s | any | regeneration 4.0s | villager_happy | cast: nature_cast, impact: nature_impact |
 
 ### Shadow Sword
@@ -331,6 +359,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Shadow Step | 7s | mob, player | knockback 0.4 | mob_portal | cast: shadow_cast, impact: shadow_impact |
+| Use (right-click / long-press) | Umbral Lance | 7s | mob, player | 6 ability damage · weakness 4.0s | mob_portal, obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
+| Use (right-click / long-press) | Night Veil | 9s | mob, player | 3 ability damage · knockback 0.3 · blindness 4.0s · weakness 5.0s | mob_portal, obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
+| Use (right-click / long-press) | Shadow Pounce | 6s | any | — | mob_portal, obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
+| Use (right-click / long-press) | Shade Cloak | 25s | any | invisibility 5.0s · speed 5.0s | mob_portal, obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
 | Melee hit | Shadow Edge | 0.5s | mob, player | 1 ability damage · weakness 4.0s | obsidian_glow_dust_particle | cast: shadow_cast, impact: shadow_impact |
 
 ### Crystal Sword
@@ -364,6 +396,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Crystal Burst | 8s | mob, player | 5 ability damage · knockback 0.6 · slowness 3.0s | lab_table_misc_mystical_particle, magnesium_salts_emitter | cast: crystal_cast, impact: crystal_impact |
+| Use (right-click / long-press) | Prism Beam | 8s | mob, player | 7 ability damage | lab_table_misc_mystical_particle, magnesium_salts_emitter | cast: crystal_cast, impact: crystal_impact |
+| Use (right-click / long-press) | Shard Storm | 8s | mob, player | 7 ability damage · knockback 0.6 · slowness 2.0s | lab_table_misc_mystical_particle, magnesium_salts_emitter | cast: crystal_cast, impact: crystal_impact |
+| Use (right-click / long-press) | Refraction Step | 7s | mob, player | knockback 0.4 | lab_table_misc_mystical_particle, magnesium_salts_emitter | cast: crystal_cast, impact: crystal_impact |
+| Use (right-click / long-press) | Crystal Shell | 25s | any | absorption 10.0s · resistance 5.0s | lab_table_misc_mystical_particle, magnesium_salts_emitter | cast: crystal_cast, impact: crystal_impact |
 | Melee hit | Crystal Guard | 0.5s | mob, player | 1 ability damage · resistance 5.0s | lab_table_misc_mystical_particle | cast: crystal_ward, impact: crystal_impact |
 
 ### Void Sword
@@ -398,6 +434,11 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Void Rift | 9s | mob, player | knockback 1.2 · weakness 4.0s | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
+| Use (right-click / long-press) | Void Lance | 9s | mob, player | 9 ability damage · weakness 4.0s | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
+| Use (right-click / long-press) | Null Step | 7s | mob, player | knockback 0.4 | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
+| Use (right-click / long-press) | Event Horizon | 9s | mob, player | 3 ability damage · knockback 1.8 · slowness 4.0s | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
+| Use (right-click / long-press) | Entropy | 10s | mob, player | 4 ability damage · knockback 0.3 · wither 4.0s · weakness 5.0s | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
+| Use (right-click / long-press) | Void Shell | 30s | any | resistance 8.0s · absorption 10.0s | dragon_breath_trail, obsidian_tear_particle | cast: void_cast, impact: void_impact |
 | Melee hit | Void Drain | 0.5s | mob, player | 2 ability damage | end_chest | cast: void_cast, impact: void_drain |
 
 ### Solar Sword
@@ -432,6 +473,11 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Solar Flare | 8.5s | mob, player | knockback 0.5 (wave) · blindness 3.0s | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
+| Use (right-click / long-press) | Sunbeam | 9s | mob, player | 9 ability damage · ignite 3s | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
+| Use (right-click / long-press) | Solar Nova | 9s | mob, player | 8 ability damage · knockback 0.6 · ignite 3s | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
+| Use (right-click / long-press) | Sunfall | 10s | mob, player | knockback 1 | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
+| Use (right-click / long-press) | Radiant Ascent | 7s | any | slow_falling 6.0s | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
+| Use (right-click / long-press) | Dawn Blessing | 30s | any | regeneration 5.0s · absorption 10.0s | totem_particle, evocation_fang_particle | cast: solar_cast, impact: solar_impact |
 | Melee hit | Solar Radiance | 0.5s | mob, player | 1 ability damage · weakness 4.0s | totem_particle | cast: solar_smite, impact: solar_impact |
 
 ### Gravity Sword
@@ -466,6 +512,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Gravity Crush | 10s | mob, player | knockback 1.4 · slowness 3.0s | rising_border_dust_particle, dragon_destroy_block | cast: gravity_cast, impact: gravity_impact |
+| Use (right-click / long-press) | Singularity | 9s | mob, player | 3 ability damage · knockback 1.8 · slowness 3.0s | rising_border_dust_particle, dragon_destroy_block | cast: gravity_cast, impact: gravity_impact |
+| Use (right-click / long-press) | Repulsor Field | 8s | mob, player | 4 ability damage · knockback 2.6 | rising_border_dust_particle, dragon_destroy_block | cast: gravity_cast, impact: gravity_impact |
+| Use (right-click / long-press) | Levitation Field | 10s | mob, player | 3 ability damage · knockback 0.3 · levitation 2.0s · slow_falling 5.0s | rising_border_dust_particle, dragon_destroy_block | cast: gravity_cast, impact: gravity_impact |
+| Use (right-click / long-press) | Gravity Leap | 7s | any | slow_falling 6.0s | rising_border_dust_particle, dragon_destroy_block | cast: gravity_cast, impact: gravity_impact |
 | Melee hit | Heavy Force | 0.5s | mob, player | 1 ability damage | mycelium_dust_particle | cast: gravity_cast, impact: gravity_impact |
 
 ### Poison Sword
@@ -500,6 +550,9 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Venom Burst | 6.5s | mob, player | 4 ability damage · knockback 0.4 · nausea 4.0s | llama_spit_smoke, sculk_sensor_redstone_particle | cast: venom_cast, impact: venom_impact |
+| Use (right-click / long-press) | Venom Spit | 7s | mob, player | 3 ability damage · poison 5.0s | llama_spit_smoke, sculk_sensor_redstone_particle | cast: venom_cast, impact: venom_impact |
+| Use (right-click / long-press) | Toxic Cloud | 9s | mob, player | 3 ability damage · knockback 0.3 · poison 5.0s · nausea 4.0s | llama_spit_smoke, sculk_sensor_redstone_particle | cast: venom_cast, impact: venom_impact |
+| Use (right-click / long-press) | Withering Hex | 9s | mob, player | 2 ability damage · weakness 8.0s · hunger 8.0s | llama_spit_smoke, sculk_sensor_redstone_particle | cast: venom_cast, impact: venom_impact |
 | Melee hit | Venomous Edge | 0.6s | mob, player | 1 ability damage | llama_spit_smoke | cast: venom_cast, impact: venom_impact |
 
 ### Time Sword
@@ -534,6 +587,12 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Time Freeze | 12s | mob, player | 3 ability damage · weakness 2.0s · mining_fatigue 2.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Slow Field | 10s | mob, player | 3 ability damage · knockback 0.3 · slowness 6.0s · mining_fatigue 6.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Chrono Lance | 9s | mob, player | 9 ability damage · slowness 4.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Time Skip | 7s | mob, player | knockback 0.4 | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Temporal Rift | 11s | mob, player | knockback 1.1 | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Haste | 25s | any | speed 8.0s · haste 8.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
+| Use (right-click / long-press) | Rewind | 45s | any | regeneration 6.0s | redstone_repeater_dust_particle, stalactite_water_drip_particle | cast: chrono_cast, impact: chrono_impact |
 | Melee hit | Temporal Edge | 0.5s | mob, player | 2 ability damage · slowness 1.5s | redstone_repeater_dust_particle | cast: chrono_cast, impact: chrono_wind |
 
 ### Storm Sword
@@ -568,6 +627,10 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Storm Surge | 7.5s | mob, player | knockback 2.4 (wave) · slowness 3.5s | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
+| Use (right-click / long-press) | Thunderhead | 9s | mob, player | 8 ability damage · knockback 0.8 | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
+| Use (right-click / long-press) | Lightning Lance | 8s | mob, player | 7 ability damage | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
+| Use (right-click / long-press) | Squall | 8s | mob, player | 3 ability damage · knockback 2.4 (wave) · slowness 3.0s | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
+| Use (right-click / long-press) | Storm Dash | 6s | any | speed 5.0s | campfire_tall_smoke_particle, water_drip_particle | cast: tempest_cast, impact: tempest_impact |
 | Melee hit | Storm Momentum | 0.5s | mob, player | 1 ability damage · knockback 0.8 · speed 4.0s | campfire_tall_smoke_particle | cast: tempest_cast, impact: tempest_gust |
 
 ### Soul Sword
@@ -726,27 +789,27 @@ every melee hit.
 
 | Ability | Used by | Behaviour |
 |---|---|---|
-| **Burst** | Earth Sword, Soul Sword, Blood Sword | Detonates around the caster, hitting hardest at the centre. |
-| **Repulse** | Wind Sword, Ocean Sword, Blood Sword, Echo Sword, Dragon Sword | Throws everything nearby away from the caster. |
-| **Brand** | Inferno Sword, Blood Sword | Marks its targets with lingering afflictions. |
+| **Burst** | Inferno Sword, Thunder Sword, Earth Sword, Nature Sword, Crystal Sword, Solar Sword, Soul Sword, Blood Sword | Detonates around the caster, hitting hardest at the centre. |
+| **Repulse** | Wind Sword, Earth Sword, Ocean Sword, Nature Sword, Void Sword, Gravity Sword, Storm Sword, Blood Sword, Echo Sword, Dragon Sword | Throws everything nearby away from the caster. |
+| **Brand** | Inferno Sword, Poison Sword, Blood Sword | Marks its targets with lingering afflictions. |
 | **Cleave** | Inferno Sword, Blood Sword, Dragon Sword | Sweeps everything in a wide arc ahead of the caster. |
-| **Bolster** | Wind Sword, Earth Sword, Ocean Sword, Nature Sword, Soul Sword, Blood Sword, Dragon Sword | Steeps the wielder in the blade’s own energy. |
+| **Bolster** | Frost Sword, Wind Sword, Earth Sword, Ocean Sword, Nature Sword, Shadow Sword, Crystal Sword, Void Sword, Solar Sword, Time Sword, Soul Sword, Blood Sword, Dragon Sword | Steeps the wielder in the blade’s own energy. |
 | **Ember Burst** | Ember Blade | Releases stored heat in a tight burst around the wielder. |
 | **Ember Edge** | Ember Blade | Banks a little heat with every blow that lands. |
-| **Nova** | Frost Sword, Echo Sword, Dragon Sword | Bursts outward, gripping hardest at its centre. |
+| **Nova** | Thunder Sword, Frost Sword, Shadow Sword, Void Sword, Gravity Sword, Poison Sword, Time Sword, Echo Sword, Dragon Sword | Bursts outward, gripping hardest at its centre. |
 | **Afflict** | Frost Sword | Bites deeper into a foe already suffering. |
-| **Chain** | Thunder Sword, Echo Sword | Strikes one foe, then arcs to those beside it. |
+| **Chain** | Thunder Sword, Storm Sword, Echo Sword | Strikes one foe, then arcs to those beside it. |
 | **Discharge** | Thunder Sword, Echo Sword | Builds with every blow and lets go on the beat. |
-| **Blink** | Shadow Sword, Soul Sword, Echo Sword, Dragon Sword | Steps through the dark to a place close by. |
+| **Blink** | Thunder Sword, Frost Sword, Shadow Sword, Crystal Sword, Void Sword, Time Sword, Soul Sword, Echo Sword, Dragon Sword | Steps through the dark to a place close by. |
 | **Opportunist** | Shadow Sword | Strikes hardest in the moment after a reposition. |
 | **Entangle** | Nature Sword, Soul Sword | Roots everything nearby, and feeds on what it holds. |
 | **Resonate** | Crystal Sword, Echo Sword | Rings through a crowd, and grows louder for every body in it. |
-| **Rift** | Void Sword, Echo Sword, Dragon Sword | Tears a collapse open at range and drags everything into it. |
+| **Rift** | Inferno Sword, Thunder Sword, Void Sword, Solar Sword, Time Sword, Echo Sword, Dragon Sword | Tears a collapse open at range and drags everything into it. |
 | **Ward** | Crystal Sword, Dragon Sword | Closes a defensive layer around a wielder who is losing. |
 | **Drain** | Void Sword, Soul Sword, Blood Sword | Takes back most from what has least left. |
 | **Flare** | Solar Sword | Draws on the sun overhead, and is only as bright as the hour. |
 | **Radiance** | Solar Sword | Burns brightest against what the sun was always against. |
-| **Crush** | Gravity Sword, Dragon Sword | Collapses a small well of force, and hits hardest what was highest. |
+| **Crush** | Earth Sword, Gravity Sword, Dragon Sword | Collapses a small well of force, and hits hardest what was highest. |
 | **Weigh** | Gravity Sword | Presses its target into the ground, and the heavy feel it most. |
 | **Rupture** | Poison Sword | Bursts the venom already worked into everything nearby. |
 | **Envenom** | Poison Sword | Works the venom deeper with every blow. |
@@ -754,3 +817,5 @@ every melee hit.
 | **Tempo** | Time Sword | Every blow winds the blade a little further. |
 | **Surge** | Storm Sword | Throws the weather forward, and carries the wielder’s own speed into it. |
 | **Momentum** | Storm Sword | Rewards a wielder who never stops moving, and throws harder for it. |
+| **Beam** | Ember Blade, Inferno Sword, Thunder Sword, Frost Sword, Wind Sword, Earth Sword, Ocean Sword, Shadow Sword, Crystal Sword, Void Sword, Solar Sword, Poison Sword, Time Sword, Storm Sword | A straight line through everything in front of you. |
+| **Leap** | Ember Blade, Inferno Sword, Wind Sword, Ocean Sword, Shadow Sword, Solar Sword, Gravity Sword, Storm Sword | Throws you forward along your aim. |

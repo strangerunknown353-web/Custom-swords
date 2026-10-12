@@ -111,9 +111,10 @@ string allocation in the hot path.
   library; their 16×16 icons already use long-sword proportions and are
   redrawn at 32×32 with the rest in Step 5.
 
-## Step 3 — Full ability kits for all 20 swords — (planned)
-- Author every sword's full kit to its rarity cap (~110 abilities total, built
-  from the shared built-in library with per-sword parameters, visuals, sounds).
+## Step 3 — Full ability kits for all 20 swords — **done**
+- Every sword's kit is at its rarity cap: 101 selectable abilities + 20
+  passives, built from the shared library (now 30 abilities, with the new
+  `beam` and `leap`) with per-sword parameters, visuals and sounds.
 - Balance pass per rarity band; cooldowns per ability, shown on the HUD.
 - Updated `SWORD_CATALOG.md`, in-game `/scriptevent custom_swords:list`.
 

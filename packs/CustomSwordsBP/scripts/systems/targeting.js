@@ -323,6 +323,44 @@ export class TargetingService {
     }
 
     /**
+     * Every permitted entity along the caster's view vector, nearest first, up
+     * to `maxTargets`. One engine query; the piercing counterpart of
+     * {@link TargetingService#raycast}.
+     *
+     * @param {import('../core/types.js').AbilityContext} ctx
+     * @param {{ range: number, maxTargets?: number, includePlayers?: boolean, allowedCategories?: readonly string[] }} query
+     * @returns {Entity[]}
+     */
+    raycastAll(ctx, query) {
+        const range = clamp(query.range, 0, this.config.targeting.maxRange);
+        const limit = clamp(query.maxTargets ?? this.config.targeting.maxTargets, 0, this.config.targeting.maxTargets);
+        /** @type {Entity[]} */
+        const found = [];
+        if (range <= 0 || limit <= 0) return found;
+        try {
+            const hits = ctx.dimension.getEntitiesFromRay(ctx.origin, ctx.viewDirection, {
+                maxDistance: range,
+                excludeTypes: [...this.neverTarget],
+            });
+            for (const hit of hits) {
+                if (found.length >= limit) break;
+                if (
+                    this.isTargetable(hit.entity, {
+                        casterId: ctx.playerId,
+                        includePlayers: query.includePlayers,
+                        allowedCategories: query.allowedCategories,
+                    })
+                ) {
+                    found.push(hit.entity);
+                }
+            }
+        } catch (error) {
+            this.log.warn('targeting.raycastAll query failed:', error);
+        }
+        return found;
+    }
+
+    /**
      * First permitted entity along the caster's view vector.
      *
      * @param {import('../core/types.js').AbilityContext} ctx

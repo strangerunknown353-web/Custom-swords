@@ -1,0 +1,34 @@
+{
+  "name": "Soul Sword",
+  "description": "A long blade of pale soul-steel that burns cold blue along its edge, with a dark bone guard holding a soul-flame gem, a wrapped grip and a bone pommel.",
+  "palette": {
+    "o": "#0a0e16",
+    "X": "#d8fbff",
+    "H": "#6fe0f0",
+    "B": "#2c8fb0",
+    "G": "#e6dcc0",
+    "g": "#8a8068",
+    "M": "#40e8ff",
+    "W": "#3a3040",
+    "w": "#5a4a60",
+    "P": "#cfc6a8"
+  },
+  "pixels": [
+    "..............oo",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHBo",
+    "..........oXHBo.",
+    ".........oXHBo..",
+    "........oXHBo...",
+    ".......oXHBo....",
+    "..oo..oXHBo.....",
+    "..oGooXHBo......",
+    "...oGMHBo.......",
+    "....oMgo........",
+    "...oWogGo.......",
+    "..oWwo.oGo......",
+    ".oPWo...oo......",
+    ".oPo............"
+  ]
+}

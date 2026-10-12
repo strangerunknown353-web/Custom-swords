@@ -1,0 +1,33 @@
+{
+  "name": "Blood Sword",
+  "description": "A long crimson blade with a serrated spine, bright at the edge and near black along its back, a down-swept blackened iron guard set with a ruby, a dark red wrapped grip and an iron pommel.",
+  "palette": {
+    "o": "#120406",
+    "X": "#ffb0a8",
+    "H": "#e0283a",
+    "B": "#7a0c18",
+    "G": "#6a6470",
+    "g": "#33303a",
+    "M": "#ff3048",
+    "W": "#4a1016",
+    "P": "#8a8494"
+  },
+  "pixels": [
+    "..............oo",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHBo",
+    "..........oXHBoo",
+    ".........oXHBoBo",
+    "........oXHBo.o.",
+    ".......oXHBoo...",
+    "......oXHBoBo...",
+    ".....oXHBo.o....",
+    "..o.oXHBo.......",
+    "..oGoMBo........",
+    "...oMgGo........",
+    "..oWo.oGo.......",
+    ".oPWo..ogo......",
+    "oPPo....o......."
+  ]
+}

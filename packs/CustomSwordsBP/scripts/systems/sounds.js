@@ -46,6 +46,7 @@ export const SOUND_LIBRARY = Object.freeze({
     // --- Framework cues -----------------------------------------------------
     ability_cast: { id: 'random.orb', volume: 0.8, pitch: 1.2 },
     ability_deny: { id: 'note.bass', volume: 0.5, pitch: 0.6 },
+    ability_switch: { id: 'random.click', volume: 0.5, pitch: 1.5 },
     ability_ready: { id: 'random.levelup', volume: 0.4, pitch: 1.6 },
     impact_heavy: { id: 'random.explode', volume: 0.6, pitch: 1.4 },
     impact_light: { id: 'random.anvil_land', volume: 0.4, pitch: 1.8 },
@@ -134,6 +135,18 @@ export const SOUND_LIBRARY = Object.freeze({
 
     // Ember: quenching steel, then the crackle of what it left behind. Pitched
     // up and quieter than Inferno's blaze roar — a smaller, faster weapon.
+    // --- v2.0 swords --------------------------------------------------------
+    soul_cast: { id: 'particle.soul_escape', volume: 1, pitch: 0.9 },
+    soul_impact: { id: 'mob.vex.charge', volume: 0.6, pitch: 0.8 },
+    soul_siphon: { id: 'mob.vex.hurt', volume: 0.4, pitch: 0.7 },
+    blood_cast: { id: 'mob.ravager.roar', volume: 0.6, pitch: 1.4 },
+    blood_impact: { id: 'mob.phantom.bite', volume: 0.6, pitch: 0.8 },
+    blood_drain: { id: 'random.drink_honey', volume: 0.5, pitch: 0.6 },
+    echo_cast: { id: 'mob.warden.sonic_boom', volume: 0.8, pitch: 1.1 },
+    echo_impact: { id: 'mob.warden.heartbeat', volume: 0.8, pitch: 1 },
+    dragon_cast: { id: 'mob.enderdragon.growl', volume: 0.7, pitch: 1.2 },
+    dragon_impact: { id: 'mob.ghast.fireball', volume: 0.6, pitch: 0.9 },
+
     ember_cast: { id: 'random.fizz', volume: 0.8, pitch: 1.4 },
     ember_impact: { id: 'block.campfire.crackle', volume: 0.7, pitch: 1.5 },
 });

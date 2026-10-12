@@ -82,3 +82,23 @@ item.custom_swords:time_sword.description=It keeps what you do not spend, and sp
 item.custom_swords:storm_sword=§dStorm Sword§r
 item.custom_swords:storm_sword.name=§dStorm Sword§r
 item.custom_swords:storm_sword.description=It brings the weather with it, and only as fast as you do.
+
+## custom_swords:soul_sword - Rare
+item.custom_swords:soul_sword=§9Soul Sword§r
+item.custom_swords:soul_sword.name=§9Soul Sword§r
+item.custom_swords:soul_sword.description=It burns cold and blue, and keeps a little of everything it cuts.
+
+## custom_swords:blood_sword - Epic
+item.custom_swords:blood_sword=§dBlood Sword§r
+item.custom_swords:blood_sword.name=§dBlood Sword§r
+item.custom_swords:blood_sword.description=Every wound it opens is a debt, and the blade always collects.
+
+## custom_swords:echo_sword - Legendary
+item.custom_swords:echo_sword=§6Echo Sword§r
+item.custom_swords:echo_sword.name=§6Echo Sword§r
+item.custom_swords:echo_sword.description=Forged where nothing makes a sound. It makes up for it.
+
+## custom_swords:dragon_sword - Mythic
+item.custom_swords:dragon_sword=§cDragon Sword§r
+item.custom_swords:dragon_sword.name=§cDragon Sword§r
+item.custom_swords:dragon_sword.description=Cut from the last scale of the last dragon. It still breathes.

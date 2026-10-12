@@ -11,7 +11,38 @@ together; `npm run validate` fails if they ever drift apart.
 
 ## [Unreleased]
 
-Nothing yet.
+Work towards v2.0.0. See `docs/V2_PLAN.md`.
+
+### Added
+
+- **Ability switching.** A sword can now carry several selectable abilities.
+  Tap crouch while holding it to switch to the next one; use casts the
+  selected ability. The action bar shows `[2/5] Ability - Ready` (or the time
+  left) and a click plays. Holding sneak to creep along an edge does not
+  switch — only a tap of 0.4 s or less does.
+  - Each ability has its own cooldown.
+  - The selection is remembered per sword and survives a relog.
+  - On an engine without the sneak-button event, crouch + use switches instead.
+- **Ability limits by rarity**: Common 2, Uncommon 3, Rare 4, Epic 5,
+  Legendary 6, Mythic 7 selectable abilities, plus one on-hit passive. The
+  validator enforces them.
+- **Four new swords**, each with a full kit:
+  - **Soul Sword** (Rare) — Soul Flame, Soul Snare, Soul Dash, Soul Ward;
+    passive Soul Siphon.
+  - **Blood Sword** (Epic) — Crimson Cleave, Hemorrhage, Blood Burst, Blood
+    Pull, Bloodlust; passive Vampiric Edge.
+  - **Echo Sword** (Legendary) — Sonic Boom, Shriek, Resonance, Vibration
+    Rift, Echo Step, Sculk Shockwave; passive Reverberate.
+  - **Dragon Sword** (Mythic) — Dragon Breath, Wing Gust, Ender Flame, Dragon
+    Dash, Dragon Roar, Sky Crush, Draconic Fury; passive Dragon Scale.
+- Visual profiles `soul`, `blood`, `echo`, `dragon` and their sounds.
+
+### Fixed
+
+- CI: every shipped texture has an art source again, so `generate --check`
+  reproduces the shipped PNGs byte for byte.
+- The cooldown message named the underlying ability instead of the sword's
+  label for it.
 
 ## [0.9.0] — 2026-09-01
 

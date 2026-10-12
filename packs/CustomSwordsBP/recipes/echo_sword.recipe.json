@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:echo_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " E ",
+      "ECE",
+      " N "
+    ],
+    "key": {
+      "E": {
+        "item": "minecraft:echo_shard"
+      },
+      "C": {
+        "item": "minecraft:sculk_catalyst"
+      },
+      "N": {
+        "item": "minecraft:netherite_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:sculk_catalyst"
+      }
+    ],
+    "result": "custom_swords:echo_sword"
+  }
+}

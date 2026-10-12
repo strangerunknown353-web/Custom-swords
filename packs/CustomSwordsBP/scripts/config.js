@@ -128,6 +128,15 @@ export const CONFIG = Object.freeze({
         maxDashDistance: 10,
     }),
 
+    switching: Object.freeze({
+        /**
+         * Longest sneak press, in ticks, that still counts as a tap. Crouch
+         * taps switch the selected ability; holding sneak to creep along an
+         * edge does not. 8 ticks = 0.4 s.
+         */
+        tapMaxTicks: 8,
+    }),
+
     feedback: Object.freeze({
         /** Show ability names / cooldown notices on the action bar. */
         actionBar: true,

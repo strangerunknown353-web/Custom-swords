@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:soul_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " L ",
+      "SDS",
+      " B "
+    ],
+    "key": {
+      "L": {
+        "item": "minecraft:soul_lantern"
+      },
+      "S": {
+        "item": "minecraft:soul_sand"
+      },
+      "D": {
+        "item": "minecraft:diamond"
+      },
+      "B": {
+        "item": "minecraft:bone"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:soul_lantern"
+      }
+    ],
+    "result": "custom_swords:soul_sword"
+  }
+}

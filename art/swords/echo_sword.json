@@ -1,0 +1,34 @@
+{
+  "name": "Echo Sword",
+  "description": "A broad blade of deep sculk-steel with a glowing cyan edge and a dark fuller down its length, a heavy square deepslate guard with an echo-shard core, a wrapped grip and a netherite pommel.",
+  "palette": {
+    "o": "#02080c",
+    "X": "#b8fff6",
+    "H": "#1fc2c2",
+    "B": "#0b4a5a",
+    "G": "#3c4a52",
+    "M": "#5ffff0",
+    "W": "#24404a",
+    "w": "#3a5a66",
+    "P": "#4a4046",
+    "F": "#063040"
+  },
+  "pixels": [
+    ".............ooo",
+    "............oXXo",
+    "...........oXHBo",
+    "..........oXHFBo",
+    ".........oXHFBo.",
+    "........oXHFBo..",
+    ".......oXHFBo...",
+    "......oXHFBo....",
+    ".....oXHFBo.....",
+    "..oooXHFBo......",
+    "..oGGoHBo.......",
+    "..oGMMGo........",
+    "...ooMGGo.......",
+    "..oWo.oGo.......",
+    ".oWwo..oo.......",
+    "oPPo............"
+  ]
+}

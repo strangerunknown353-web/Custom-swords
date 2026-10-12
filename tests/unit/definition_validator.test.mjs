@@ -71,17 +71,53 @@ describe('validateSwordDefinition', () => {
         );
     });
 
-    it('rejects two bindings on the same activation, which would make dispatch ambiguous', () => {
+    it('rejects two bindings on the same non-use activation, which would make dispatch ambiguous', () => {
+        const problems = validateSwordDefinition(
+            sword({
+                abilities: [
+                    { activation: 'attack', abilityId: 'custom_swords:a' },
+                    { activation: 'attack', abilityId: 'custom_swords:b' },
+                ],
+            }),
+            always,
+        );
+        assert.ok(problems.some((p) => p.includes("binds 'attack' more than once")));
+    });
+
+    it('accepts several use bindings: they are the abilities crouch cycles through', () => {
         const problems = validateSwordDefinition(
             sword({
                 abilities: [
                     { activation: 'use', abilityId: 'custom_swords:a' },
                     { activation: 'use', abilityId: 'custom_swords:b' },
+                    { activation: 'attack', abilityId: 'custom_swords:c' },
                 ],
             }),
             always,
         );
-        assert.ok(problems.some((p) => p.includes("binds 'use' more than once")));
+        assert.deepEqual(problems, []);
+    });
+
+    it('caps selectable abilities by rarity', () => {
+        const uses = (n) => Array.from({ length: n }, (_, i) => ({ activation: 'use', abilityId: `custom_swords:a${i}` }));
+        assert.deepEqual(validateSwordDefinition(sword({ rarity: 'rare', abilities: uses(4) }), always), []);
+        const problems = validateSwordDefinition(sword({ rarity: 'rare', abilities: uses(5) }), always);
+        assert.ok(problems.some((p) => p.includes('exceeds the rare limit of 4')));
+        assert.deepEqual(validateSwordDefinition(sword({ rarity: 'mythic', abilities: uses(7) }), always), []);
+    });
+
+    it('reserves crouch for switching once a sword has several abilities', () => {
+        const problems = validateSwordDefinition(
+            sword({
+                abilities: [
+                    { activation: 'use', abilityId: 'custom_swords:a' },
+                    { activation: 'use', abilityId: 'custom_swords:b' },
+                    { activation: 'sneak_use', abilityId: 'custom_swords:c' },
+                ],
+            }),
+            always,
+        );
+        assert.ok(problems.some((p) => p.includes('reserved for switching')));
     });
 
     it('rejects an unknown activation method', () => {

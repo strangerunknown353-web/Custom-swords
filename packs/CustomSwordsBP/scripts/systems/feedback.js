@@ -61,6 +61,19 @@ export class FeedbackService {
      * @param {string} abilityName
      * @param {number} remainingTicks
      */
+    /**
+     * The player switched abilities. Shows position, name and readiness, with a
+     * click so the switch is felt even when the action bar is missed.
+     *
+     * @param {import('@minecraft/server').Player} player
+     * @param {{ label: string, index: number, count: number, remainingTicks: number }} selection
+     */
+    abilitySelected(player, { label, index, count, remainingTicks }) {
+        const status = remainingTicks > 0 ? `§c${formatTicks(remainingTicks)}` : '§aReady';
+        this.actionBar(player, `§e[${index + 1}/${count}] §b${label} §7- ${status}§r`);
+        this.sounds.playFor(player, 'ability_switch');
+    }
+
     onCooldown(player, abilityName, remainingTicks) {
         this.actionBar(player, `§7${abilityName} §c${formatTicks(remainingTicks)}§r`);
         if (this.config.feedback.denySound) this.sounds.playFor(player, 'ability_deny');

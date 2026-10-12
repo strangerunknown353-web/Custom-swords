@@ -14,7 +14,7 @@
  */
 
 import { IDENTIFIER_PATTERN, isValidIdentifier, isValidLocalName } from './identifiers.js';
-import { RARITIES, isRarity } from './rarity.js';
+import { RARITIES, isRarity, maxActiveAbilities } from './rarity.js';
 import { ACTIVATION_METHODS, isActivationMethod } from './activation.js';
 import { TARGET_CATEGORY_IDS, isTargetCategory } from './target_categories.js';
 import { isVanillaEffect, suggestEffect } from './effect_catalogue.js';
@@ -530,14 +530,23 @@ export function validateSwordDefinition(sword, abilityExists) {
         sword.abilities.forEach((binding, index) => {
             const activation = isPlainObject(binding) ? String(binding.activation) : `#${index}`;
             problems.push(...validateBinding(binding, `${label}[${activation}]`, abilityExists));
-            // Two bindings on one activation would make dispatch ambiguous.
+            // Two bindings on one activation would make dispatch ambiguous —
+            // except `use`, where several form the list crouch cycles through.
             if (isPlainObject(binding) && isActivationMethod(binding.activation)) {
-                if (seenActivations.has(binding.activation)) {
+                if (binding.activation !== 'use' && seenActivations.has(binding.activation)) {
                     problems.push(`${label}: binds '${binding.activation}' more than once.`);
                 }
                 seenActivations.add(binding.activation);
             }
         });
+        const actives = sword.abilities.filter((binding) => isPlainObject(binding) && binding.activation === 'use');
+        const cap = maxActiveAbilities(sword.rarity);
+        if (isRarity(sword.rarity) && actives.length > cap) {
+            problems.push(`${label}: ${actives.length} selectable abilities exceeds the ${sword.rarity} limit of ${cap}.`);
+        }
+        if (actives.length > 1 && seenActivations.has('sneak_use')) {
+            problems.push(`${label}: binds 'sneak_use', but crouching is reserved for switching between its abilities.`);
+        }
     }
 
     if (sword.tags !== undefined && !Array.isArray(sword.tags)) {

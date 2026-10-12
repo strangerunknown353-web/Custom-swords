@@ -80,7 +80,7 @@ string allocation in the hot path.
 
 ---
 
-## Step 2 — Ability switching system + 4 new swords (data) — (planned)
+## Step 2 — Ability switching system + 4 new swords — **done**
 - **Mode system:** each sword gets an ordered list of *active* abilities.
   - **Crouch (tap sneak) while holding the sword → switch to the next ability.**
     Action bar shows `◆ [2/5] Frost Lance` in the rarity colour, with a click.
@@ -90,6 +90,8 @@ string allocation in the hot path.
     survives relog.
   - Fallback for players/devices where the sneak-button event isn't delivered:
     **sneak + use** also switches.
+  - Only a *tap* (≤ 0.4 s) switches, so holding sneak at a ledge does not.
+  - Each selectable ability has its own cooldown.
 - **Max abilities per rarity** (actives + 1 passive):
   | Rarity | Actives | Passive | Total |
   |---|---|---|---|
@@ -105,8 +107,9 @@ string allocation in the hot path.
   | Blood Sword | Epic | lifesteal, bleed, berserk at low HP |
   | Echo Sword | Legendary | sculk, sonic boom line, sense/darkness |
   | Dragon Sword | Mythic | dragon breath cone, wing leap, ender-flame |
-- New built-in abilities as needed (dash, projectile/line, pull, buff aura,
-  ultimate) so kits reuse the engine rather than one-off code.
+- The 4 new swords ship with full kits built from the existing 28-ability
+  library; their 16×16 icons already use long-sword proportions and are
+  redrawn at 32×32 with the rest in Step 5.
 
 ## Step 3 — Full ability kits for all 20 swords — (planned)
 - Author every sword's full kit to its rarity cap (~110 abilities total, built

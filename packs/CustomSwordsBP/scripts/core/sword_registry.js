@@ -48,6 +48,8 @@ export class SwordRegistry {
     constructor() {
         /** @private @readonly @type {Registry<SwordDefinition>} */
         this.registry = new Registry('sword');
+        /** @type {Map<string, readonly AbilityBinding[]>} */
+        this.useBindings = new Map();
     }
 
     /**
@@ -138,6 +140,22 @@ export class SwordRegistry {
      * @param {string} id
      * @returns {ActivationMethod[]}
      */
+    /**
+     * Every selectable (use) binding on a sword, in definition order. Crouch
+     * cycles through these; use casts the selected one.
+     *
+     * @param {string} id
+     * @returns {readonly AbilityBinding[]}
+     */
+    getUseBindings(id) {
+        let cached = this.useBindings.get(id);
+        if (cached === undefined) {
+            cached = Object.freeze(this.getAbilities(id).filter((binding) => binding.activation === 'use'));
+            if (this.registry.has(id)) this.useBindings.set(id, cached);
+        }
+        return cached;
+    }
+
     getActivations(id) {
         return this.getAbilities(id).map((binding) => binding.activation);
     }

@@ -86,7 +86,38 @@ export class AbilityExecutor {
      * @returns {string}
      */
     static cooldownKey(sword, binding) {
-        return binding.cooldownKey ?? `${sword.id}#${binding.activation}`;
+        if (binding.cooldownKey !== undefined) return binding.cooldownKey;
+        // Each selectable ability cools down on its own. The first keeps the
+        // pre-2.0 key so a cooldown running across an upgrade is honoured.
+        if (binding.activation === 'use') {
+            let slot = 0;
+            for (const candidate of sword.abilities) {
+                if (candidate === binding) break;
+                if (candidate.activation === 'use') slot++;
+            }
+            if (slot > 0) return `${sword.id}#use:${slot}`;
+        }
+        return `${sword.id}#${binding.activation}`;
+    }
+
+    /**
+     * @param {AbilityBinding} binding
+     * @returns {string}
+     */
+    abilityName(binding) {
+        return this.abilities.get(binding.abilityId)?.name ?? 'Ability';
+    }
+
+    /**
+     * Ticks until `binding` can be cast again by `player`; 0 when ready.
+     *
+     * @param {import('@minecraft/server').Player} player
+     * @param {SwordDefinition} sword
+     * @param {AbilityBinding} binding
+     * @returns {number}
+     */
+    remainingCooldown(player, sword, binding) {
+        return this.services.cooldowns.remaining(player.id, AbilityExecutor.cooldownKey(sword, binding));
     }
 
     /**
@@ -151,7 +182,7 @@ export class AbilityExecutor {
         if (!FEEDBACK_ACTIVATIONS.has(request.activation)) return;
         const { player, binding } = request;
         const ability = this.abilities.get(binding.abilityId);
-        const name = ability?.name ?? 'Ability';
+        const name = binding.label ?? ability?.name ?? 'Ability';
 
         if (gateResult.reason === 'cooldown') {
             this.services.feedback.onCooldown(player, name, gateResult.remainingTicks ?? 0);

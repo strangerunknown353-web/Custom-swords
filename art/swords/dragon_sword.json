@@ -1,0 +1,34 @@
+{
+  "name": "Dragon Sword",
+  "description": "A long, slim black-violet blade with an ender-purple edge, a gold guard swept back like wings around a dragon-breath gem, a scaled grip and a pale horned pommel.",
+  "palette": {
+    "o": "#08020c",
+    "X": "#f4c8ff",
+    "H": "#b04ce0",
+    "B": "#4a1a6a",
+    "G": "#ffcf4a",
+    "g": "#a87a10",
+    "M": "#ff5cf0",
+    "W": "#2a1036",
+    "w": "#46205a",
+    "P": "#d0d0e0"
+  },
+  "pixels": [
+    "..............oo",
+    ".............oXo",
+    "............oXHo",
+    "...........oXHo.",
+    "..........oXHBo.",
+    ".........oXHBo..",
+    "........oXHBo...",
+    ".......oXHBo....",
+    "o.....oXHBo.....",
+    "oGo..oXHBo......",
+    ".oGooHBBo.......",
+    "..oGMMgo........",
+    "...oMgGGo.o.....",
+    "..oWo.oGGGo.....",
+    ".oWwo...ooo.....",
+    "oPoPo..........."
+  ]
+}

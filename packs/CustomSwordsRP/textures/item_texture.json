@@ -49,6 +49,18 @@
     },
     "storm_sword": {
       "textures": "textures/items/custom_swords/swords/storm_sword"
+    },
+    "soul_sword": {
+      "textures": "textures/items/custom_swords/swords/soul_sword"
+    },
+    "blood_sword": {
+      "textures": "textures/items/custom_swords/swords/blood_sword"
+    },
+    "echo_sword": {
+      "textures": "textures/items/custom_swords/swords/echo_sword"
+    },
+    "dragon_sword": {
+      "textures": "textures/items/custom_swords/swords/dragon_sword"
     }
   }
 }

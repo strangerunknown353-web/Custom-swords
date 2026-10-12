@@ -18,6 +18,7 @@
  * See docs/API_NOTES.md for the exact API version contract.
  */
 
+import * as mc from '@minecraft/server';
 import { system, world } from '@minecraft/server';
 
 import { CONFIG } from '../config.js';
@@ -32,6 +33,7 @@ import { PlayerStateStore } from './player_state.js';
 import { AbilityGate } from './ability_gate.js';
 import { AbilityExecutor } from './ability_executor.js';
 import { InputRouter } from './input_router.js';
+import { AbilitySelector } from './ability_selector.js';
 import { validateAbilityDefinition, validateSwordDefinition } from './definition_validator.js';
 
 import { TargetingService } from '../systems/targeting.js';
@@ -154,9 +156,10 @@ export function createFramework(options = {}) {
     // --- Engine ------------------------------------------------------------
     const gate = new AbilityGate({ abilities, identifier, cooldowns, config: CONFIG, log });
     const executor = new AbilityExecutor({ abilities, gate, services, clock });
-    const router = new InputRouter({ identifier, swords, executor, log });
+    const selector = new AbilitySelector({ swords, log });
+    const router = new InputRouter({ identifier, swords, executor, selector, feedback, clock, config: CONFIG, log });
 
-    return { abilities, swords, identifier, diagnostics, services, gate, executor, router, problems };
+    return { abilities, swords, identifier, diagnostics, services, gate, executor, selector, router, problems };
 }
 
 /**
@@ -200,6 +203,7 @@ export function start() {
     });
 
     subscribePlayerLifecycle(framework);
+    subscribeSneakSwitching(framework);
 
     // Diagnostics are exposed as script events rather than a tick loop, so they
     // cost one namespace-filtered subscription and nothing else.
@@ -253,6 +257,8 @@ export function subscribePlayerLifecycle(framework) {
     world.afterEvents.playerLeave.subscribe(({ playerId }) => {
         cooldowns.clearPlayer(playerId);
         state.clearPlayer(playerId);
+        framework.selector?.clearPlayer(playerId);
+        framework.router?.forgetPlayer(playerId);
         log.debug(`Cleared runtime state for departed player ${playerId}.`);
     });
 
@@ -280,6 +286,49 @@ export function subscribePlayerLifecycle(framework) {
 }
 
 /**
+ * Tap-crouch ability switching.
+ *
+ * `playerButtonInput` is looked up through the module namespace rather than
+ * imported by name: a named import the engine does not export fails the whole
+ * script at link time, which would take every sword down on an older client.
+ * Read this way, a missing event leaves crouch + use as the way to switch.
+ *
+ * The subscription is filtered to the sneak button, so the handler never runs
+ * for jumps or any other input.
+ *
+ * Exported for the test suite; `start()` is the only caller in the game.
+ *
+ * @param {ReturnType<typeof createFramework>} framework
+ * @returns {boolean} Whether tap switching is active.
+ */
+export function subscribeSneakSwitching(framework) {
+    const signal = world.afterEvents.playerButtonInput;
+    const InputButton = /** @type {any} */ (mc).InputButton;
+    const ButtonState = /** @type {any} */ (mc).ButtonState;
+    if (signal === undefined || InputButton?.Sneak === undefined || ButtonState?.Pressed === undefined) {
+        log.info('Sneak-button event unavailable; crouch + use switches abilities.');
+        return false;
+    }
+    try {
+        world.afterEvents.playerButtonInput.subscribe(
+            (event) => {
+                try {
+                    framework.router.handleSneakButton(event.player, event.newButtonState === ButtonState.Pressed);
+                } catch (error) {
+                    log.debug('Sneak switch skipped:', error);
+                }
+            },
+            { buttons: [InputButton.Sneak] },
+        );
+    } catch (error) {
+        log.warn('Could not subscribe to sneak input; crouch + use switches abilities.', error);
+        return false;
+    }
+    framework.router.enableTapSwitching();
+    return true;
+}
+
+/**
  * The addon's ONLY recurring timer. It does no gameplay work: it just releases
  * memory for players who are gone. Every gameplay path is event-driven.
  *
@@ -289,7 +338,8 @@ function startMaintenance(framework) {
     system.runInterval(() => {
         try {
             const expired = framework.services.cooldowns.sweep();
-            const dropped = framework.services.state.retainOnly(world.getAllPlayers().map((player) => player.id));
+            const live = world.getAllPlayers().map((player) => player.id);
+            const dropped = framework.services.state.retainOnly(live) + framework.selector.retainOnly(live);
             if (expired > 0 || dropped > 0) {
                 log.debug(`Maintenance: ${expired} cooldown(s) expired, ${dropped} state bucket(s) dropped.`);
             }

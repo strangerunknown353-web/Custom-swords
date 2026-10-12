@@ -1,0 +1,33 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:dragon_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " B ",
+      "BHB",
+      " N "
+    ],
+    "key": {
+      "B": {
+        "item": "minecraft:dragon_breath"
+      },
+      "H": {
+        "item": "minecraft:dragon_head"
+      },
+      "N": {
+        "item": "minecraft:netherite_ingot"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:dragon_head"
+      }
+    ],
+    "result": "custom_swords:dragon_sword"
+  }
+}

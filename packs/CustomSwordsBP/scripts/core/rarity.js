@@ -20,19 +20,31 @@
  * @property {string} label Human-readable name for UI and documentation.
  * @property {string} colorCode Minecraft section colour code applied to the display name.
  * @property {string} colorName Equivalent Bedrock colour name, for any future component that wants one.
+ * @property {number} maxActives Most selectable abilities a sword of this tier may carry.
  */
 
 /** @type {Readonly<Record<string, RarityTier>>} */
 export const RARITY_TIERS = Object.freeze({
-    common: Object.freeze({ id: 'common', order: 0, label: 'Common', colorCode: '§f', colorName: 'white' }),
-    uncommon: Object.freeze({ id: 'uncommon', order: 1, label: 'Uncommon', colorCode: '§a', colorName: 'green' }),
-    rare: Object.freeze({ id: 'rare', order: 2, label: 'Rare', colorCode: '§9', colorName: 'blue' }),
-    epic: Object.freeze({ id: 'epic', order: 3, label: 'Epic', colorCode: '§d', colorName: 'light_purple' }),
-    legendary: Object.freeze({ id: 'legendary', order: 4, label: 'Legendary', colorCode: '§6', colorName: 'gold' }),
-    mythic: Object.freeze({ id: 'mythic', order: 5, label: 'Mythic', colorCode: '§c', colorName: 'red' }),
+    common: Object.freeze({ id: 'common', order: 0, label: 'Common', colorCode: '§f', colorName: 'white', maxActives: 2 }),
+    uncommon: Object.freeze({ id: 'uncommon', order: 1, label: 'Uncommon', colorCode: '§a', colorName: 'green', maxActives: 3 }),
+    rare: Object.freeze({ id: 'rare', order: 2, label: 'Rare', colorCode: '§9', colorName: 'blue', maxActives: 4 }),
+    epic: Object.freeze({ id: 'epic', order: 3, label: 'Epic', colorCode: '§d', colorName: 'light_purple', maxActives: 5 }),
+    legendary: Object.freeze({ id: 'legendary', order: 4, label: 'Legendary', colorCode: '§6', colorName: 'gold', maxActives: 6 }),
+    mythic: Object.freeze({ id: 'mythic', order: 5, label: 'Mythic', colorCode: '§c', colorName: 'red', maxActives: 7 }),
 });
 
 /** Tier ids in ascending order. */
+/**
+ * The most selectable (use) abilities a sword of this rarity may carry.
+ * Crouching cycles through them; a sword's on-hit passive does not count.
+ *
+ * @param {unknown} value
+ * @returns {number} 0 for an unknown rarity.
+ */
+export function maxActiveAbilities(value) {
+    return rarityOf(value)?.maxActives ?? 0;
+}
+
 export const RARITIES = Object.freeze(
     Object.values(RARITY_TIERS)
         .sort((a, b) => a.order - b.order)

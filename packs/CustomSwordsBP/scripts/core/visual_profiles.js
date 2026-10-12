@@ -243,6 +243,53 @@ export const VISUAL_PROFILES = Object.freeze({
         impactSound: 'tempest_impact',
     }),
 
+    /**
+     * Soul: cold blue fire, the only profile that burns without being warm.
+     * Soul Sword.
+     */
+    soul: Object.freeze({
+        caster: 'minecraft:blue_flame_particle',
+        target: 'minecraft:obsidian_glow_dust_particle',
+        trail: 'minecraft:blue_flame_particle',
+        castSound: 'soul_cast',
+        impactSound: 'soul_impact',
+    }),
+
+    /**
+     * Blood: deep red dust and angry sparks — wounds, not flame. Blood Sword.
+     */
+    blood: Object.freeze({
+        caster: 'minecraft:redstone_wire_dust_particle',
+        target: 'minecraft:villager_angry',
+        trail: 'minecraft:redstone_wire_dust_particle',
+        castSound: 'blood_cast',
+        impactSound: 'blood_impact',
+    }),
+
+    /**
+     * Echo: the Deep Dark. Sculk pulses at the hand, the Warden's roar ring
+     * where it lands. Echo Sword.
+     */
+    echo: Object.freeze({
+        caster: 'minecraft:sculk_sensor_redstone_particle',
+        target: 'minecraft:knockback_roar_particle',
+        trail: 'minecraft:sculk_sensor_redstone_particle',
+        castSound: 'echo_cast',
+        impactSound: 'echo_impact',
+    }),
+
+    /**
+     * Dragon: molten spatter at the hand, dragon breath where it lands.
+     * Dragon Sword.
+     */
+    dragon: Object.freeze({
+        caster: 'minecraft:lava_particle',
+        target: 'minecraft:dragon_breath_trail',
+        trail: 'minecraft:dragon_breath_trail',
+        castSound: 'dragon_cast',
+        impactSound: 'dragon_impact',
+    }),
+
     /** The framework's neutral default. */
     arcane: Object.freeze({
         caster: 'minecraft:critical_hit_emitter',

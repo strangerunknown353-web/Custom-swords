@@ -69,18 +69,22 @@ const lines = [
     '',
     '## Summary',
     '',
-    '| Sword | Rarity | Melee | Durability | Active | Cooldown | Passive |',
-    '|---|---|---:|---:|---|---:|---|',
+    'Tap crouch while holding a sword to switch between its abilities; use',
+    '(right-click / long-press) casts the selected one. The passive runs on',
+    'every melee hit.',
+    '',
+    '| Sword | Rarity | Melee | Durability | Abilities (crouch to switch) | Passive |',
+    '|---|---|---:|---:|---|---|',
 ];
 
 for (const sword of shipped) {
     const d = described.get(sword.id);
-    const active = bindingFor(sword, 'use');
+    const actives = sword.abilities.filter((b) => b.activation === 'use');
     const passive = bindingFor(sword, 'attack');
+    const activeList = actives.map((b, i) => `${i + 1}. ${bindingName(b)} (${(b.cooldownTicks ?? 0) / 20}s)`).join('<br>');
     lines.push(
         `| ${sword.name} | ${d.rarityLabel} | ${d.stats.meleeDamage} | ${d.stats.durability} ` +
-            `| ${active === undefined ? '—' : bindingName(active)} ` +
-            `| ${active === undefined ? '—' : `${(active.cooldownTicks ?? 0) / 20}s`} ` +
+            `| ${activeList || '—'} ` +
             `| ${passive === undefined ? '—' : bindingName(passive)} |`,
     );
 }

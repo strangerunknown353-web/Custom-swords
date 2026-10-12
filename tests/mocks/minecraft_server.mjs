@@ -220,6 +220,19 @@ export class MockEntity {
         this.knockbacks = [];
         /** @type {{ effect: string, duration: number, options: any }[]} */
         this.effects = [];
+        /** @type {Map<string, any>} */
+        this.dynamicProperties = new Map();
+    }
+
+    /** @param {string} key */
+    getDynamicProperty(key) {
+        return this.dynamicProperties.get(key);
+    }
+
+    /** @param {string} key @param {any} value */
+    setDynamicProperty(key, value) {
+        if (value === undefined) this.dynamicProperties.delete(key);
+        else this.dynamicProperties.set(key, value);
     }
 
     /** @param {number} amount @param {any} options */
@@ -460,6 +473,9 @@ export class InvalidMockItemStack {
     }
 }
 
+export const InputButton = Object.freeze({ Jump: 'Jump', Sneak: 'Sneak' });
+export const ButtonState = Object.freeze({ Pressed: 'Pressed', Released: 'Released' });
+
 /** Controllable stand-in for the `system` global. */
 export const system = {
     currentTick: 0,
@@ -497,6 +513,8 @@ export const world = {
         worldLoad: new Signal(),
         entityHitEntity: new Signal(),
         entityDie: new Signal(),
+        /** @type {Signal | undefined} Set to undefined to model an engine without it. */
+        playerButtonInput: new Signal(),
     },
     beforeEvents: {},
     /** @type {MockPlayer[]} */
@@ -523,6 +541,7 @@ export function resetMocks() {
     world.afterEvents.playerSpawn = new Signal();
     world.afterEvents.entityDie = new Signal();
     world.afterEvents.worldLoad = new Signal();
+    world.afterEvents.playerButtonInput = new Signal();
     world.players = [];
     world.messages = [];
 }

@@ -1,0 +1,33 @@
+{
+  "name": "Solar Sword",
+  "description": "Sharpened at noon. It remembers, and it is much less at night.",
+  "palette": {
+    "o": "#20140a",
+    "X": "#fffdf0",
+    "H": "#f5b820",
+    "B": "#ffe98a",
+    "S": "#c07a10",
+    "M": "#e0c060",
+    "F": "#5e4818",
+    "R": "#33260c",
+    "G": "#f0c85a"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXBHo.",
+    "........oXBHSo..",
+    ".......oXBHSo...",
+    "......oXBHSo....",
+    "....oXXBHSo.....",
+    "...oXXBHSo......",
+    "MFoXXBHSo.......",
+    "oMFXBHSo........",
+    "oXMFHSo.........",
+    "..oMFo..........",
+    ".oRRMFo.........",
+    "oRRooMFo........",
+    "GGo..oMFo.......",
+    "GGo............."
+  ]
+}

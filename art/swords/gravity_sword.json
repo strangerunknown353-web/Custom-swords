@@ -1,0 +1,33 @@
+{
+  "name": "Gravity Sword",
+  "description": "Everything it touches remembers which way is down.",
+  "palette": {
+    "o": "#050510",
+    "X": "#9aa0c8",
+    "H": "#363a5c",
+    "B": "#5a5f8a",
+    "S": "#b892ff",
+    "M": "#1c1e33",
+    "F": "#7d82a8",
+    "R": "#141628",
+    "G": "#a8aed0"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXBHo.",
+    "........oXBSMo..",
+    "......oXXBHMo...",
+    ".....oXXBHMo....",
+    "FBo..oXBHMo.....",
+    "oFBooXBHMo......",
+    ".oFBXBHMo.......",
+    "..oFBHMo........",
+    "...oFBo.........",
+    "..oRRFBo........",
+    ".oRRooFBo.......",
+    "oRRo..oFBo......",
+    "GGo....oFBo.....",
+    "GGo............."
+  ]
+}

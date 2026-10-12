@@ -1,0 +1,33 @@
+{
+  "name": "Poison Sword",
+  "description": "The wound is the smaller half of what it leaves behind.",
+  "palette": {
+    "o": "#0a0f06",
+    "X": "#e4ff9a",
+    "H": "#8ecf3e",
+    "B": "#3f7a18",
+    "S": "#7a3f9c",
+    "M": "#8a9a68",
+    "F": "#39441f",
+    "R": "#2b3318",
+    "G": "#b9cf7a"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXHBo.",
+    "........oSXHBo..",
+    ".......oXXHBo...",
+    "......oXXHBSo...",
+    ".....oXXHBo.....",
+    "....oSXHBo......",
+    ".oMFoXHBo.......",
+    "..oMFHBo........",
+    "...oMFo.........",
+    "..oRRMFo........",
+    "ooRRooMFo.......",
+    "oGGo............",
+    ".oo.............",
+    "................"
+  ]
+}

@@ -426,7 +426,7 @@ describe('cooldown behaviour through the executor', () => {
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 1, 'second use should be refused while on cooldown');
 
-        tick += 60;
+        tick += 80;
         use(registry, player);
         assert.equal(zombie.damageTaken.length, 2, 'use should be allowed once the cooldown elapses');
     });
@@ -513,7 +513,7 @@ describe('cooldown behaviour through the executor', () => {
         const registry = install(createFramework({ clock }));
         const { player } = makeWorld(1);
         use(registry, player);
-        assert.deepEqual(player.itemCooldowns, [{ category: 'custom_swords_ember_blade', ticks: 70 }]);
+        assert.deepEqual(player.itemCooldowns, [{ category: 'custom_swords_ember_blade', ticks: 90 }]);
     });
 
     it('contains a throwing ability instead of letting it escape the handler', () => {

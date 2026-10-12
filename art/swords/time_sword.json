@@ -1,0 +1,32 @@
+{
+  "name": "Time Sword",
+  "description": "It keeps what you do not spend, and spends what you have kept.",
+  "palette": {
+    "o": "#12100a",
+    "X": "#fff6d8",
+    "H": "#e0c47e",
+    "B": "#9c7228",
+    "S": "#c9a94f",
+    "M": "#54431a",
+    "F": "#2a2210",
+    "R": "#f5e3a8"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXHBo.",
+    ".........oXHBo..",
+    "........oXHBo...",
+    ".......oXHBo....",
+    ".......oXHo.....",
+    "......oXHo......",
+    ".oSMooXHo.......",
+    "..oSMXHo........",
+    "...oSMo.........",
+    "..oFFSMo........",
+    ".oFFooSMo.......",
+    "oFFo............",
+    "RRo.............",
+    "Ro.............."
+  ]
+}

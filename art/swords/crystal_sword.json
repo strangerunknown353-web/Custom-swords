@@ -1,0 +1,33 @@
+{
+  "name": "Crystal Sword",
+  "description": "Struck once, it rings until everything around it answers.",
+  "palette": {
+    "o": "#120a1c",
+    "X": "#f4e8ff",
+    "H": "#8f52c9",
+    "B": "#c69bf0",
+    "S": "#54277f",
+    "M": "#b3a4c4",
+    "F": "#453a58",
+    "R": "#241a33",
+    "G": "#d9c7ea"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXBHo.",
+    "........oXBHSo..",
+    "......oXXBHSo...",
+    "....oXXBHHSo....",
+    "...oXXBHHSo.....",
+    "...oXXBHSo......",
+    ".oMFXBHSo.......",
+    ".oXMFHSo........",
+    "...oMFo.........",
+    "..oRRMFo........",
+    "ooRRooMFo.......",
+    "oGGo............",
+    ".oo.............",
+    "................"
+  ]
+}

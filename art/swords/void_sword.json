@@ -1,0 +1,31 @@
+{
+  "name": "Void Sword",
+  "description": "The edge is a seam. What it opens does not stay open.",
+  "palette": {
+    "o": "#050208",
+    "X": "#c4b0ff",
+    "H": "#7f5cd4",
+    "B": "#3f2d75",
+    "S": "#8b81a8",
+    "M": "#332c48",
+    "F": "#a191d1"
+  },
+  "pixels": [
+    "..............oX",
+    "............oXHo",
+    "..........oXHBo.",
+    ".........oXHBo..",
+    "........oX.Bo...",
+    ".......oX.Bo....",
+    "......oX.Bo.....",
+    ".....oX.Bo......",
+    "....oX.Bo.......",
+    "oSMoXHBo........",
+    ".oSMHBo.........",
+    "..oSMo..........",
+    ".oBBSMo.........",
+    "oBBooSMo........",
+    "FFo.............",
+    "Fo.............."
+  ]
+}

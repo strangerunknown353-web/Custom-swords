@@ -5,6 +5,26 @@
  * with `pull` to close it. Knockback is clamped by the combat system, so even a
  * mis-authored binding cannot launch anyone out of the world.
  *
+ * ## Two swords, and why they do not feel alike
+ *
+ * Wind and Tidal both bind this as their **active**, which is the only place in
+ * the collection two swords share a headline ability. They are separated
+ * entirely by the envelope, and separated far enough that a player would not
+ * guess they run the same forty lines:
+ *
+ * | | Wind Burst | Tidal Wave |
+ * |---|---|---|
+ * | Shape | radial, 5 blocks, up to 12 | 80° cone, 7 blocks, up to 10 |
+ * | Direction | away from the caster | along the caster's view |
+ * | Damage | 2 — the push *is* the ability | 6 |
+ * | Payload | knockback alone | knockback and slowness |
+ * | Cooldown | 5s | 7.5s |
+ * | Question | am I surrounded? | where do I want them? |
+ *
+ * One clears a circle you are standing in; the other drives a line of enemies
+ * somewhere. That is the case for the invocation envelope in miniature: the
+ * shared part is the arithmetic, and none of what a player notices is shared.
+ *
  * @type {import('../../core/types.js').AbilityDefinition}
  */
 export const repulse = {

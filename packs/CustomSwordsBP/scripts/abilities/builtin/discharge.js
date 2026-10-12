@@ -1,3 +1,5 @@
+import { locationOf } from '../support.js';
+
 /**
  * Discharge — a passive that builds silently and releases on a fixed rhythm.
  *
@@ -105,11 +107,17 @@ export const discharge = {
         }
 
         services.state.spendCharges(ctx.playerId, params.chargeKey);
-        services.particles.emit(
-            ctx.dimension,
-            { id: ctx.visual?.target ?? 'minecraft:critical_hit_emitter', count: params.dischargeParticleCount, spread: 0.5 },
-            target.location,
-        );
+        // Guarded: the strike above may have killed this target, and reading a
+        // released handle's `location` would throw out of the ability after the
+        // charge was already spent.
+        const at = locationOf(target);
+        if (at !== undefined) {
+            services.particles.emit(
+                ctx.dimension,
+                { id: ctx.visual?.target ?? 'minecraft:critical_hit_emitter', count: params.dischargeParticleCount, spread: 0.5 },
+                at,
+            );
+        }
         return { ok: true, message: 'discharge' };
     },
 };

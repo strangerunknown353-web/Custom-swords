@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:poison_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " P ",
+      "FIF",
+      " C "
+    ],
+    "key": {
+      "P": {
+        "item": "minecraft:pufferfish"
+      },
+      "F": {
+        "item": "minecraft:fermented_spider_eye"
+      },
+      "I": {
+        "item": "minecraft:iron_ingot"
+      },
+      "C": {
+        "item": "minecraft:cactus"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:fermented_spider_eye"
+      }
+    ],
+    "result": "custom_swords:poison_sword"
+  }
+}

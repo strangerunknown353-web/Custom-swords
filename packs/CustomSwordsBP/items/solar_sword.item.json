@@ -1,0 +1,54 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:item": {
+    "description": {
+      "identifier": "custom_swords:solar_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "solar_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.custom_swords:solar_sword"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 8
+      },
+      "minecraft:durability": {
+        "max_durability": 1000
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 24
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:gold_ingot"
+            ],
+            "repair_amount": 250
+          }
+        ]
+      },
+      "minecraft:swing_duration": {
+        "value": 0.3
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "custom_swords:is_custom_sword"
+        ]
+      },
+      "custom_swords:sword": {}
+    }
+  }
+}

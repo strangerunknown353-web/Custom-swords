@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:solar_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " N ",
+      "GIG",
+      " R "
+    ],
+    "key": {
+      "N": {
+        "item": "minecraft:nether_star"
+      },
+      "G": {
+        "item": "minecraft:glowstone"
+      },
+      "I": {
+        "item": "minecraft:gold_ingot"
+      },
+      "R": {
+        "item": "minecraft:blaze_rod"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:nether_star"
+      }
+    ],
+    "result": "custom_swords:solar_sword"
+  }
+}

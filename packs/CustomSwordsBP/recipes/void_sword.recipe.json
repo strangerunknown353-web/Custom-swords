@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "custom_swords:void_sword_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " B ",
+      "ENE",
+      " R "
+    ],
+    "key": {
+      "B": {
+        "item": "minecraft:dragon_breath"
+      },
+      "E": {
+        "item": "minecraft:ender_eye"
+      },
+      "N": {
+        "item": "minecraft:netherite_ingot"
+      },
+      "R": {
+        "item": "minecraft:end_rod"
+      }
+    },
+    "unlock": [
+      {
+        "item": "minecraft:dragon_breath"
+      }
+    ],
+    "result": "custom_swords:void_sword"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:item": {
+    "description": {
+      "identifier": "custom_swords:poison_sword",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "poison_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.custom_swords:poison_sword"
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 5
+      },
+      "minecraft:durability": {
+        "max_durability": 750
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 18
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:fermented_spider_eye"
+            ],
+            "repair_amount": 188
+          }
+        ]
+      },
+      "minecraft:swing_duration": {
+        "value": 0.26
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "custom_swords:is_custom_sword"
+        ]
+      },
+      "custom_swords:sword": {}
+    }
+  }
+}

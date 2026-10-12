@@ -1,3 +1,5 @@
+import { spanFraction, taper } from '../support.js';
+
 /**
  * Cleave — a directional sweep in front of the caster.
  *
@@ -121,7 +123,7 @@ function angleFalloff(origin, forward, target, halfAngle, edgeFactor) {
         if (length === 0 || forwardLength === 0) return 1;
         const cos = (dx * forward.x + dz * forward.z) / (length * forwardLength);
         const angle = Math.acos(Math.min(1, Math.max(-1, cos)));
-        return 1 - Math.min(angle / halfAngle, 1) * (1 - edgeFactor);
+        return taper(spanFraction(angle, halfAngle) ?? 0, edgeFactor);
     } catch {
         return 1;
     }

@@ -43,6 +43,17 @@ export function lifeKey(name) {
     return `${LIFE_SCOPE}${name}`;
 }
 
+/**
+ * The storage key for a mark, in whichever scope it was written.
+ *
+ * @param {string} name
+ * @param {boolean} lifeScoped
+ * @returns {string}
+ */
+function markKey(name, lifeScoped) {
+    return lifeScoped ? lifeKey(name) : `mark:${name}`;
+}
+
 export class PlayerStateStore {
     constructor() {
         /** @private @type {Map<string, Map<string, unknown>>} */
@@ -152,13 +163,24 @@ export class PlayerStateStore {
      *
      * Life-scoped, so a window cannot survive the death that ended the combo.
      *
+     * ## Surviving death
+     *
+     * Life-scoped by default, so a window cannot outlast the death that ended
+     * the combo. Pass `lifeScoped: false` for a mark that should survive
+     * respawning — Time Sword's temporal charge does, because it belongs to the
+     * sword rather than to the body holding it, and because a life-scoped
+     * version would read as *absent* after a death and so grant a full charge.
+     * Dying to recharge a weapon is the exact shape of exploit cooldowns are
+     * deliberately not life-scoped to avoid.
+     *
      * @param {string} playerId
      * @param {string} name
      * @param {number} tick
+     * @param {{ lifeScoped?: boolean }} [options]
      */
-    mark(playerId, name, tick) {
+    mark(playerId, name, tick, options = {}) {
         if (!Number.isFinite(tick)) return;
-        this.set(playerId, lifeKey(name), tick);
+        this.set(playerId, markKey(name, options.lifeScoped !== false), tick);
     }
 
     /**
@@ -168,13 +190,17 @@ export class PlayerStateStore {
      * `sinceMark(...) <= windowTicks` — is false for an absent mark without the
      * caller having to special-case it.
      *
+     * Must be given the same `lifeScoped` value the mark was written with, or it
+     * will read a different key and report `Infinity`.
+     *
      * @param {string} playerId
      * @param {string} name
      * @param {number} tick
+     * @param {{ lifeScoped?: boolean }} [options]
      * @returns {number}
      */
-    sinceMark(playerId, name, tick) {
-        const at = this.get(playerId, lifeKey(name), undefined);
+    sinceMark(playerId, name, tick, options = {}) {
+        const at = this.get(playerId, markKey(name, options.lifeScoped !== false), undefined);
         if (!Number.isFinite(at) || !Number.isFinite(tick)) return Number.POSITIVE_INFINITY;
         const elapsed = tick - /** @type {number} */ (at);
         // A clock that appears to run backwards means the world reloaded under

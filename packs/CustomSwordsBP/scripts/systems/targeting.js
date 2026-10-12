@@ -112,6 +112,39 @@ export class TargetingService {
     }
 
     /**
+     * Whether an entity belongs to any of the given target categories.
+     *
+     * `isTargetable` already applies categories as a *filter*; this exposes the
+     * same test as a **question**, so an ability can branch on what a target is
+     * rather than only on whether it is allowed. Solar Sword's `radiance` uses
+     * it to pay a bonus against the undead specifically.
+     *
+     * The distinction matters for reuse: the categories live in
+     * `core/target_categories.js` and the family lookup is already written and
+     * guarded here, so an ability asking "is this undead?" gets the project's
+     * one answer rather than hard-coding a list of mob ids that a future
+     * Minecraft release would silently break.
+     *
+     * Never throws. An unreadable entity matches nothing.
+     *
+     * @param {Entity} entity
+     * @param {readonly string[]} categories
+     * @returns {boolean}
+     */
+    isCategory(entity, categories) {
+        if (entity === undefined || entity === null) return false;
+        if (categories === undefined || categories.length === 0) return false;
+        try {
+            if (!entity.isValid) return false;
+            if (categories.includes('any')) return true;
+            return matchesCategories(entity.typeId, this.familiesOf(entity), categories);
+        } catch (error) {
+            this.log.debug('targeting.isCategory failed:', error);
+            return false;
+        }
+    }
+
+    /**
      * Resolves a declarative {@link TargetingSpec} into a concrete entity list.
      *
      * This is what lets targeting be data. An ability calls

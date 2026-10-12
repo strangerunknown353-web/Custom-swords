@@ -42,6 +42,7 @@ import { MovementService } from '../systems/movement.js';
 import { SoundService } from '../systems/sounds.js';
 import { FeedbackService } from '../systems/feedback.js';
 import { CombatSystem } from '../systems/combat.js';
+import { EnvironmentService } from '../systems/environment.js';
 
 import { ABILITIES } from '../abilities/index.js';
 import { SWORDS } from '../swords/index.js';
@@ -57,6 +58,7 @@ import { SWORDS } from '../swords/index.js';
  * @param {readonly AbilityDefinition[]} [options.abilities]
  * @param {readonly SwordDefinition[]} [options.swords]
  * @param {() => number} [options.clock]
+ * @param {{ getTimeOfDay: () => number }} [options.worldClock] World time source; defaults to the engine.
  * @returns {{
  *   abilities: AbilityRegistry,
  *   swords: SwordRegistry,
@@ -128,6 +130,7 @@ export function createFramework(options = {}) {
     const effects = new EffectService(log);
     const particles = new ParticleService(CONFIG, log);
     const movement = new MovementService(CONFIG, log);
+    const environment = new EnvironmentService(log, options.worldClock);
     const feedback = new FeedbackService(CONFIG, sounds, log);
     const combat = new CombatSystem({ config: CONFIG, damage, effects, particles, sounds, cooldowns });
 
@@ -140,6 +143,7 @@ export function createFramework(options = {}) {
         sounds,
         feedback,
         movement,
+        environment,
         combat,
         cooldowns,
         state,

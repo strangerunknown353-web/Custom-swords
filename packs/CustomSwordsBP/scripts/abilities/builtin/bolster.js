@@ -11,6 +11,26 @@
  * ability applies to `ctx.player` directly rather than searching for anything.
  * That makes it the cheapest ability in the framework: no entity query at all.
  *
+ * ## Four swords, one implementation
+ *
+ * More swords bind this than bind anything else, which makes it the collection's
+ * fairest test of whether the invocation envelope really is enough to separate
+ * two swords that run the same code:
+ *
+ * | Sword | Grants | For | Every | And also |
+ * |---|---|---|---|---|
+ * | Wind | speed II | 4s | 6s | — |
+ * | Earth | resistance I | 5s | 8s | — |
+ * | Tidal | water breathing | 15s | 10s | puts the wielder's fire out |
+ * | Nature | regeneration | 4s | 7s | restores a point outright |
+ *
+ * The first two are pure buffs and are deliberately left that way: Wind is the
+ * mobility sword and Earth the defensive one, and giving either a second job
+ * would blur what it is for. The other two reach for the `heal` and
+ * `extinguish` parameters this ability has always exposed and nothing used, so
+ * that no two of the four are the same shape rather than merely the same shape
+ * with a different effect name.
+ *
  * @type {import('../../core/types.js').AbilityDefinition}
  */
 export const bolster = {

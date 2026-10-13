@@ -136,7 +136,7 @@ string allocation in the hot path.
   first N entities the engine listed rather than the N closest.
 - Crouch-taps no longer switch abilities during creative flight, where sneak
   means "descend".
-- `/scriptevent custom_swords:swordinfo` lists each ability's slot and name.
+- `/scriptevent custom_swords:held` and `info <id>` list each ability's slot and name.
 - Entity searches reuse one exclusion list instead of building a new one per
   query.
 - **Minimum version stays 1.21.120.** The Step 1 audit called this an
@@ -166,7 +166,12 @@ string allocation in the hot path.
   nothing reads as a checkerboard); all 20 pass the texture quality gate
   with zero warnings.
 
-## Step 7 — Final polish and v2.0.0 release — (planned)
-- Balance pass, README how-to-play, CHANGELOG, version bump to 2.0.0.
-- Build and deliver `CustomSwords-v2.0.0.mcaddon`, `CustomSwordsBP.mcpack`,
-  `CustomSwordsRP.mcpack`.
+## Step 7 — Final polish and v2.0.0 release — **done**
+- Balance pass over all 101 selectable powers by rarity; Ice Lance and Soul
+  Flame trimmed 6 → 5 (the two Rare outliers).
+- New pack icons and pack descriptions; README rewritten with how-to-play;
+  CHANGELOG 2.0.0; version 2.0.0 everywhere (pack UUIDs unchanged, so v2.0
+  upgrades v1.x worlds in place).
+- Built and delivered `CustomSwords-v2.0.0.mcaddon`,
+  `CustomSwordsBP-v2.0.0.mcpack`, `CustomSwordsRP-v2.0.0.mcpack` (also in
+  `releases/`).

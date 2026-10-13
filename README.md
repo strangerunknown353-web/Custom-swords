@@ -1,22 +1,46 @@
 # Custom Swords
 
 A custom sword add-on for **Minecraft Bedrock Edition / MCPE**, built as a
-reusable framework rather than a pile of one-off scripts. The finished add-on
-will contain 20–25 swords with genuinely distinct powers, effects, particles,
-sounds and cooldowns.
+reusable framework rather than a pile of one-off scripts.
 
-> **Status: v0.9.0 — nine swords, all craftable.**
-> Shadow Sword 🌑 and Ember Blade 🔥 join the seven Elemental Collection
-> blades: Inferno 🔥, Thunder ⚡, Frost ❄️, Wind 🌪️, Earth 🪨, Tidal 🌊 and
-> Nature 🌿. See
-> `SWORD_CATALOG.md` for the roster and `ROADMAP.md` for what comes next.
+> **Status: v2.0.0 — 20 swords, 121 powers.**
+> Every sword carries several powers you switch between by tapping crouch,
+> each animated with its own particle effects, and every icon is a 32×32
+> long sword. See `SWORD_CATALOG.md` for the full roster and `CHANGELOG.md`
+> for everything new in 2.0.
 >
-> **v0.5.2 was tested in Minecraft Bedrock and passed** — creative category,
-> icon, name, rendering, attack animation, abilities, particles, sounds and
-> cooldowns all confirmed working. That followed two failed client tests and two
-> rounds of fixes, recorded honestly in `docs/TESTING.md`.
->
-> Ember Blade, Frost, Thunder and Shadow have **not** been client-tested.
+> v2.0 passes the full automated suite (generate, validate, 450+ tests,
+> build) but has **not yet been played in a Minecraft client** — see
+> *Current limitations*.
+
+## How to play
+
+| Do this | While holding a Custom Sword |
+|---|---|
+| **Tap crouch** | Switch to the sword's next power. The bar above the hotbar shows `[2/5] Power - Ready` (or the seconds left). |
+| **Use** (right-click / long-press) | Cast the selected power. |
+| **Hit** something | The sword's passive triggers on every melee hit. |
+
+- Holding crouch (to sneak along a ledge) does **not** switch — only a quick
+  tap does. In creative flight, crouch means "fly down" and never switches.
+- Each power has its own cooldown. When the power you have selected is ready
+  again you hear a chime and see "*Power ready*".
+- Each sword remembers which power you had selected, even after you leave
+  and rejoin.
+- More powers at higher rarity: Uncommon 3 · Rare 4 · Epic 5 · Legendary 6 ·
+  Mythic 7 — plus one passive each.
+- Every sword is crafted at a crafting table; recipes are in
+  `SWORD_CATALOG.md`. Or, with cheats: `/give @s custom_swords:dragon_sword`.
+- Powers hit mobs from other add-ons too, and never hurt players when the
+  world's PvP setting is off.
+
+| Rarity | Swords |
+|---|---|
+| Uncommon | Ember Blade |
+| Rare | Frost, Wind, Nature, Poison, Soul |
+| Epic | Inferno, Earth, Ocean, Shadow, Crystal, Gravity, Storm, Blood |
+| Legendary | Thunder, Solar, Void, Echo |
+| Mythic | Time, Dragon |
 
 ---
 
@@ -35,9 +59,9 @@ The build writes to `dist/`:
 
 | File | Use |
 |---|---|
-| `CustomSwords-v0.9.0.mcaddon` | import both packs at once — this is the one to test with |
-| `CustomSwordsBP-v0.9.0.mcpack` | behaviour pack alone |
-| `CustomSwordsRP-v0.9.0.mcpack` | resource pack alone |
+| `CustomSwords-v2.0.0.mcaddon` | import both packs at once — this is the one to install |
+| `CustomSwordsBP-v2.0.0.mcpack` | behaviour pack alone |
+| `CustomSwordsRP-v2.0.0.mcpack` | resource pack alone |
 
 Prefer not to build? `releases/CustomSwords-v0.9.0.mcaddon` is a committed copy
 of the same file.
@@ -146,26 +170,21 @@ not meet `docs/TEXTURE_STANDARD.md`.
 
 Stated plainly:
 
-- **No sword behaviour has ever been observed in Minecraft.** The one in-game
-  test so far (v0.5.0) failed at item registration before any ability could be
-  exercised. Every "Tested" cell in the sword test matrix is still empty. The
-  code passes static validation and a full test suite against a *mocked*
-  engine — v0.5.0 proved that is not the same as working.
-- **9 of 20–25 swords.** The remaining 11–16 arrive in milestones 7, 9 and 10.
-- **No custom particles or sounds.** Both services reference vanilla identifiers
-  only; custom assets arrive in milestone 11.
-- **No loot tables or trades.** Every sword is craftable at a table, but none
-  appear in chests or villager trades yet — milestone 12.
-- **`en_US` only.** The localisation plumbing exists; other languages do not.
-- **In-memory state only.** Cooldowns and player state reset on world reload, by
-  design; persistence is tracked in `TODO.md`.
-- **No multi-stage abilities.** Wind-up → impact, and the cancellation that goes
-  with it, is milestone 8. Everything resolves within a single tick today.
+- **v2.0 has not been played in a client yet.** Everything passes static
+  validation and a full test suite against a *mocked* engine; v0.5.0 proved
+  that is not the same as working. The parts most worth checking in game:
+  tap-crouch switching, the leap and beam powers, how busy the animations
+  look, and the new 32×32 icons in the hand.
+- **Requires Minecraft 1.21.120 or newer** — each sword's swing speed uses a
+  component that does not exist earlier. See `docs/API_NOTES.md`.
+- **Balance is reasoned, not playtested.** Damage rises with rarity and the
+  outliers were trimmed, but real fights will show what needs tuning.
+- **Vanilla particles and sounds only.** The animations are built from
+  vanilla particle effects; there are no custom particle or sound files.
+- **No loot tables or trades.** Swords are crafted, not found.
+- **`en_US` only.**
 - **No tooltip flavour text.** Bedrock has no item-JSON lore component; a
-  sword's description is reachable through `/scriptevent custom_swords:info` but
-  not the vanilla tooltip. See `TODO.md`.
-- **Balance is unplayed.** The progression in `SWORD_CATALOG.md` is reasoned,
-  not tuned; milestone 13 is the pass that fixes that.
+  sword's description is reachable through `/scriptevent custom_swords:info`.
 
 ---
 

@@ -52,7 +52,7 @@ export const soulSword = {
             allowedTargets: ['mob', 'player'],
             knockback: { horizontal: 0.5, vertical: 0.2, mode: 'away' },
             params: {
-                damage: 6,
+                damage: 5,
                 edgeDamageFactor: 0.5,
                 igniteSeconds: 4,
                 cause: 'fire',

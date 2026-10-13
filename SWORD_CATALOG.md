@@ -178,7 +178,7 @@ every melee hit.
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
 | Use (right-click / long-press) | Frost Nova | 6s | mob, player | 4 ability damage · knockback 0.3 · slowness 7.0s · mining_fatigue 6.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
-| Use (right-click / long-press) | Ice Lance | 7s | mob, player | 6 ability damage · slowness 3.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
+| Use (right-click / long-press) | Ice Lance | 7s | mob, player | 5 ability damage · slowness 3.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
 | Use (right-click / long-press) | Frost Step | 7s | mob, player | knockback 0.4 · slowness 3.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
 | Use (right-click / long-press) | Glacial Ward | 20s | any | resistance 6.0s · fire_resistance 10.0s | snowflake_particle, ice_evaporation_emitter | cast: frost_cast, impact: frost_impact |
 | Melee hit | Frostbite | 2.5s | mob, player | 1 ability damage · slowness 3.0s | snowflake_particle | cast: frost_cast, impact: frost_impact |
@@ -664,7 +664,7 @@ every melee hit.
 
 | Activation | Ability | Cooldown | Targets | Details | Particles | Sounds |
 |---|---|---:|---|---|---|---|
-| Use (right-click / long-press) | Soul Flame | 6s | mob, player | 6 ability damage · knockback 0.5 · ignite 4s | blue_flame_particle, obsidian_glow_dust_particle | cast: soul_cast, impact: soul_impact |
+| Use (right-click / long-press) | Soul Flame | 6s | mob, player | 5 ability damage · knockback 0.5 · ignite 4s | blue_flame_particle, obsidian_glow_dust_particle | cast: soul_cast, impact: soul_impact |
 | Use (right-click / long-press) | Soul Snare | 8s | mob, player | 2 ability damage · slowness 4.0s | blue_flame_particle, obsidian_glow_dust_particle | cast: soul_cast, impact: soul_impact |
 | Use (right-click / long-press) | Soul Dash | 7s | mob, player | knockback 0.4 | blue_flame_particle, obsidian_glow_dust_particle | cast: soul_cast, impact: soul_impact |
 | Use (right-click / long-press) | Soul Ward | 20s | any | absorption 10.0s · speed 6.0s | blue_flame_particle, obsidian_glow_dust_particle | cast: soul_cast, impact: soul_impact |

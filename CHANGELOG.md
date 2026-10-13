@@ -11,7 +11,19 @@ together; `npm run validate` fails if they ever drift apart.
 
 ## [Unreleased]
 
-Work towards v2.0.0. See `docs/V2_PLAN.md`.
+Nothing yet.
+
+## [2.0.0] — 2026-10-13
+
+**Custom Swords 2.0: 20 swords, 121 powers.** Every sword now carries
+several powers — tap crouch to switch, use to cast — each with its own
+animated effect, and every sword is redrawn as a 32×32 long sword. Built in
+seven steps; see `docs/V2_PLAN.md`.
+
+### Balance
+
+- Ice Lance (Frost) and Soul Flame (Soul) 6 → 5 damage: both out-hit every
+  other Rare power by a clear margin.
 
 ### Added
 
@@ -88,7 +100,11 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
 
 ### Changed
 
+- New pack icons (crossed Dragon and Echo for the behaviour pack, Inferno and
+  Frost for the resources) and pack descriptions that say how to play.
+- README rewritten for 2.0 with a how-to-play section.
 - Item textures are 32×32 (`TEXTURE_SIZE`), and the texture standard says so.
+- Entity searches reuse one cached exclusion list.
 
 ### Fixed
 
@@ -103,11 +119,7 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
   damages, knocks back or applies effects to a player.
 - Area abilities with a target cap now take the nearest targets.
 - Tapping sneak during creative flight no longer switches abilities.
-- `/scriptevent custom_swords:swordinfo` shows each ability's slot and name.
-
-### Changed
-
-- Entity searches reuse one cached exclusion list.
+- `/scriptevent custom_swords:held` and `info <id>` show each ability's slot and name.
 
 ## [0.9.0] — 2026-09-01
 

@@ -8,7 +8,9 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v0.9.0.mcaddon` | Nine swords, **all craftable at a crafting table** — see `SWORD_CATALOG.md` for each recipe grid. Includes both rounds of client bug fixes (item registration, ability presentation), confirmed working in Minecraft Bedrock at v0.5.2. |
+| `CustomSwords-v2.0.0.mcaddon` | **v2.0** — 20 swords, 121 powers, tap crouch to switch power, animated effects, 32×32 icons. Both packs in one file. |
+| `CustomSwordsBP-v2.0.0.mcpack` | v2.0 behaviour pack alone. |
+| `CustomSwordsRP-v2.0.0.mcpack` | v2.0 resource pack alone. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -16,38 +18,27 @@ disagrees with a fresh build, the fresh build wins.
 
 ## Installing
 
-Requires Minecraft Bedrock Edition **1.21.120 or newer** — raised in v0.5.2 for the swing-animation component. No experimental
+Requires Minecraft Bedrock Edition **1.21.120 or newer**. No experimental
 toggles are needed.
 
-1. Download the `.mcaddon` onto a device with Minecraft installed.
+1. Download `CustomSwords-v2.0.0.mcaddon` onto a device with Minecraft installed.
 2. Open it — Minecraft imports both the behaviour pack and the resource pack.
-3. Create a **new** world, enable both packs, and turn on Creative plus cheats.
-4. Give yourself a sword and right-click (or long-press) with mobs nearby:
+   (Upgrading from v1.x: the pack IDs are unchanged, so existing worlds pick
+   up v2.0 automatically.)
+3. Enable **both** packs on the world.
+4. Craft a sword (recipes in `../SWORD_CATALOG.md`), or with cheats on:
 
    ```
+   /give @s custom_swords:dragon_sword
+   /give @s custom_swords:echo_sword
    /give @s custom_swords:ember_blade
-   /give @s custom_swords:inferno_sword
-   /give @s custom_swords:thunder_sword
-   /give @s custom_swords:frost_sword
-   /give @s custom_swords:wind_sword
-   /give @s custom_swords:earth_sword
-   /give @s custom_swords:tidal_sword
-   /give @s custom_swords:nature_sword
-   /give @s custom_swords:shadow_sword
    ```
 
-5. Every sword has an active on right-click and a passive that fires on a melee
-   hit. Try Wind and Tidal back to back: same ability, completely different
-   feel.
-6. Confirm the framework recognises it:
+5. **Tap crouch** to switch power, **use** (right-click / long-press) to cast,
+   and **hit** things for the passive.
+6. To inspect what the add-on loaded:
 
    ```
    /scriptevent custom_swords:list
    /scriptevent custom_swords:held
-   /scriptevent custom_swords:abilities
    ```
-
-Then work through the checklist in `../docs/TESTING.md`, starting with section
-**A2 (item registration)** — that is what failed in v0.5.0 and what this build
-is meant to fix. Results are recorded in that file, honestly, including the
-failure.

@@ -96,7 +96,7 @@ export const frostSword = {
             allowedTargets: ['mob', 'player'],
             effects: [{ effect: 'slowness', durationTicks: 60, amplifier: 1 }],
             params: {
-                damage: 6,
+                damage: 5,
                 pierceFalloff: 0.8,
                 maxPierce: 4,
                 cause: 'freezing',

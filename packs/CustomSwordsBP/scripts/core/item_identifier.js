@@ -114,7 +114,7 @@ export class ItemIdentifier {
     }
 
     /**
-     * Classifies any item. Used by diagnostics and by the `swordinfo` script
+     * Classifies any item. Used by diagnostics and by the `held` script
      * event; kept here so the four-way distinction is defined once.
      *
      * @param {ItemStack | undefined | null} itemStack

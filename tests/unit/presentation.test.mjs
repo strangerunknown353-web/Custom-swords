@@ -25,7 +25,7 @@ import { SWORDS } from '../../packs/CustomSwordsBP/scripts/swords/index.js';
 describe('visual profiles', () => {
     it('only references particles the catalogue vouches for', () => {
         for (const [name, profile] of Object.entries(VISUAL_PROFILES)) {
-            for (const slot of ['caster', 'target', 'trail']) {
+            for (const slot of ['caster', 'target', 'trail', 'accent']) {
                 const complaint = explainParticle(profile[slot]);
                 assert.equal(complaint, undefined, `profile '${name}'.${slot}: ${complaint}`);
             }

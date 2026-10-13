@@ -145,13 +145,17 @@ string allocation in the hot path.
   load those item files. Dropping swing speed would open 1.21.90–1.21.11x;
   that is the owner's call, recorded in `docs/API_NOTES.md`.
 
-## Step 5 — Ability animations, effects and particles — (planned)
-- Richer, layered particle effects for every power: charge-up at the hand,
-  travelling shapes (rings, spirals, beams, shockwaves), and impact bursts.
-- Short multi-tick animations (expanding rings, rising spirals, trails that
-  follow the wielder), scheduled cheaply and capped for performance.
-- Sounds layered per ability; switch effect when changing ability.
-- Budgeted so busy servers stay smooth.
+## Step 5 — Ability animations, effects and particles — **done**
+- `systems/fx.js`: multi-frame animations chained on `system.runTimeout`
+  (no recurring interval), at most 24 at once world-wide; past the cap an
+  animation plays its first frame only. `config.fx.enabled` turns them off.
+- Recipes chosen per power from its shape: swirling shockwave (outward or
+  collapsing for pulls), sword-slash arc, travelling beam pulse with end
+  burst, pillar of light, rising double-helix aura, follow-trail for
+  leaps/dashes, charge-up at the hand, spark on passive hits, crown burst for
+  Legendary/Mythic powers.
+- Switch flourish, and a ready ping when the selected power's cooldown ends.
+- Every profile gained an `accent` particle.
 
 ## Step 6 — Regenerated sword textures — (planned)
 - Redraw all 20 swords at **32×32** with proper sword proportions: long blade

@@ -87,9 +87,10 @@ export class ParticleService {
      * @param {Vec3Like} center
      * @param {number} radius
      * @param {number} points
+     * @param {number} [phase] Rotation in radians, so successive rings can swirl.
      * @returns {number}
      */
-    ring(dimension, spec, center, radius, points) {
+    ring(dimension, spec, center, radius, points, phase = 0) {
         const total = clamp(Math.floor(points), 0, this.config.particles.maxPerEmit);
         if (total === 0 || radius <= 0) return 0;
         // `emit` and `line` both screen their inputs; this one did not, so a
@@ -102,7 +103,7 @@ export class ParticleService {
         const molang = this.buildMolang(spec);
         let spawned = 0;
         for (let i = 0; i < total; i++) {
-            const angle = (i / total) * Math.PI * 2;
+            const angle = (i / total) * Math.PI * 2 + phase;
             const point = {
                 x: center.x + Math.cos(angle) * radius,
                 y: center.y,

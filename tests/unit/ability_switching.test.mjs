@@ -199,6 +199,62 @@ describe('ability switching', () => {
     });
 });
 
+describe('ready ping', () => {
+    beforeEach(() => {
+        resetMocks();
+        tick = 0;
+        casts.length = 0;
+    });
+
+    function pingSetup() {
+        const queue = [];
+        const framework = createFramework({
+            clock,
+            abilities: ABILITIES,
+            swords: [SWORD],
+            fxScheduler: (callback, delay) => queue.push({ callback, at: tick + delay }),
+        });
+        const registry = new MockItemComponentRegistry();
+        framework.router.register(registry);
+        const player = new MockPlayer({ id: 'p1', location: { x: 0, y: 64, z: 0 }, dimension: new MockDimension() });
+        player.setMainhand(new MockItemStack(SWORD.id));
+        const use = () => {
+            tick += 3;
+            registry.components.get(SWORD_COMPONENT_ID).onUse({ source: player, itemStack: new MockItemStack(SWORD.id) });
+        };
+        const advance = (ticks) => {
+            tick += ticks;
+            for (const job of queue.splice(0).filter((j) => j.at <= tick)) job.callback();
+        };
+        return { framework, player, use, advance };
+    }
+
+    it('announces the selected ability when its cooldown ends', () => {
+        const { player, use, advance } = pingSetup();
+        use();
+        advance(100);
+        assert.match(player.actionBarMessages.at(-1), /First ready/);
+        assert.ok(player.soundsHeard.some((s) => s.id === 'random.levelup'));
+    });
+
+    it('stays quiet if the wielder switched away or put the sword down', () => {
+        const switched = pingSetup();
+        subscribeSneakSwitching(switched.framework);
+        switched.use();
+        world.afterEvents.playerButtonInput.emit({ player: switched.player, button: InputButton.Sneak, newButtonState: ButtonState.Pressed });
+        world.afterEvents.playerButtonInput.emit({ player: switched.player, button: InputButton.Sneak, newButtonState: ButtonState.Released });
+        switched.advance(100);
+        assert.doesNotMatch(switched.player.actionBarMessages.at(-1), /ready/);
+
+        resetMocks();
+        const stowed = pingSetup();
+        stowed.use();
+        stowed.player.setMainhand(undefined);
+        stowed.advance(100);
+        assert.ok(!stowed.player.actionBarMessages.some((m) => /ready/.test(m)));
+    });
+});
+
 describe('shipped kits', () => {
     it('every shipped sword stays within its rarity limit and has a passive', () => {
         for (const sword of SWORDS) {

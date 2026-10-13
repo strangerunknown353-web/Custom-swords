@@ -50,6 +50,27 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
   ability: switching to a ready ability clears it, switching to one that is
   cooling down shows its remaining time.
 
+- **Ability animations (FX engine).** Every power now plays a short animated
+  effect in its sword's colours, chosen from what the power does:
+  - area powers send out a **swirling shockwave** (a second, later wave for
+    the big ones); pulling powers **collapse inward** instead;
+  - cone powers draw a **sword slash** sweeping across your front;
+  - beam and bolt powers fire a **travelling pulse** that bursts at the end;
+  - powers aimed at a spot raise a **pillar of light** out of a collapsing ring;
+  - buffs wrap you in a **rising double-helix aura**;
+  - dashes and leaps leave a **trail** that follows you through the air;
+  - every cast draws energy into your hand first, and every passive hit
+    sparks on the target;
+  - **Legendary and Mythic** powers add a crown burst above your head.
+- **Switch flourish**: a ring of the new power's colour rises around you when
+  you change ability.
+- **Ready ping**: when the power you have selected comes off cooldown, you
+  get "*Ice Lance ready*", a soft chime and a sparkle — only if you are still
+  holding that sword with that power selected.
+- Every visual profile gained an `accent` particle for these effects.
+- `config.fx` (on/off, animation cap, frame length) and
+  `config.feedback.readyPingMinTicks`.
+
 ### Fixed
 
 - CI: every shipped texture has an art source again, so `generate --check`

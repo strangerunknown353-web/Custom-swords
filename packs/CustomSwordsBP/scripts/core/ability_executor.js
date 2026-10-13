@@ -159,6 +159,7 @@ export class AbilityExecutor {
 
         if (result.ok) {
             this.startCooldown(player, player.id, cooldownKey, binding);
+            services.fx?.forAbility(ctx);
             if (FEEDBACK_ACTIVATIONS.has(activation)) {
                 services.feedback.abilityUsed(player, binding.label ?? ability.name, result.message);
             }

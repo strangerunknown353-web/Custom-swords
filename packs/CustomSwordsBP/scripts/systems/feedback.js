@@ -74,6 +74,17 @@ export class FeedbackService {
         this.sounds.playFor(player, 'ability_switch');
     }
 
+    /**
+     * The selected ability came off cooldown.
+     *
+     * @param {import('@minecraft/server').Player} player
+     * @param {string} label
+     */
+    abilityReady(player, label) {
+        this.actionBar(player, `§a${label} ready§r`);
+        this.sounds.playFor(player, 'ability_ready');
+    }
+
     onCooldown(player, abilityName, remainingTicks) {
         this.actionBar(player, `§7${abilityName} §c${formatTicks(remainingTicks)}§r`);
         if (this.config.feedback.denySound) this.sounds.playFor(player, 'ability_deny');

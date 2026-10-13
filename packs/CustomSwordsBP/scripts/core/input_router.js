@@ -37,6 +37,7 @@
 
 import { SWORD_COMPONENT_ID } from './identifiers.js';
 import { activationFor, resolutionOrder } from './activation.js';
+import { getProfile } from './visual_profiles.js';
 
 /** @typedef {import('./types.js').SwordDefinition} SwordDefinition */
 /** @typedef {import('./activation.js').ActivationMethod} ActivationMethod */
@@ -133,7 +134,34 @@ export class InputRouter {
             remainingTicks: remaining,
         });
         this.executor.mirrorHud(player, result.binding, remaining);
+        this.executor.services.fx?.abilitySwitched(player, getProfile(result.binding.visual ?? ''));
         return true;
+    }
+
+    /**
+     * When a cast power's cooldown ends, tell the wielder — but only if they
+     * are still holding that sword with that power selected. Anything else
+     * would be noise about a power they are not about to use.
+     *
+     * @private
+     * @param {import('@minecraft/server').Player} player
+     * @param {SwordDefinition} sword
+     * @param {import('./types.js').AbilityBinding} binding
+     */
+    scheduleReadyPing(player, sword, binding) {
+        const ticks = binding.cooldownTicks ?? 0;
+        if (ticks < this.config.feedback.readyPingMinTicks) return;
+        const fx = this.executor.services.fx;
+        if (fx === undefined) return;
+        fx.later(() => {
+            if (!player.isValid) return;
+            const held = this.identifier.heldSword(player);
+            if (held?.sword.id !== sword.id) return;
+            if (this.selector.current(player, sword.id) !== binding) return;
+            if (this.executor.remainingCooldown(player, sword, binding) > 0) return;
+            this.feedback.abilityReady(player, binding.label ?? this.executor.abilityName(binding));
+            fx.ready(player, getProfile(binding.visual ?? ''));
+        }, ticks);
     }
 
     /** @param {string} playerId */
@@ -217,7 +245,7 @@ export class InputRouter {
             const exact = sneaking ? this.swords.getBinding(sword.id, 'sneak_use') : undefined;
             const binding = exact ?? this.selector.current(player, sword.id);
             if (binding === undefined) return;
-            this.executor.invoke({
+            const result = this.executor.invoke({
                 player,
                 sword,
                 binding,
@@ -225,6 +253,7 @@ export class InputRouter {
                 itemStack,
                 target,
             });
+            if (result?.ok === true) this.scheduleReadyPing(player, sword, binding);
             return;
         }
 

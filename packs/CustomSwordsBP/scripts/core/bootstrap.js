@@ -45,6 +45,7 @@ import { SoundService } from '../systems/sounds.js';
 import { FeedbackService } from '../systems/feedback.js';
 import { CombatSystem } from '../systems/combat.js';
 import { EnvironmentService } from '../systems/environment.js';
+import { FxService } from '../systems/fx.js';
 
 import { ABILITIES } from '../abilities/index.js';
 import { SWORDS } from '../swords/index.js';
@@ -134,6 +135,7 @@ export function createFramework(options = {}) {
     const effects = new EffectService(log);
     const particles = new ParticleService(CONFIG, log);
     const movement = new MovementService(CONFIG, log);
+    const fx = new FxService(CONFIG, particles, log, options.fxScheduler ? { schedule: options.fxScheduler } : {});
     const environment = new EnvironmentService(log, options.worldClock);
     const feedback = new FeedbackService(CONFIG, sounds, log);
     const combat = new CombatSystem({ config: CONFIG, damage, effects, particles, sounds, cooldowns });
@@ -144,6 +146,7 @@ export function createFramework(options = {}) {
         damage,
         effects,
         particles,
+        fx,
         sounds,
         feedback,
         movement,

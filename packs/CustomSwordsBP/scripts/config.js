@@ -128,6 +128,21 @@ export const CONFIG = Object.freeze({
         maxDashDistance: 10,
     }),
 
+    fx: Object.freeze({
+        /** Play ability animations (shockwaves, slashes, beams, auras, trails). */
+        enabled: true,
+        /**
+         * Most animations playing at once across the whole world. Past this a
+         * new animation draws only its first frame, so a crowded fight costs
+         * less rather than more.
+         */
+        maxActiveAnimations: 24,
+        /** Longest animation, in frames. 20 frames = one second. */
+        maxFrames: 20,
+        /** Ticks between animation frames. */
+        frameTicks: 1,
+    }),
+
     switching: Object.freeze({
         /**
          * Longest sneak press, in ticks, that still counts as a tap. Crouch
@@ -142,5 +157,12 @@ export const CONFIG = Object.freeze({
         actionBar: true,
         /** Play a short click when an ability is refused (cooldown, no target). */
         denySound: true,
+        /**
+         * Announce when the selected ability comes off cooldown, for
+         * cooldowns at least this long (in ticks). Shorter ones are back
+         * before the wielder would notice. Set it to `Infinity` to turn the
+         * ping off.
+         */
+        readyPingMinTicks: 60,
     }),
 });

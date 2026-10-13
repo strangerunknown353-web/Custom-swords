@@ -14,8 +14,8 @@
 
 import { encodePng } from './png.mjs';
 
-/** Every sword icon is 16x16 — the vanilla item resolution. */
-export const TEXTURE_SIZE = 16;
+/** Every sword icon is 32x32 — double the vanilla item resolution, for detail (v2.0). */
+export const TEXTURE_SIZE = 32;
 
 /** The character reserved for a transparent pixel. */
 export const TRANSPARENT = '.';
@@ -122,7 +122,7 @@ export function renderPixels(source) {
 
 /**
  * @param {TextureSource} source
- * @returns {Buffer} A 16x16 RGBA PNG.
+ * @returns {Buffer} A TEXTURE_SIZE x TEXTURE_SIZE RGBA PNG.
  */
 export function compile(source) {
     return encodePng(TEXTURE_SIZE, TEXTURE_SIZE, renderPixels(source));

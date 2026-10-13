@@ -157,11 +157,14 @@ string allocation in the hot path.
 - Switch flourish, and a ready ping when the selected power's cooldown ends.
 - Every profile gained an `accent` particle.
 
-## Step 6 — Regenerated sword textures — (planned)
+## Step 6 — Regenerated sword textures — **done**
 - Redraw all 20 swords at **32×32** with proper sword proportions: long blade
   running corner to corner (~70 % of the length), fuller line, distinct
   crossguard, wrapped grip and pommel, element-specific details.
 - Art sources for every sword in `art/swords/`, validator updated for 32×32.
+- Drawn with `art/designer/` (shading in whole diagonal pixel lines, so
+  nothing reads as a checkerboard); all 20 pass the texture quality gate
+  with zero warnings.
 
 ## Step 7 — Final polish and v2.0.0 release — (planned)
 - Balance pass, README how-to-play, CHANGELOG, version bump to 2.0.0.

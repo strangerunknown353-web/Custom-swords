@@ -21,7 +21,7 @@ photorealism, and not a flat two-tone placeholder.
 
 A finished sword icon has:
 
-- **A strong silhouette.** Readable as a specific sword at 16×16, from across a
+- **A strong silhouette.** Readable as a specific sword at 32×32 (and when shrunk to a hotbar slot), from across a
   hotbar, against any background.
 - **A full dark outline.** Every edge of the silhouette borders a near-black
   tone, so the icon never smears into a bright inventory background.
@@ -91,7 +91,7 @@ standard" means in practice, and it is why step 3 of the workflow below is
 
 | Requirement | Value |
 |---|---|
-| Dimensions | 16×16 |
+| Dimensions | 32×32 (v2.0; was 16×16) |
 | Format | PNG, 8-bit RGBA, non-interlaced |
 | Transparency | Required — the background must be fully transparent (alpha 0) |
 | Location | `packs/CustomSwordsRP/textures/items/custom_swords/swords/<shortname>.png` |
@@ -124,7 +124,7 @@ and can be checked automatically:
 
 - `.` is reserved for transparency and must not appear in the palette.
 - Every palette entry must be used by at least one pixel.
-- All 16 rows, all 16 characters wide.
+- All 32 rows, all 32 characters wide.
 
 A suggested letter convention, followed by every shipped sword:
 
@@ -162,7 +162,7 @@ It warns on near-duplicate palette entries.
 
 Taste. The linter cannot tell you the guard looks like a lump or the
 proportions are wrong. Before accepting a texture, **render it and look at it**,
-at both 16×16 and enlarged, checking for:
+at both 32×32 and enlarged, checking for:
 
 blurry or muddy detail · incorrect transparency · broken pixels · inconsistent
 perspective · ugly or missing outlines · excessive noise · an unreadable blade ·
@@ -212,3 +212,23 @@ be tellable from the first four at hotbar scale.
 | Ember Blade | 13 | 31% | 225 |
 
 Those numbers are the floor for the collection, not the ceiling.
+
+## v2.0: 32×32 and long-sword proportions
+
+Every icon was redrawn at 32×32 for v2.0, because the 16×16 set read as knives:
+the blade covered barely half the length and was nearly as wide as the guard.
+The v2.0 icons share these proportions:
+
+- the blade runs corner to corner and is about **70 %** of the sword's length;
+- the guard is clearly wider than the blade; the grip is wrapped; the pommel is distinct;
+- shading is laid out in **whole diagonal pixel lines** across the blade — edge,
+  light, mid, dark — never alternating single lines, which read as a
+  checkerboard at 45°;
+- every sword has its own silhouette (straight, leaf, flamberge, sabre,
+  crystal, rapier, serrated, slab, cleaver…), not a recolour.
+
+The art sources in `art/swords/` were produced with the designer scripts in
+`art/designer/` (Python 3 + Pillow, optional — not part of the build). The JSON
+remains the source of truth: edit it by hand, or change a design in
+`art/designer/swords32.py` and run
+`python3 art/designer/swords32.py art/swords /tmp/preview.png` to regenerate.

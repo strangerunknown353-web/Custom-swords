@@ -71,6 +71,25 @@ Work towards v2.0.0. See `docs/V2_PLAN.md`.
 - `config.fx` (on/off, animation cap, frame length) and
   `config.feedback.readyPingMinTicks`.
 
+- **All 20 swords redrawn at 32×32** with real sword proportions — the old
+  16×16 icons read as knives. Long blades running corner to corner (about 70 %
+  of the length), guards wider than the blade, wrapped grips, distinct
+  pommels, and shading laid out in clean diagonal bands. Each sword has its
+  own silhouette and details: Ember's forge-hot lower blade, Inferno's
+  flames, Thunder's forked tip and lightning seam, Frost's ice facets and
+  spiked guard, Wind's guardless sabre, Earth's stone slab with amber veins,
+  Ocean's wave-edged flamberge, Nature's leaf blade and vines, Shadow's
+  rapier and crescent guard, Crystal's amethyst shard, Void's starry blade
+  and ender-eye gem, Solar's sun-disc guard, Gravity's runed cleaver,
+  Poison's dripping serrations, Time's clock-hand blade and dial guard,
+  Storm's cloud guard and cyan bolt, Soul's blue flame, Blood's serrated
+  edge, Echo's sculk veins, Dragon's winged guard.
+- `art/designer/` — the (optional, Python) scripts the new art was drawn with.
+
+### Changed
+
+- Item textures are 32×32 (`TEXTURE_SIZE`), and the texture standard says so.
+
 ### Fixed
 
 - CI: every shipped texture has an art source again, so `generate --check`

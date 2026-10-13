@@ -143,13 +143,18 @@ export const CONFIG = Object.freeze({
         frameTicks: 1,
     }),
 
+    guide: Object.freeze({
+        /** Give every player one guide book the first time they join. */
+        giveOnFirstJoin: true,
+    }),
+
     switching: Object.freeze({
         /**
-         * Longest sneak press, in ticks, that still counts as a tap. Crouch
-         * taps switch the selected ability; holding sneak to creep along an
-         * edge does not. 8 ticks = 0.4 s.
+         * Crouching down switches the selected ability, once per crouch.
+         * Presses closer together than this (in ticks) count as one, so a
+         * single crouch reported twice never skips an ability. 4 = 0.2 s.
          */
-        tapMaxTicks: 8,
+        debounceTicks: 4,
     }),
 
     feedback: Object.freeze({

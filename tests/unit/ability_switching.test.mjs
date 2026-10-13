@@ -64,6 +64,7 @@ function setup() {
         registry.components.get(SWORD_COMPONENT_ID).onUse({ source: player, itemStack: new MockItemStack(SWORD.id) });
     };
     const tap = (holdTicks = 2) => {
+        tick += 5; // separate crouches, not one crouch reported twice
         world.afterEvents.playerButtonInput.emit({ player, button: InputButton.Sneak, newButtonState: ButtonState.Pressed });
         tick += holdTicks;
         world.afterEvents.playerButtonInput.emit({ player, button: InputButton.Sneak, newButtonState: ButtonState.Released });
@@ -87,7 +88,10 @@ describe('ability switching', () => {
     it('tap-crouch cycles forward and wraps, and use casts the selection', () => {
         const { framework, player, use, tap } = setup();
         assert.equal(subscribeSneakSwitching(framework), true);
-        assert.deepEqual(world.afterEvents.playerButtonInput.options, { buttons: [InputButton.Sneak] });
+        assert.deepEqual(world.afterEvents.playerButtonInput.options, {
+            buttons: [InputButton.Sneak],
+            state: ButtonState.Pressed,
+        });
 
         tap();
         assert.match(player.actionBarMessages.at(-1), /\[2\/3\].*Second.*Ready/);
@@ -100,12 +104,32 @@ describe('ability switching', () => {
         assert.ok(player.soundsHeard.some((s) => s.id === 'random.click'));
     });
 
-    it('holding sneak does not switch: only a tap does', () => {
-        const { framework, use, tap } = setup();
+    it('switches the moment you crouch down, never when you stand up', () => {
+        const { framework, player, use } = setup();
         subscribeSneakSwitching(framework);
-        tap(40);
+        const emit = (state) =>
+            world.afterEvents.playerButtonInput.emit({ player, button: InputButton.Sneak, newButtonState: state });
+
+        emit(ButtonState.Pressed);
+        assert.match(player.actionBarMessages.at(-1), /\[2\/3\]/, 'switched on the way down');
+        const shown = player.actionBarMessages.length;
+        tick += 40; // hold sneak for two seconds
+        emit(ButtonState.Released);
+        assert.equal(player.actionBarMessages.length, shown, 'standing up does not switch');
         use();
-        assert.deepEqual(casts.map((c) => c.name), ['first']);
+        assert.deepEqual(casts.map((c) => c.name), ['second']);
+    });
+
+    it('one crouch reported twice in quick succession switches only once', () => {
+        const { framework, player, use } = setup();
+        subscribeSneakSwitching(framework);
+        const press = () =>
+            world.afterEvents.playerButtonInput.emit({ player, button: InputButton.Sneak, newButtonState: ButtonState.Pressed });
+        press();
+        tick += 1;
+        press();
+        use();
+        assert.deepEqual(casts.map((c) => c.name), ['second']);
     });
 
     it('does not switch while flying, where sneak means descend', () => {
@@ -241,6 +265,7 @@ describe('ready ping', () => {
         const switched = pingSetup();
         subscribeSneakSwitching(switched.framework);
         switched.use();
+        tick += 5;
         world.afterEvents.playerButtonInput.emit({ player: switched.player, button: InputButton.Sneak, newButtonState: ButtonState.Pressed });
         world.afterEvents.playerButtonInput.emit({ player: switched.player, button: InputButton.Sneak, newButtonState: ButtonState.Released });
         switched.advance(100);

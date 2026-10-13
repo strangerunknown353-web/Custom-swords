@@ -45,6 +45,10 @@ const {
     legacyNameKey,
     descriptionKey,
     swordTexturePath,
+    GUIDE_ITEM_ID,
+    GUIDE_COMPONENT_ID,
+    GUIDE_TEXTURE_NAME,
+    GUIDE_TEXTURE_PATH,
 } = await import(
     MODULES.identifiers
 );
@@ -181,6 +185,42 @@ function buildRecipeJson(sword) {
     };
 }
 
+/** Where the guide book's generated files live (subfolders, so they never mix with the swords'). */
+const GUIDE_ITEM_FILE = 'guide/guide_book.item.json';
+const GUIDE_RECIPE_FILE = 'guide/guide_book.recipe.json';
+const GUIDE_DISPLAY_NAME = '§6Custom Swords Guide§r';
+
+/** The guide book item: opens the in-game guide on use. */
+function buildGuideItemJson() {
+    return {
+        format_version: ITEM_FORMAT_VERSION,
+        'minecraft:item': {
+            description: { identifier: GUIDE_ITEM_ID, menu_category: { category: 'items' } },
+            components: {
+                'minecraft:max_stack_size': 1,
+                'minecraft:icon': { textures: { default: GUIDE_TEXTURE_NAME } },
+                'minecraft:display_name': { value: nameKey(GUIDE_ITEM_ID) },
+                'minecraft:glint': true,
+                [GUIDE_COMPONENT_ID]: {},
+            },
+        },
+    };
+}
+
+/** Book + Stick, any arrangement: deliberately the easiest recipe in the add-on. */
+function buildGuideRecipeJson() {
+    return {
+        format_version: ITEM_FORMAT_VERSION,
+        'minecraft:recipe_shapeless': {
+            description: { identifier: `${GUIDE_ITEM_ID}_recipe` },
+            tags: ['crafting_table'],
+            ingredients: [{ item: 'minecraft:book' }, { item: 'minecraft:stick' }],
+            unlock: [{ item: 'minecraft:book' }],
+            result: { item: GUIDE_ITEM_ID },
+        },
+    };
+}
+
 /**
  * @param {readonly any[]} swords
  * @returns {object}
@@ -192,6 +232,7 @@ function buildItemTextureJson(swords) {
         const shortname = textureNameOf(sword);
         textureData[shortname] = { textures: swordTexturePath(shortname) };
     }
+    textureData[GUIDE_TEXTURE_NAME] = { textures: GUIDE_TEXTURE_PATH };
     return {
         resource_pack_name: 'custom_swords',
         texture_name: 'atlas.items',
@@ -227,6 +268,10 @@ function buildResourceLang(swords) {
         lines.push(`${descriptionKey(sword.id)}=${sword.description}`);
         lines.push('');
     }
+    lines.push(`## ${GUIDE_ITEM_ID} - the in-game guide`);
+    lines.push(`${nameKey(GUIDE_ITEM_ID)}=${GUIDE_DISPLAY_NAME}`);
+    lines.push(`${legacyNameKey(GUIDE_ITEM_ID)}=${GUIDE_DISPLAY_NAME}`);
+    lines.push('');
     return lines.join('\n');
 }
 
@@ -262,6 +307,12 @@ async function main() {
         generatedRecipeFiles.push(fileName);
         writeIfChanged(path.join(PATHS.bpRecipes, fileName), toJson(buildRecipeJson(sword)));
     }
+
+    // --- Guide book -------------------------------------------------------------
+    generatedItemFiles.push(GUIDE_ITEM_FILE);
+    writeIfChanged(path.join(PATHS.bpItems, GUIDE_ITEM_FILE), toJson(buildGuideItemJson()));
+    generatedRecipeFiles.push(GUIDE_RECIPE_FILE);
+    writeIfChanged(path.join(PATHS.bpRecipes, GUIDE_RECIPE_FILE), toJson(buildGuideRecipeJson()));
 
     // Prune generated files left behind by swords that were renamed or removed.
     const manifest = fs.existsSync(PATHS.generatedManifest)
@@ -316,6 +367,20 @@ async function main() {
         }
         writeIfChanged(target, compileTexture(spec));
     }
+    // The guide book's icon, from `art/guide_book.json`.
+    {
+        const guideArt = path.join(PATHS.root, 'art', 'guide_book.json');
+        const spec = JSON.parse(fs.readFileSync(guideArt, 'utf8'));
+        const problems = validateSource(spec);
+        if (problems.length > 0) {
+            console.error('generate: art/guide_book.json is malformed:');
+            for (const problem of problems) console.error(`  - ${problem}`);
+            process.exitCode = 1;
+        } else {
+            writeIfChanged(resourceFile(GUIDE_TEXTURE_PATH), compileTexture(spec));
+        }
+    }
+
     for (const [dir, seed] of [
         [PATHS.bp, 'custom_swords_behaviour'],
         [PATHS.rp, 'custom_swords_resources'],

@@ -102,3 +102,7 @@ item.custom_swords:echo_sword.description=Forged where nothing makes a sound. It
 item.custom_swords:dragon_sword=§cDragon Sword§r
 item.custom_swords:dragon_sword.name=§cDragon Sword§r
 item.custom_swords:dragon_sword.description=Cut from the last scale of the last dragon. It still breathes.
+
+## custom_swords:guide_book - the in-game guide
+item.custom_swords:guide_book=§6Custom Swords Guide§r
+item.custom_swords:guide_book.name=§6Custom Swords Guide§r

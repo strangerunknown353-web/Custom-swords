@@ -23,12 +23,15 @@
  * A sword may carry several `use` bindings. Use casts the *selected* one, and
  * the player changes the selection by crouching:
  *
- *  - **Tap crouch** while holding the sword: press and release sneak within
- *    `CONFIG.switching.tapMaxTicks`. Holding sneak to creep along a ledge does
- *    not switch. Needs the `playerButtonInput` event; bootstrap turns this on
- *    with {@link InputRouter#enableTapSwitching} when the engine has it.
+ *  - **Crouch down** while holding the sword: the switch happens the moment
+ *    sneak is pressed, once. Standing back up does nothing, and holding sneak
+ *    does not switch again. Needs the `playerButtonInput` event; bootstrap
+ *    turns this on with {@link InputRouter#enableTapSwitching} when the engine
+ *    has it.
  *  - **Crouch + use** is the fallback where that event does not exist, so
- *    every supported version can still switch. It contains no sword knowledge and no ability knowledge,
+ *    every supported version can still switch.
+ *
+ * It contains no sword knowledge and no ability knowledge,
  * so adding sword #26 does not touch this file.
  *
  * Requires `@minecraft/server` 2.0.0+ (Custom Components V2). See
@@ -74,12 +77,12 @@ export class InputRouter {
         /** @private @readonly */
         this.log = log;
         /**
-         * True once tap-crouch switching is live; until then crouch + use
+         * True once crouch switching is live; until then crouch + use
          * switches instead.
          */
         this.tapSwitching = false;
-        /** @private @type {Map<string, number>} playerId -> tick sneak was pressed */
-        this.sneakPressedAt = new Map();
+        /** @private @type {Map<string, number>} playerId -> tick of the last switch */
+        this.lastSwitchAt = new Map();
     }
 
     /** Called by bootstrap once the sneak-button event is subscribed. */
@@ -88,34 +91,33 @@ export class InputRouter {
     }
 
     /**
-     * Sneak pressed or released. A short press-and-release while holding a
-     * sword with more than one ability selects the next one.
+     * Sneak pressed or released. Pressing sneak while holding a sword with
+     * more than one ability selects the next one; releasing does nothing.
      *
      * @param {import('@minecraft/server').Player} player
      * @param {boolean} pressed
      */
     handleSneakButton(player, pressed) {
+        // Switch on the way down only. Releasing sneak never switches.
+        if (!pressed) return;
         let playerId;
         try {
             playerId = player.id;
         } catch {
             return;
         }
-        if (pressed) {
-            this.sneakPressedAt.set(playerId, this.clock());
-            return;
-        }
-        const pressedAt = this.sneakPressedAt.get(playerId);
-        this.sneakPressedAt.delete(playerId);
-        if (pressedAt === undefined) return;
-        if (this.clock() - pressedAt > this.config.switching.tapMaxTicks) return;
+        // A press arriving within a few ticks of the last one is the same
+        // crouch reported twice, not a second switch.
+        const now = this.clock();
+        const last = this.lastSwitchAt.get(playerId);
+        if (last !== undefined && now - last >= 0 && now - last < this.config.switching.debounceTicks) return;
 
         // In creative flight sneak means "descend", not "switch".
         if (this.isFlying(player)) return;
 
         const held = this.identifier.heldSword(player);
         if (held === undefined) return;
-        this.switchAbility(player, held.sword);
+        if (this.switchAbility(player, held.sword)) this.lastSwitchAt.set(playerId, now);
     }
 
     /**
@@ -166,7 +168,7 @@ export class InputRouter {
 
     /** @param {string} playerId */
     forgetPlayer(playerId) {
-        this.sneakPressedAt.delete(playerId);
+        this.lastSwitchAt.delete(playerId);
     }
 
     /**

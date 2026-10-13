@@ -16,7 +16,7 @@ Nothing yet.
 ## [2.0.0] — 2026-10-13
 
 **Custom Swords 2.0: 20 swords, 121 powers.** Every sword now carries
-several powers — tap crouch to switch, use to cast — each with its own
+several powers — crouch to switch, use to cast — each with its own
 animated effect, and every sword is redrawn as a 32×32 long sword. Built in
 seven steps; see `docs/V2_PLAN.md`.
 
@@ -28,10 +28,10 @@ seven steps; see `docs/V2_PLAN.md`.
 ### Added
 
 - **Ability switching.** A sword can now carry several selectable abilities.
-  Tap crouch while holding it to switch to the next one; use casts the
-  selected ability. The action bar shows `[2/5] Ability - Ready` (or the time
-  left) and a click plays. Holding sneak to creep along an edge does not
-  switch — only a tap of 0.4 s or less does.
+  Crouch while holding it to switch to the next one — once, the moment you
+  crouch down; standing up never switches and holding crouch does not repeat.
+  Use casts the selected ability. The action bar shows `[2/5] Ability - Ready`
+  (or the time left) and a click plays.
   - Each ability has its own cooldown.
   - The selection is remembered per sword and survives a relog.
   - On an engine without the sneak-button event, crouch + use switches instead.
@@ -97,6 +97,14 @@ seven steps; see `docs/V2_PLAN.md`.
   Storm's cloud guard and cyan bolt, Soul's blue flame, Blood's serrated
   edge, Echo's sculk veins, Dragon's winged guard.
 - `art/designer/` — the (optional, Python) scripts the new art was drawn with.
+- **The Custom Swords Guide** — an in-game book. Use it to open a menu:
+  *How to play*, then every sword (with its icon, by rarity) showing its
+  recipe as a 3×3 grid with ingredient names, its stats and repair item,
+  every power with what it does, its damage and cooldown, and its passive.
+  Built from the sword data, so it can never go out of date. Every player
+  gets one on first join; craft more from a **Book + Stick** (shapeless).
+  Adds the `@minecraft/server-ui` 2.0.0 dependency for the menu.
+- Two recipe posters (`releases/CustomSwords-v2-recipes-1.png` and `-2.png`).
 
 ### Changed
 

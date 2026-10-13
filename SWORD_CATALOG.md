@@ -8,7 +8,7 @@ are not part of the collection.
 
 ## Summary
 
-Tap crouch while holding a sword to switch between its abilities; use
+Crouch while holding a sword to switch to its next ability; use
 (right-click / long-press) casts the selected one. The passive runs on
 every melee hit.
 

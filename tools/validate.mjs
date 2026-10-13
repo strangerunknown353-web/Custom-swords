@@ -37,6 +37,10 @@ const {
     nameKey,
     legacyNameKey,
     swordTexturePath,
+    GUIDE_ITEM_ID,
+    GUIDE_COMPONENT_ID,
+    GUIDE_TEXTURE_NAME,
+    GUIDE_TEXTURE_PATH,
 } =
     await import(MODULES.identifiers);
 const { RARITIES } = await import(MODULES.rarity);
@@ -306,6 +310,10 @@ function validateItemsAndResources(swords) {
             error(`${relative}: description.identifier is missing.`);
             continue;
         }
+        if (identifier === GUIDE_ITEM_ID) {
+            validateGuideItem(json, relative, textureData, rpLangKeys);
+            continue;
+        }
         declaredIdentifiers.add(identifier);
 
         const expectedFile = `${localNameOf(identifier)}.item.json`;
@@ -409,10 +417,40 @@ function validateItemsAndResources(swords) {
 
     // Every texture entry should be referenced by something.
     for (const shortname of Object.keys(textureData)) {
+        if (shortname === GUIDE_TEXTURE_NAME) continue;
         if (!swords.some((/** @type {any} */ s) => (s.texture ?? localNameOf(s.id)) === shortname)) {
             warn(`item_texture.json defines unused texture '${shortname}'.`);
         }
     }
+}
+
+/**
+ * The guide book: not a sword, so it gets its own, smaller set of checks.
+ *
+ * @param {any} json
+ * @param {string} relative
+ * @param {Record<string, { textures: string }>} textureData
+ * @param {Set<string>} rpLangKeys
+ */
+function validateGuideItem(json, relative, textureData, rpLangKeys) {
+    const components = json['minecraft:item']?.components ?? {};
+    if (components[GUIDE_COMPONENT_ID] === undefined) {
+        error(`${relative}: does not declare the '${GUIDE_COMPONENT_ID}' component; the book would never open.`);
+    }
+    if (components['minecraft:icon']?.textures?.default !== GUIDE_TEXTURE_NAME) {
+        error(`${relative}: icon must be '${GUIDE_TEXTURE_NAME}'.`);
+    }
+    if (textureData[GUIDE_TEXTURE_NAME]?.textures !== GUIDE_TEXTURE_PATH) {
+        error(`item_texture.json: '${GUIDE_TEXTURE_NAME}' must point at '${GUIDE_TEXTURE_PATH}'.`);
+    } else {
+        const png = resourceFile(GUIDE_TEXTURE_PATH);
+        if (!fs.existsSync(png)) error(`${relative}: '${GUIDE_TEXTURE_PATH}.png' does not exist.`);
+        else for (const problem of verifyPng(fs.readFileSync(png))) error(`${relative}: icon is not a conformant PNG — ${problem}.`);
+    }
+    for (const key of [nameKey(GUIDE_ITEM_ID), legacyNameKey(GUIDE_ITEM_ID)]) {
+        if (!rpLangKeys.has(key)) error(`${relative}: '${key}' is not defined in the resource pack en_US.lang.`);
+    }
+    note('  guide book: item, component, icon and name verified.');
 }
 
 // ---------------------------------------------------------------------------
@@ -811,6 +849,20 @@ function validateRecipes(swords) {
         }
     } else {
         error("packs/CustomSwordsBP/recipes/ does not exist. Run 'npm run generate'.");
+    }
+
+    // --- the guide book's recipe ---
+    const guideRecipe = readJson(path.join(PATHS.bpRecipes, 'guide', 'guide_book.recipe.json'));
+    const shapeless = guideRecipe?.['minecraft:recipe_shapeless'];
+    if (shapeless === undefined) {
+        error("recipes/guide/guide_book.recipe.json: missing or not shapeless. Run 'npm run generate'.");
+    } else {
+        for (const ingredient of shapeless.ingredients ?? []) {
+            ingredientsChecked += 1;
+            if (!vanillaItems.has(ingredient.item)) error(`guide book recipe: '${ingredient.item}' is not a vanilla item.`);
+        }
+        if (shapeless.result?.item !== GUIDE_ITEM_ID) error(`guide book recipe: result must be '${GUIDE_ITEM_ID}'.`);
+        if (!(shapeless.tags ?? []).includes('crafting_table')) error("guide book recipe: missing the 'crafting_table' tag.");
     }
 
     note(`${swords.length} recipe(s), ${ingredientsChecked} ingredient/repair item(s) verified against ${vanillaItems.size} vanilla items.`);

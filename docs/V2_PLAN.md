@@ -94,7 +94,8 @@ string allocation in the hot path.
     survives relog.
   - Fallback for players/devices where the sneak-button event isn't delivered:
     **sneak + use** also switches.
-  - Only a *tap* (≤ 0.4 s) switches, so holding sneak at a ledge does not.
+  - Final: it switches once, the moment sneak is pressed; releasing never
+    switches and holding does not repeat.
   - Each selectable ability has its own cooldown.
 - **Max abilities per rarity** (actives + 1 passive):
   | Rarity | Actives | Passive | Total |

@@ -19,11 +19,11 @@
  */
 
 import * as mc from '@minecraft/server';
-import { system, world } from '@minecraft/server';
+import { ItemStack, system, world } from '@minecraft/server';
 
 import { CONFIG } from '../config.js';
 import { log } from './log.js';
-import { NAMESPACE } from './identifiers.js';
+import { NAMESPACE, GUIDE_COMPONENT_ID, GUIDE_ITEM_ID } from './identifiers.js';
 import { SwordRegistry } from './sword_registry.js';
 import { AbilityRegistry } from './ability_registry.js';
 import { ItemIdentifier } from './item_identifier.js';
@@ -46,6 +46,7 @@ import { FeedbackService } from '../systems/feedback.js';
 import { CombatSystem } from '../systems/combat.js';
 import { EnvironmentService } from '../systems/environment.js';
 import { FxService } from '../systems/fx.js';
+import { GuideUi } from '../systems/guide_ui.js';
 
 import { ABILITIES } from '../abilities/index.js';
 import { SWORDS } from '../swords/index.js';
@@ -163,8 +164,9 @@ export function createFramework(options = {}) {
     const executor = new AbilityExecutor({ abilities, gate, services, clock });
     const selector = new AbilitySelector({ swords, log });
     const router = new InputRouter({ identifier, swords, executor, selector, feedback, clock, config: CONFIG, log });
+    const guide = new GuideUi(swordDefinitions, log);
 
-    return { abilities, swords, identifier, diagnostics, services, gate, executor, selector, router, problems };
+    return { abilities, swords, identifier, diagnostics, services, gate, executor, selector, router, guide, problems };
 }
 
 /**
@@ -202,6 +204,7 @@ export function start() {
         try {
             reportProblems(framework.problems);
             framework.router.register(event.itemComponentRegistry);
+            registerGuideBook(framework, event.itemComponentRegistry);
         } catch (error) {
             log.error('Startup failed:', error);
         }
@@ -281,7 +284,11 @@ export function subscribePlayerLifecycle(framework) {
     );
 
     world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
-        if (initialSpawn) return; // A first join has nothing to clear.
+        if (initialSpawn) {
+            // A first join has nothing to clear, but may be owed a guide book.
+            giveGuideOnce(player);
+            return;
+        }
         try {
             state.clearLifeScope(player.id);
         } catch (error) {
@@ -290,8 +297,52 @@ export function subscribePlayerLifecycle(framework) {
     });
 }
 
+/** Player dynamic property recording that the guide book was handed out. */
+export const GUIDE_GIVEN_PROPERTY = `${NAMESPACE}:guide_given`;
+
 /**
- * Tap-crouch ability switching.
+ * The guide book opens its menu on use.
+ *
+ * @param {ReturnType<typeof createFramework>} framework
+ * @param {import('@minecraft/server').ItemComponentRegistry} registry
+ */
+export function registerGuideBook(framework, registry) {
+    registry.registerCustomComponent(GUIDE_COMPONENT_ID, {
+        onUse: (event) => {
+            const player = event.source;
+            if (player?.typeId !== 'minecraft:player') return;
+            void framework.guide.open(/** @type {any} */ (player));
+        },
+    });
+}
+
+/**
+ * Hands a player one guide book the first time they join a world with the
+ * add-on, and never again — losing it is fixed by crafting another.
+ *
+ * @param {import('@minecraft/server').Player} player
+ * @returns {boolean} Whether a book was given.
+ */
+export function giveGuideOnce(player) {
+    if (!CONFIG.guide.giveOnFirstJoin) return false;
+    try {
+        if (player.getDynamicProperty(GUIDE_GIVEN_PROPERTY) === true) return false;
+        const inventory = /** @type {any} */ (player.getComponent('minecraft:inventory'));
+        const container = inventory?.container;
+        if (container === undefined) return false;
+        const leftover = container.addItem(new ItemStack(GUIDE_ITEM_ID, 1));
+        // A full inventory hands the book back; drop it at the player's feet.
+        if (leftover !== undefined) player.dimension.spawnItem(leftover, player.location);
+        player.setDynamicProperty(GUIDE_GIVEN_PROPERTY, true);
+        return true;
+    } catch (error) {
+        log.debug('Guide book not given:', error);
+        return false;
+    }
+}
+
+/**
+ * Crouch ability switching (on the way down).
  *
  * `playerButtonInput` is looked up through the module namespace rather than
  * imported by name: a named import the engine does not export fails the whole
@@ -304,7 +355,7 @@ export function subscribePlayerLifecycle(framework) {
  * Exported for the test suite; `start()` is the only caller in the game.
  *
  * @param {ReturnType<typeof createFramework>} framework
- * @returns {boolean} Whether tap switching is active.
+ * @returns {boolean} Whether crouch switching is active.
  */
 export function subscribeSneakSwitching(framework) {
     const signal = world.afterEvents.playerButtonInput;
@@ -323,7 +374,9 @@ export function subscribeSneakSwitching(framework) {
                     log.debug('Sneak switch skipped:', error);
                 }
             },
-            { buttons: [InputButton.Sneak] },
+            // Presses only: the switch happens on the way down, so releases
+            // never need to reach the script at all.
+            { buttons: [InputButton.Sneak], state: ButtonState.Pressed },
         );
     } catch (error) {
         log.warn('Could not subscribe to sneak input; crouch + use switches abilities.', error);

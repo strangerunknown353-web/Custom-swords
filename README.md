@@ -17,20 +17,23 @@ reusable framework rather than a pile of one-off scripts.
 
 | Do this | While holding a Custom Sword |
 |---|---|
-| **Tap crouch** | Switch to the sword's next power. The bar above the hotbar shows `[2/5] Power - Ready` (or the seconds left). |
+| **Crouch** | Switch to the sword's next power — once, the moment you crouch down. The bar above the hotbar shows `[2/5] Power - Ready` (or the seconds left). |
 | **Use** (right-click / long-press) | Cast the selected power. |
 | **Hit** something | The sword's passive triggers on every melee hit. |
 
-- Holding crouch (to sneak along a ledge) does **not** switch — only a quick
-  tap does. In creative flight, crouch means "fly down" and never switches.
+- Standing back up never switches, and holding crouch does not switch again.
+  In creative flight, crouch means "fly down" and never switches.
 - Each power has its own cooldown. When the power you have selected is ready
   again you hear a chime and see "*Power ready*".
 - Each sword remembers which power you had selected, even after you leave
   and rejoin.
 - More powers at higher rarity: Uncommon 3 · Rare 4 · Epic 5 · Legendary 6 ·
   Mythic 7 — plus one passive each.
-- Every sword is crafted at a crafting table; recipes are in
-  `SWORD_CATALOG.md`. Or, with cheats: `/give @s custom_swords:dragon_sword`.
+- **The Custom Swords Guide** book has every recipe, stat and power in game:
+  use it to open. You get one the first time you join; craft more from a
+  **Book + Stick** (any arrangement).
+- Every sword is crafted at a crafting table; recipes are in the guide, in
+  `SWORD_CATALOG.md`, and on the two recipe posters in `releases/`. Or, with cheats: `/give @s custom_swords:dragon_sword`.
 - Powers hit mobs from other add-ons too, and never hurt players when the
   world's PvP setting is off.
 
@@ -173,7 +176,7 @@ Stated plainly:
 - **v2.0 has not been played in a client yet.** Everything passes static
   validation and a full test suite against a *mocked* engine; v0.5.0 proved
   that is not the same as working. The parts most worth checking in game:
-  tap-crouch switching, the leap and beam powers, how busy the animations
+  crouch switching, the guide book, the leap and beam powers, how busy the animations
   look, and the new 32×32 icons in the hand.
 - **Requires Minecraft 1.21.120 or newer** — each sword's swing speed uses a
   component that does not exist earlier. See `docs/API_NOTES.md`.

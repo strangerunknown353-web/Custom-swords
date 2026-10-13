@@ -51,11 +51,11 @@ describe('scripts/main.js', () => {
         assert.equal(system.intervals.length, 0);
     });
 
-    it('registers the sword component when startup fires', () => {
+    it('registers the sword and guide-book components when startup fires', () => {
         const registry = new MockItemComponentRegistry();
         system.beforeEvents.startup.emit({ itemComponentRegistry: registry });
 
-        assert.deepEqual([...registry.components.keys()], [SWORD_COMPONENT_ID]);
+        assert.deepEqual([...registry.components.keys()], [SWORD_COMPONENT_ID, 'custom_swords:guide']);
         assert.ok(
             logged.some((line) => line.includes(`Registered item component '${SWORD_COMPONENT_ID}'`)),
             'expected the registration to be logged',

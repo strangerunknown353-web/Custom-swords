@@ -442,6 +442,15 @@ export class MockPlayer extends MockEntity {
     }
 }
 
+/** The real constructor is `new ItemStack(typeId, amount)`. */
+export class ItemStack {
+    /** @param {string} typeId @param {number} [amount] */
+    constructor(typeId, amount = 1) {
+        this.typeId = typeId;
+        this.amount = amount;
+    }
+}
+
 /**
  * Stand-in for `ItemStack`. Only `typeId` and `hasTag` are modelled, which is
  * the entire surface the identification system touches.

@@ -1,0 +1,27 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "custom_swords:guide_book_recipe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minecraft:book"
+      },
+      {
+        "item": "minecraft:stick"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "minecraft:book"
+      }
+    ],
+    "result": {
+      "item": "custom_swords:guide_book"
+    }
+  }
+}

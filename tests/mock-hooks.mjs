@@ -9,6 +9,7 @@
 
 /** Resolved from `import.meta.url` so no Node version newer than 20 is needed. */
 const MOCK_URL = new URL('./mocks/minecraft_server.mjs', import.meta.url).href;
+const UI_MOCK_URL = new URL('./mocks/minecraft_server_ui.mjs', import.meta.url).href;
 
 /**
  * @param {string} specifier
@@ -18,6 +19,9 @@ const MOCK_URL = new URL('./mocks/minecraft_server.mjs', import.meta.url).href;
 export async function resolve(specifier, context, nextResolve) {
     if (specifier === '@minecraft/server') {
         return { url: MOCK_URL, shortCircuit: true };
+    }
+    if (specifier === '@minecraft/server-ui') {
+        return { url: UI_MOCK_URL, shortCircuit: true };
     }
     return nextResolve(specifier, context);
 }

@@ -433,3 +433,14 @@ from experimental in Minecraft 1.21.90 for both blocks and items.
   (`minecraft:display_name`, `minecraft:damage`, `minecraft:enchantable`,
   `minecraft:glint`, `minecraft:swing_duration`), and the 1.21.90 and 1.26.0
   update notes.
+
+## v2.0 additions
+
+| API | Used for | Notes |
+|---|---|---|
+| `world.afterEvents.playerButtonInput` with `{ buttons: [InputButton.Sneak], state: ButtonState.Pressed }` | crouch to switch power | Read through the module namespace (`import * as mc`), never a named import, so an engine without it still loads the script and falls back to crouch + use. Presses only — the switch happens on the way down. |
+| `system.runTimeout` | ability animations (`systems/fx.js`), ready ping | Chained per frame; no recurring interval. |
+| `Player.get/setDynamicProperty` | remembered power per sword, guide-book gift flag | Guarded; failure falls back to session-only. |
+| `@minecraft/server-ui` **2.0.0** `ActionFormData` | the guide book's menu | New manifest dependency in v2.0, paired with `@minecraft/server` 2.0.0. |
+| `Container.addItem`, `Dimension.spawnItem` | guide book on first join | A full inventory gets the book dropped at the player's feet. |
+| `world.gameRules.pvp` | abilities never touch players when PvP is off | Read defensively; an unreadable rule counts as on. |

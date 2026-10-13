@@ -8,9 +8,11 @@ and from CI artifacts.
 
 | File | Milestone |
 |---|---|
-| `CustomSwords-v2.0.0.mcaddon` | **v2.0** — 20 swords, 121 powers, tap crouch to switch power, animated effects, 32×32 icons. Both packs in one file. |
+| `CustomSwords-v2.0.0.mcaddon` | **v2.0** — 20 swords, 121 powers, crouch to switch power, animated effects, 32×32 icons, in-game guide book. Both packs in one file. |
 | `CustomSwordsBP-v2.0.0.mcpack` | v2.0 behaviour pack alone. |
 | `CustomSwordsRP-v2.0.0.mcpack` | v2.0 resource pack alone. |
+| `CustomSwords-v2-recipes-1.png` | Recipe poster: the ten Uncommon to Epic swords. |
+| `CustomSwords-v2-recipes-2.png` | Recipe poster: the ten Epic to Mythic swords, and the guide book. |
 
 These are build artifacts. The authoritative output is `dist/`, produced by
 `npm run build`; CI also uploads it as a workflow artifact. If this copy ever
@@ -34,9 +36,11 @@ toggles are needed.
    /give @s custom_swords:ember_blade
    ```
 
-5. **Tap crouch** to switch power, **use** (right-click / long-press) to cast,
+5. **Crouch** to switch power, **use** (right-click / long-press) to cast,
    and **hit** things for the passive.
-6. To inspect what the add-on loaded:
+6. Open the **Custom Swords Guide** (you get one on first join, or craft a
+   Book + Stick) for every recipe and power.
+7. To inspect what the add-on loaded:
 
    ```
    /scriptevent custom_swords:list

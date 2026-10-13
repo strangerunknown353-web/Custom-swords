@@ -39,6 +39,12 @@ export const SWORD_COMPONENT_ID = `${NAMESPACE}:sword`;
 /** Item tag applied to every custom sword, for recipes and future filtering. */
 export const SWORD_ITEM_TAG = `${NAMESPACE}:is_custom_sword`;
 
+/** The in-game guide book: its item, its custom component and its icon. */
+export const GUIDE_ITEM_ID = `${NAMESPACE}:guide_book`;
+export const GUIDE_COMPONENT_ID = `${NAMESPACE}:guide`;
+export const GUIDE_TEXTURE_NAME = `${NAMESPACE}_guide_book`;
+export const GUIDE_TEXTURE_PATH = `textures/items/${NAMESPACE}/guide_book`;
+
 /** Resource-pack directory holding sword icons, relative to the pack root. */
 export const SWORD_TEXTURE_DIR = `textures/items/${NAMESPACE}/swords`;
 
